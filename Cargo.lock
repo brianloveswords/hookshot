@@ -1,4 +1,4 @@
 [root]
-name = "tcp-listener"
+name = "tcp_listener"
 version = "0.0.1"
 
