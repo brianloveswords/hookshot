@@ -44,12 +44,19 @@ ansible will overwrite whats in the environment.
 
 ```bash
 $ cd /path/to/deployer
-$ DEPLOYER_SECRET=super-secret-stuff DEPLOYER_PLAYBOOK=/mnt/bocoup.com/live/deploy/ansible/provision.yml ansible-playbook -i 192.168.100.100, deploy/ansible/deploy.yml
+$ DEPLOYER_SECRET=super-secret-stuff \
+  DEPLOYER_PLAYBOOK=/mnt/bocoup.com/live/deploy/ansible/provision.yml \
+  ansible-playbook -i 192.168.100.100, deploy/ansible/deploy.yml
 ```
 
 ## Example with CLI Ansible Variables
 
 ```bash
 $ cd /path/to/deployer
-$ ansible-playbook -i 192.168.100.100, deploy/ansible/deploy.yml -e '{"deployer_secret": "super-secret-stuff", "deployer_playbook": "/mnt/bocoup.com/live/deploy/ansible/provision.yml"}'
+$ ansible-playbook -i 192.168.100.100, deploy/ansible/deploy.yml \
+  -e "deployer_secret=super-secret-stuff deployer_playbook=/mnt/bocoup.com/live/deploy/ansible/provision.yml"
 ```
+
+# App Prerequisites
+
+TODO: fill this out
