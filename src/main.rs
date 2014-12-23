@@ -81,6 +81,9 @@ fn handle_client(mut stream: TcpStream) {
     // data within 30 seconds, time it out.
     stream.set_read_timeout(Some(30_000));
 
+    // Don't buffer data, send everything immediately
+    stream.set_nodelay(true).ok();
+
     // Read the incoming bytes.
     let bytes = match stream.read_to_end() {
         Err(e) => panic!("Error reading incoming message: {}", e),
@@ -115,7 +118,7 @@ fn handle_client(mut stream: TcpStream) {
     let ansible_vars = CommandLineVars::new(command.ansible.hostname,
                                             command.ansible.version);
 
-    // Start a detached ansible process
+    // Start a detached ansible process and set up the cli args
     let mut ansible = Command::new(ANSIBLE_CMD);
     ansible.detached();
     ansible.arg("--connection=local");
@@ -123,14 +126,29 @@ fn handle_client(mut stream: TcpStream) {
     ansible.arg("-e").arg(json::encode(&ansible_vars));
     ansible.arg(playbook);
 
-    let result = match ansible.output() {
+    let mut child = match ansible.spawn() {
         Err(why) => panic!("Could not spawn `ansible-playbook`: {}", why),
-        Ok(output) => output
+        Ok(child) => child
     };
 
-    stream.write(result.error.as_slice()).ok();
-    stream.write(result.output.as_slice()).ok();
-    stream.write(format!("{}\n", result.status).as_bytes()).ok();
+    // Create a new short-lived scope to borrow a mutable reference to
+    // `child` or else when we try to do `child.wait()` later the
+    // compiler will get mad at us.
+    {
+        let mut stdout = child.stdout.as_mut().unwrap();
+        loop {
+            match stdout.read_byte() {
+                Ok(byte) => { stream.write(&[byte]).ok(); } ,
+                Err(_) => { break }
+            }
+        }
+    }
+
+    let stderr = child.stderr.as_mut().unwrap().read_to_end();
+    stream.write(stderr.unwrap().as_slice()).ok();
+
+    let exit_status = child.wait().unwrap();
+    stream.write(format!("{}\n", exit_status).as_bytes()).ok();
 
     println!("{}: Closing connection", peer_name);
 

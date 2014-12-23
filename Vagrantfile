@@ -10,7 +10,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.network "private_network", ip: "192.168.100.128"
   config.ssh.forward_agent = true
   config.vm.provision "ansible" do |ansible|
-    ansible.playbook = "deploy/ansible/local-build.yml"
+    ansible.playbook = "deploy/ansible/build.yml"
     ansible.inventory_path = "deploy/ansible/inventory/development"
     ansible.limit = "vagrant"
   end

@@ -1,0 +1,19 @@
+- name: source is syncronized
+  remote_user: "{{ ansible_ssh_user }}"
+  synchronize: src={{ local_src_root }}
+               dest={{ build_root }}
+
+- name: rust & cargo are installed
+  shell: "curl -s https://static.rust-lang.org/rustup.sh | sudo sh"
+  args:
+    creates: /usr/local/bin/rustc
+
+- name: build is up-to-date
+  shell: "cargo build --release"
+  args:
+    chdir: "{{ build_root }}"
+
+- name: copy build back to local machine
+  synchronize: src={{ build }}
+               dest={{ deploy_files }}/{{ name }}.linux
+               mode=pull

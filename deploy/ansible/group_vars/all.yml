@@ -1,0 +1,8 @@
+---
+name: deployer
+local_src_root: ../..
+build_root: /mnt/{{ name }}
+build: "{{ build_root }}/target/release/{{ name }}"
+deploy_files: "{{ local_src_root }}/deploy/ansible/roles/deploy/files"
+deployer_secret: "{{ lookup('env', 'DEPLOYER_SECRET') }}"
+deployer_playbook: "{{ lookup('env', 'DEPLOYER_PLAYBOOK') }}"

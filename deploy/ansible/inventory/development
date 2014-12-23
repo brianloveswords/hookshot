@@ -1,1 +1,1 @@
-vagrant ansible_ssh_host=192.168.100.128
+vagrant   ansible_ssh_host=192.168.100.128  ansible_ssh_user=vagrant
