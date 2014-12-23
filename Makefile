@@ -1,11 +1,13 @@
-all: local linux
+build-all: local-build linux-build
 
-linux:
+linux-build:
 	vagrant provision
 
-local:
+local-build:
 	cargo build --release
 
 clean:
 	rm -f deployer.linux
 	rm -rf target
+
+.PHONY: build-all build-linux build-local clean

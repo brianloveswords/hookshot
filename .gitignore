@@ -1,4 +1,4 @@
 /target
 /.vagrant/
-/tcp_listener.linux
-/deployer.linux
+/deploy/ansible/roles/deploy/files
+!/deploy/ansible/roles/deploy/files/.gitkeep

@@ -28,7 +28,6 @@ struct RemoteCommandMsg {
 struct AnsibleConfig {
     hostname: String,
     version: String,
-    optional: Option<String>,
 }
 
 #[deriving(Encodable, Show)]
@@ -126,6 +125,8 @@ fn handle_client(mut stream: TcpStream) {
     ansible.arg("-e").arg(json::encode(&ansible_vars));
     ansible.arg(playbook);
 
+    println!("{}: spawning ansible", peer_name);
+
     let mut child = match ansible.spawn() {
         Err(why) => panic!("Could not spawn `ansible-playbook`: {}", why),
         Ok(child) => child
@@ -138,7 +139,10 @@ fn handle_client(mut stream: TcpStream) {
         let mut stdout = child.stdout.as_mut().unwrap();
         loop {
             match stdout.read_byte() {
-                Ok(byte) => { stream.write(&[byte]).ok(); } ,
+                Ok(byte) => {
+                    stream.write(&[byte]).ok();
+                    stream.flush().ok();
+                } ,
                 Err(_) => { break }
             }
         }

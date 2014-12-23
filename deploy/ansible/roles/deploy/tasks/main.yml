@@ -1,9 +1,11 @@
 ---
 # Configure & start the deploy server subsystem
+- include: ansible.yml
+
 - name: deployer upstart config exists
   template: dest=/etc/init/deployer.conf
             src=deployer.conf
-            mode=0744
+            mode=0644
             owner=root
 
 - name: reload initctl conf
@@ -15,6 +17,8 @@
 - name: sync deployer binary
   copy: dest={{ deployer_bin }}
         src=deployer.linux
+        mode=0755
+        owner=root
 
 - name: start deployer service
   service: name=deployer state=started

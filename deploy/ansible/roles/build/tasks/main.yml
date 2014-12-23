@@ -1,6 +1,6 @@
 - name: source is syncronized
   remote_user: "{{ ansible_ssh_user }}"
-  synchronize: src={{ local_src_root }}
+  synchronize: src=../../../../../
                dest={{ build_root }}
 
 - name: rust & cargo are installed
@@ -15,5 +15,5 @@
 
 - name: copy build back to local machine
   synchronize: src={{ build }}
-               dest={{ deploy_files }}/{{ name }}.linux
+               dest=../../deploy/files/{{ name }}.linux
                mode=pull
