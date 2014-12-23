@@ -1,7 +1,6 @@
 all: local linux
 
 linux:
-	rm -f deployer.linux
 	vagrant provision
 
 local:
