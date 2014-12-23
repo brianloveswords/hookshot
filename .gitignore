@@ -2,3 +2,4 @@
 /.vagrant/
 /deploy/ansible/roles/deploy/files
 !/deploy/ansible/roles/deploy/files/.gitkeep
+/client.js

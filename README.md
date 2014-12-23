@@ -57,6 +57,6 @@ $ ansible-playbook -i 192.168.100.100, deploy/ansible/deploy.yml \
   -e "deployer_secret=super-secret-stuff deployer_playbook=/mnt/bocoup.com/live/deploy/ansible/provision.yml"
 ```
 
-# App Prerequisites
+# App Expectations
 
 TODO: fill this out

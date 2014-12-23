@@ -3,7 +3,9 @@ extern crate "rustc-serialize" as rustc_serialize;
 use std::io::{TcpListener, TcpStream};
 use std::io::{Acceptor, Listener};
 use std::io::process::Command;
+
 use std::thread::Thread;
+use std::collections::BTreeMap;
 
 use std::str;
 use std::os;
@@ -11,42 +13,17 @@ use std::os;
 use rustc_serialize::json;
 
 static DEFAULT_PORT: &'static str = "1469";
-static DEFAULT_KEY_SRC: &'static str = "/home/robocoup/.ssh/id_rsa";
-static DEPLOY_VIA: &'static str = "git";
 static ANSIBLE_CMD: &'static str = "ansible-playbook";
 
 static SECRET_ENV_KEY: &'static str = "DEPLOYER_SECRET";
 static PLAYBOOK_ENV_KEY: &'static str = "DEPLOYER_PLAYBOOK";
 
+type Object = BTreeMap<String, String>;
+
 #[deriving(RustcDecodable, Show)]
 struct RemoteCommandMsg {
     secret: String,
-    ansible: AnsibleConfig,
-}
-
-#[deriving(RustcDecodable, Show)]
-struct AnsibleConfig {
-    hostname: String,
-    version: String,
-}
-
-#[deriving(RustcEncodable, Show)]
-struct CommandLineVars {
-    hostname: String,
-    deploy_via: String,
-    deploy_version: String,
-    deploy_key_src: String,
-}
-
-impl CommandLineVars {
-    pub fn new(hostname: String, version: String) -> CommandLineVars {
-        CommandLineVars {
-            hostname: hostname,
-            deploy_via: String::from_str(DEPLOY_VIA),
-            deploy_version: version,
-            deploy_key_src: get_key_src(),
-        }
-    }
+    ansible: Object,
 }
 
 fn get_from_env_or_panic(key: &str) -> String {
@@ -65,10 +42,6 @@ fn get_from_env_or_default(key: &str, default: &str) -> String {
 
 fn get_port() -> String {
     get_from_env_or_default("DEPLOYER_PORT", DEFAULT_PORT)
-}
-
-fn get_key_src() -> String {
-    get_from_env_or_default("DEPLOY_KEY_SRC", DEFAULT_KEY_SRC)
 }
 
 fn handle_client(mut stream: TcpStream) {
@@ -114,15 +87,12 @@ fn handle_client(mut stream: TcpStream) {
     stream.write("okay, message received\n".as_bytes()).ok();
     println!("{}: {}", peer_name, command);
 
-    let ansible_vars = CommandLineVars::new(command.ansible.hostname,
-                                            command.ansible.version);
-
     // Start a detached ansible process and set up the cli args
     let mut ansible = Command::new(ANSIBLE_CMD);
     ansible.detached();
     ansible.arg("--connection=local");
     ansible.arg("-i").arg("127.0.0.1,");
-    ansible.arg("-e").arg(json::encode(&ansible_vars));
+    ansible.arg("-e").arg(json::encode(&command.ansible));
     ansible.arg(playbook);
 
     println!("{}: spawning ansible", peer_name);
