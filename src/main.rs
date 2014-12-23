@@ -39,7 +39,7 @@ impl CommandLineVars {
             hostname: hostname,
             deploy_via: String::from_str(DEPLOY_VIA),
             deploy_version: version,
-            deploy_key_src: String::from_str(DEPLOY_KEY_SRC),
+            deploy_key_src: get_deploy_key_src(),
         }
     }
 }
@@ -49,6 +49,14 @@ fn get_port() -> String {
     match os::getenv("DEPLOYER_PORT") {
         Some(val) => val,
         None => default_port,
+    }
+}
+
+fn get_deploy_key_src() -> String {
+    let default_deploy_key_src = String::from_str(DEPLOY_KEY_SRC);
+    match os::getenv("DEPLOY_KEY_SRC") {
+        Some(val) => val,
+        None => default_deploy_key_src,
     }
 }
 
@@ -80,6 +88,8 @@ fn main() {
             return
         }
 
+        // Decode the incoming message or panic
+        // TODO: notify the client if the thing could not be decoded.
         let command: RemoteCommand = match json::decode(msg) {
             Ok(command) => command,
             Err(e) => panic!("Error converting message to command: {}", e)
