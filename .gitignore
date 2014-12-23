@@ -1,3 +1,4 @@
 /target
 /.vagrant/
 /tcp_listener.linux
+/deployer.linux
