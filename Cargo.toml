@@ -3,3 +3,6 @@
 name = "deployer"
 version = "0.0.1"
 authors = ["Brian J Brennan <brianloveswords@gmail.com>"]
+
+[dependencies]
+rustc-serialize = "0.1.1"

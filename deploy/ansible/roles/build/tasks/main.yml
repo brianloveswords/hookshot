@@ -3,10 +3,23 @@
   synchronize: src=../../../../../
                dest={{ build_root }}
 
-- name: rust & cargo are installed
-  shell: "curl -s https://static.rust-lang.org/rustup.sh | sudo sh"
+- name: rustup script exists
+  shell: "curl -s -o rustup https://static.rust-lang.org/rustup.sh"
   args:
-    creates: /usr/local/bin/rustc
+    chdir: /usr/local/bin
+    creates: "{{ rustup_script }}"
+
+- name: rustup script has correct permissions
+  file: path={{ rustup_script }} mode=0755
+
+- name: rustc & cargo are installed
+  shell: "{{ rustup_script }}"
+  args:
+    creates: "{{ rustc_bin }}"
+
+- name: force rust update
+  command: "{{ rustup_script }}"
+  when: lookup('env', 'RUSTUP') != ''
 
 - name: build is up-to-date
   shell: "cargo build --release"

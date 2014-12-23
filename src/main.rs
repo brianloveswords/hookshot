@@ -1,4 +1,4 @@
-extern crate serialize;
+extern crate "rustc-serialize" as rustc_serialize;
 
 use std::io::{TcpListener, TcpStream};
 use std::io::{Acceptor, Listener};
@@ -8,7 +8,7 @@ use std::thread::Thread;
 use std::str;
 use std::os;
 
-use serialize::json;
+use rustc_serialize::json;
 
 static DEFAULT_PORT: &'static str = "1469";
 static DEFAULT_KEY_SRC: &'static str = "/home/robocoup/.ssh/id_rsa";
@@ -18,19 +18,19 @@ static ANSIBLE_CMD: &'static str = "ansible-playbook";
 static SECRET_ENV_KEY: &'static str = "DEPLOYER_SECRET";
 static PLAYBOOK_ENV_KEY: &'static str = "DEPLOYER_PLAYBOOK";
 
-#[deriving(Decodable, Show)]
+#[deriving(RustcDecodable, Show)]
 struct RemoteCommandMsg {
     secret: String,
     ansible: AnsibleConfig,
 }
 
-#[deriving(Decodable, Show)]
+#[deriving(RustcDecodable, Show)]
 struct AnsibleConfig {
     hostname: String,
     version: String,
 }
 
-#[deriving(Encodable, Show)]
+#[deriving(RustcEncodable, Show)]
 struct CommandLineVars {
     hostname: String,
     deploy_via: String,
