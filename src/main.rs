@@ -3,6 +3,7 @@ extern crate serialize;
 use std::io::{TcpListener, TcpStream};
 use std::io::{Acceptor, Listener};
 use std::thread::Thread;
+
 use std::str;
 use std::os;
 
@@ -25,7 +26,7 @@ struct AnsibleConfig {
     optional: Option<String>,
 }
 
-#[deriving(Encodable)]
+#[deriving(Encodable, Show)]
 struct CommandLineVars {
     hostname: String,
     deploy_via: String,
@@ -80,26 +81,34 @@ fn main() {
             Ok(bytes) => bytes,
         };
 
-        // Turn those bytes into a string.
-        let msg = str::from_utf8(bytes.as_slice()).unwrap();
-
         // Bail early if we don't have a message to process
-        if msg.len() == 0 {
+        if bytes.len() == 0 {
             return
         }
 
+        // json::decode requires &str
+        let msg = str::from_utf8(bytes.as_slice()).unwrap();
+
         // Decode the incoming message or panic
-        // TODO: notify the client if the thing could not be decoded.
         let command: RemoteCommand = match json::decode(msg) {
             Ok(command) => command,
-            Err(e) => panic!("Error converting message to command: {}", e)
+            Err(e) => {
+                stream.write("error, could not parse message".as_bytes()).ok();
+                panic!("Error converting message to command: {}", e)
+            }
         };
 
+        stream.write("okay, message received\n".as_bytes()).ok();
         println!("{}: {}", peer_name, command);
 
-        stream.write("okay, message received".as_bytes()).ok();
+        let ansible_vars = CommandLineVars::new(command.ansible.hostname,
+                                                command.ansible.version);
+
+        println!("{}", json::encode(&ansible_vars));
 
         println!("{}: Closing connection", peer_name);
+
+        stream.write("okay, see ya later!\n".as_bytes()).ok();
         drop(stream);
     }
 

@@ -1,0 +1,24 @@
+---
+- hosts: all
+  sudo: yes
+  gather_facts: no
+  vars:
+    name: tcp_listener
+  tasks:
+  - name: source is syncronized
+    synchronize: src=../ dest=/mnt/{{ name }}
+
+  - name: rust & cargo are installed
+    shell: "curl -s https://static.rust-lang.org/rustup.sh | sudo sh"
+    args:
+      creates: /usr/local/bin/rustc
+
+  - name: build is up-to-date
+    shell: "cargo build --release"
+    args:
+      chdir: /mnt/{{ name }}
+
+  - name: copy build back to local machine
+    synchronize: src=/mnt/tcp_listener/target/release/{{ name }}
+                 dest=../{{ name }}.linux
+                 mode=pull
