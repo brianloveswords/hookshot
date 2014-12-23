@@ -2,6 +2,7 @@ extern crate serialize;
 
 use std::io::{TcpListener, TcpStream};
 use std::io::{Acceptor, Listener};
+use std::io::process::Command;
 use std::thread::Thread;
 
 use std::str;
@@ -13,8 +14,13 @@ static DEFAULT_PORT: &'static str = "1469";
 static DEPLOY_VIA: &'static str = "git";
 static DEPLOY_KEY_SRC: &'static str = "/home/robocoup/.ssh/id_rsa";
 
+static ANSIBLE_CMD: &'static str = "ansible-playbook";
+
+static SECRET_ENV_KEY: &'static str = "DEPLOYER_SECRET";
+static PLAYBOOK_ENV_KEY: &'static str = "DEPLOYER_PLAYBOOK";
+
 #[deriving(Decodable, Show)]
-struct RemoteCommand {
+struct RemoteCommandMsg {
     secret: String,
     ansible: AnsibleConfig,
 }
@@ -45,6 +51,13 @@ impl CommandLineVars {
     }
 }
 
+fn get_from_env_or_panic(key: &str) -> String {
+    match os::getenv(key) {
+        Some(val) => val,
+        None => panic!("Must have {} set in environment", key),
+    }
+}
+
 fn get_port() -> String {
     let default_port = String::from_str(DEFAULT_PORT);
     match os::getenv("DEPLOYER_PORT") {
@@ -69,6 +82,9 @@ fn main() {
     let mut acceptor = listener.listen();
 
     fn handle_client(mut stream: TcpStream) {
+        let deployer_secret = get_from_env_or_panic(SECRET_ENV_KEY);
+        let playbook = get_from_env_or_panic(PLAYBOOK_ENV_KEY);
+
         let peer_name = stream.peer_name().unwrap();
 
         // Don't leave sockets lying around. If a socket doesn't send
@@ -90,7 +106,7 @@ fn main() {
         let msg = str::from_utf8(bytes.as_slice()).unwrap();
 
         // Decode the incoming message or panic
-        let command: RemoteCommand = match json::decode(msg) {
+        let command: RemoteCommandMsg = match json::decode(msg) {
             Ok(command) => command,
             Err(e) => {
                 stream.write("error, could not parse message".as_bytes()).ok();
@@ -98,13 +114,33 @@ fn main() {
             }
         };
 
+        if command.secret != deployer_secret {
+            stream.write("error, wrong secret".as_bytes()).ok();
+            panic!("Wrong secret");
+        }
+
         stream.write("okay, message received\n".as_bytes()).ok();
         println!("{}: {}", peer_name, command);
 
         let ansible_vars = CommandLineVars::new(command.ansible.hostname,
                                                 command.ansible.version);
 
-        println!("{}", json::encode(&ansible_vars));
+        // Start a detached ansible process
+        let mut ansible = Command::new(ANSIBLE_CMD);
+        ansible.detached();
+        ansible.arg("--connection=local");
+        ansible.arg("-i").arg("127.0.0.1,");
+        ansible.arg("-e").arg(json::encode(&ansible_vars));
+        ansible.arg(playbook);
+
+        let result = match ansible.output() {
+            Err(why) => panic!("Could not spawn `ansible-playbook`: {}", why),
+            Ok(output) => output
+        };
+
+        stream.write(result.error.as_slice()).ok();
+        stream.write(result.output.as_slice()).ok();
+        stream.write(format!("{}\n", result.status).as_bytes()).ok();
 
         println!("{}: Closing connection", peer_name);
 

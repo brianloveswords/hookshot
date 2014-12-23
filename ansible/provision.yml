@@ -3,10 +3,18 @@
   sudo: yes
   gather_facts: no
   vars:
-    name: tcp_listener
+    name: deployer
+    build_root: /mnt/{{ name }}
+    build: "{{ build_root }}/target/release/{{ name }}"
   tasks:
+  - name: ansible repo exists
+    apt_repository: repo=ppa:ansible/ansible
+
+  - name: ansible is installed
+    apt: name=ansible
+
   - name: source is syncronized
-    synchronize: src=../ dest=/mnt/{{ name }}
+    synchronize: src=../ dest={{ build_root }}
 
   - name: rust & cargo are installed
     shell: "curl -s https://static.rust-lang.org/rustup.sh | sudo sh"
@@ -16,9 +24,12 @@
   - name: build is up-to-date
     shell: "cargo build --release"
     args:
-      chdir: /mnt/{{ name }}
+      chdir: "{{ build_root }}"
+
+  - name: put server into path
+    command: /bin/cp {{ build }} /usr/local/bin/{{ name }}
 
   - name: copy build back to local machine
-    synchronize: src=/mnt/tcp_listener/target/release/{{ name }}
+    synchronize: src={{ build }}
                  dest=../{{ name }}.linux
                  mode=pull

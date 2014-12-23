@@ -1,4 +1,4 @@
 [root]
-name = "tcp_listener"
+name = "deployer"
 version = "0.0.1"
 
