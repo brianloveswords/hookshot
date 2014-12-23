@@ -11,9 +11,8 @@ use std::os;
 use serialize::json;
 
 static DEFAULT_PORT: &'static str = "1469";
+static DEFAULT_KEY_SRC: &'static str = "/home/robocoup/.ssh/id_rsa";
 static DEPLOY_VIA: &'static str = "git";
-static DEPLOY_KEY_SRC: &'static str = "/home/robocoup/.ssh/id_rsa";
-
 static ANSIBLE_CMD: &'static str = "ansible-playbook";
 
 static SECRET_ENV_KEY: &'static str = "DEPLOYER_SECRET";
@@ -46,7 +45,7 @@ impl CommandLineVars {
             hostname: hostname,
             deploy_via: String::from_str(DEPLOY_VIA),
             deploy_version: version,
-            deploy_key_src: get_deploy_key_src(),
+            deploy_key_src: get_key_src(),
         }
     }
 }
@@ -58,20 +57,19 @@ fn get_from_env_or_panic(key: &str) -> String {
     }
 }
 
-fn get_port() -> String {
-    let default_port = String::from_str(DEFAULT_PORT);
-    match os::getenv("DEPLOYER_PORT") {
+fn get_from_env_or_default(key: &str, default: &str) -> String {
+    match os::getenv(key) {
         Some(val) => val,
-        None => default_port,
+        None => String::from_str(default),
     }
 }
 
-fn get_deploy_key_src() -> String {
-    let default_deploy_key_src = String::from_str(DEPLOY_KEY_SRC);
-    match os::getenv("DEPLOY_KEY_SRC") {
-        Some(val) => val,
-        None => default_deploy_key_src,
-    }
+fn get_port() -> String {
+    get_from_env_or_default("DEPLOYER_PORT", DEFAULT_PORT)
+}
+
+fn get_key_src() -> String {
+    get_from_env_or_default("DEPLOY_KEY_SRC", DEFAULT_KEY_SRC)
 }
 
 fn handle_client(mut stream: TcpStream) {
