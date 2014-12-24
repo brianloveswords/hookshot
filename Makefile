@@ -20,6 +20,6 @@ clean:
 	@rm -rf release/*
 
 disinfect: clean
-	@vagrant destroy
+	@vagrant destroy -f
 
 .PHONY: build-all build-linux build-local clean test release disinfect
