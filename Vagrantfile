@@ -1,17 +1,25 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
 VAGRANTFILE_API_VERSION = "2"
+
+playbook =
+  if ENV["TEST"]
+    "deploy/ansible/test.yml"
+  else
+    "deploy/ansible/build.yml"
+  end
+
+vm_ip = "192.168.100.128"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.box = "ubuntu/trusty64"
-  config.vm.network "forwarded_port", guest: 1469, host: 4169
-  config.vm.network "private_network", ip: "192.168.100.128"
+  config.vm.network "private_network", ip: vm_ip
   config.ssh.forward_agent = true
   config.vm.provision "ansible" do |ansible|
-    ansible.playbook = "deploy/ansible/build.yml"
+    ansible.playbook = playbook
     ansible.inventory_path = "deploy/ansible/inventory/development"
     ansible.limit = "vagrant"
+    ansible.extra_vars = { vm_ip: vm_ip  }
   end
 end

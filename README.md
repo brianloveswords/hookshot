@@ -30,6 +30,27 @@ the proper location for deployment.
 If you need to modify `src/main.rs` for any reason, be sure to rebuild
 the linux binary by doing `vagrant provision`.
 
+# Testing
+
+The test suite is an ansible playbook that builds `deployer`, installs
+it on the build VM and sends a message to build a test playbook. You can
+run it with:
+
+```bash
+$ make test
+```
+
+From a fresh start, expect the test to take ~5 minutes (event longer if
+you don't have the VM image downloaded). Subsequent runs will be much
+faster, ~15 seconds on my machine.
+
+## Writing New Tests
+
+Look at the following files to get a sense of how testing works:
+* `deploy/ansible/test.yml`: Main test runner
+* `test/test-playbook.yml`: Playbook that gets run by the deployer
+* `test/test-vars.json`: JSON message that gets sent to the deployer
+
 # Variables
 
 Variables can come from the environment or ansible. Anything defined by

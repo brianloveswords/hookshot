@@ -1,0 +1,7 @@
+{
+    "secret": "{{deployer_secret}}",
+    "ansible": {
+        "test_var1": "{{random1.stdout}}",
+        "test_var2": "{{random2.stdout}}"
+    }
+}
