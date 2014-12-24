@@ -43,10 +43,9 @@ $ bin/install <host> <secret> <path_to_remote_playbook>
 
 e.g., `bin/install 192.168.100.100 shhh-secret /srv/app/provision.yml`
 
-This will install `deployer` to `/usr/local/bin/deployer` and sets up an
-upstart configuration for it that automatically starts the deployer on
-system boot. The normal upstart commands can be used to control the
-service:
+This will install `deployer` to `/usr/local/bin/deployer` and provides
+an upstart configuration that starts the deployer on system boot. The
+normal upstart commands can be used to control the service:
 
 ```bash
 $ sudo <start|stop|restart|status> deployer
