@@ -10,6 +10,7 @@ Currently depends server being provisioned with
 
 - [Installation](#installation)
   - [Ubuntu](#ubuntu)
+    - [Updating](#updating)
   - [Other OSes](#other-oses)
   - [Variables](#variables)
 - [Client](#client)
@@ -41,6 +42,25 @@ $ bin/install <host> <secret> <path_to_remote_playbook>
 ```
 
 e.g., `bin/install 192.168.100.100 shhh-secret /srv/app/provision.yml`
+
+This will install `deployer` to `/usr/local/bin/deployer` and setup an
+upstart conf start for it that automatically starts the deployer on
+system startup. The normal upstart commands can be used to control the
+service:
+
+```bash
+$ sudo <start|stop|restart|status> deployer
+```
+
+### Updating
+
+If you need to update the install, it's safe to run install again on a
+system that already has the deployer installed:
+
+```bash
+$ cd deployer
+$ git pull && bin/install <host> <secret> <path_to_remote_playbook>
+```
 
 ## Other OSes
 
