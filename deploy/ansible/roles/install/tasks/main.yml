@@ -21,7 +21,7 @@
 
 - name: sync deployer binary
   copy: dest={{ deployer_bin }}
-        src=deployer.linux
+        src={{ project_root }}/release/deployer.linux
         mode=0755
         owner=root
 

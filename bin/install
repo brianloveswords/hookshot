@@ -23,6 +23,4 @@ HOST=$1
 export DEPLOYER_SECRET=$2
 export DEPLOYER_PLAYBOOK=$3
 
-cp $DIR/../release/deployer.linux $DIR/../deploy/ansible/roles/install/files/
-
 ansible-playbook -i $HOST, deploy/ansible/install.yml

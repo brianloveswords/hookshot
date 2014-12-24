@@ -1,6 +1,6 @@
 - name: source is syncronized
   remote_user: "{{ ansible_ssh_user }}"
-  synchronize: src=../../../../../
+  synchronize: src={{ project_root }}/
                dest={{ build_root }}
 
 - name: rustup script exists
@@ -26,7 +26,10 @@
   args:
     chdir: "{{ build_root }}"
 
+- name: rename build
+  shell: mv {{ build }} {{ build }}.linux
+
 - name: copy build back to local machine
-  synchronize: src={{ build }}
-               dest=../../install/files/{{ name }}.linux
+  synchronize: src={{ build }}.linux
+               dest={{ project_root }}/release/
                mode=pull
