@@ -8,7 +8,7 @@
     deployer_port: 5000
   roles:
     - build
-    - deploy
+    - install
 
   tasks:
     - name: copy test playbook

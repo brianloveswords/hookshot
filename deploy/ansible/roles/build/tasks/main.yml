@@ -28,5 +28,5 @@
 
 - name: copy build back to local machine
   synchronize: src={{ build }}
-               dest=../../deploy/files/{{ name }}.linux
+               dest=../../install/files/{{ name }}.linux
                mode=pull
