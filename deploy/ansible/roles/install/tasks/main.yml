@@ -1,5 +1,9 @@
 ---
 # Configure & start the deploy server subsystem
+- name: playbook exists
+  file: path={{ deployer_playbook }}
+        state=file
+
 - include: ansible.yml
 
 - name: deployer upstart config exists
