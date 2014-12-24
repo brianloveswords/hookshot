@@ -19,8 +19,10 @@ Currently depends server being provisioned with
 - [Building](#building)
   - [Local](#local)
   - [Linux From Another OS](#linux-from-another-os)
-- [Testing](#testing)
-  - [Writing New Tests](#writing-new-tests)
+- [Development](#development)
+  - [Testing](#testing)
+    - [Writing New Tests](#writing-new-tests)
+  - [Releases](#releases)
 
 # Installation
 
@@ -137,7 +139,9 @@ proper location for running the install playbook.
 If you need to modify `src/main.rs` for any reason, be sure to rebuild
 the linux binary by doing `make linux-build`.
 
-# Testing
+# Development
+
+## Testing
 
 The test suite is an ansible playbook that builds `deployer`, installs
 it on the build VM and sends a message to build a test playbook. You can
@@ -151,9 +155,23 @@ From a fresh start, expect the test to take ~5 minutes (event longer if
 you don't have the VM image downloaded). Subsequent runs will be much
 faster, ~15 seconds on my machine.
 
-## Writing New Tests
+### Writing New Tests
 
 Look at the following files to get a sense of how testing works:
 * `deploy/ansible/test.yml`: Main test runner
 * `test/test-playbook.yml`: Playbook that gets run by the deployer
 * `test/test-vars.json`: JSON message that gets sent to the deployer
+
+## Releases
+
+While rust is still under active development it makes sense to check
+releases into the repository. To create new binaries:
+
+```
+$ make release
+```
+
+This runs the test suite (which builds the linux executable), then the
+`local-build` task (**NOTE:** we currently assume this is OS X, that
+should be fixed) and copies the builds to `release/deployer.linux` and
+`release/deployer.darwin`.
