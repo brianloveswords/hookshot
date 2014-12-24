@@ -100,7 +100,9 @@ The client takes messages in JSON format with the following fields:
 
 ## Message Example
 
-Assume `deployer` is running on `192.168.100.128` on port `1469`
+Assume `deployer` is running on `192.168.100.128` on port `1469`. We
+will use <a href="https://en.wikipedia.org/wiki/Netcat">`nc`</a> to fire
+off a single TCP message.
 
 ```bash
 $ echo '{"secret": "shhh", "config": {"test_var1": "Pico", "test_var2": "Loki"}}' |\
