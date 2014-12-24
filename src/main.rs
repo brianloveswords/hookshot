@@ -98,7 +98,10 @@ fn handle_client(mut stream: TcpStream) {
     println!("{}: spawning ansible", peer_name);
 
     let mut child = match ansible.spawn() {
-        Err(why) => panic!("Could not spawn `ansible-playbook`: {}", why),
+        Err(why) => {
+            stream.write("error, could not spawn ansible-playbook".as_bytes()).ok();
+            panic!("Could not spawn `ansible-playbook`: {}", why)
+        },
         Ok(child) => child
     };
 
