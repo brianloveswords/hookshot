@@ -2,11 +2,11 @@
 name = "deployer"
 version = "0.0.1"
 dependencies = [
- "rustc-serialize 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rustc-serialize 0.1.4 (git+https://github.com/rust-lang/rustc-serialize.git)",
 ]
 
 [[package]]
 name = "rustc-serialize"
 version = "0.1.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
+source = "git+https://github.com/rust-lang/rustc-serialize.git#d528a1f5b7a25ab30de335b3cad257447de07ed7"
 
