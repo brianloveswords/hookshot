@@ -58,6 +58,7 @@ ansible will overwrite whats in the environment.
 
 | Environment         | Ansible             | Description
 |---------------------|---------------------|-------------
+| `DEPLOYER_PORT`     | `deployer_port`     | Port to listen on. Defaults to **1469**
 | `DEPLOYER_SECRET`   | `deployer_secret`   | Shared client/server secret.
 | `DEPLOYER_PLAYBOOK` | `deployer_playbook` | Path to the playbook to run on the server
 
