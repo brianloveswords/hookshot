@@ -3,6 +3,7 @@
 - name: playbook exists
   file: path={{ deployer_playbook }}
         state=file
+  when: lookup('env', 'DISABLE_PLAYBOOK_CHECK') == ''
 
 - include: ansible.yml
 

@@ -1,6 +1,6 @@
 test:
 	@vagrant up --no-provision
-	@TEST=yes vagrant provision
+	@TEST=yes DISABLE_PLAYBOOK_CHECK=yes vagrant provision
 
 build-all: local-build linux-build
 
