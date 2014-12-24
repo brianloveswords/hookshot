@@ -171,7 +171,9 @@ releases into the repository. To create new binaries:
 $ make release
 ```
 
+**NOTE:** we currently assume the local machine is OS X, that will be
+  fixed in the future
+
 This runs the test suite (which builds the linux executable), then the
-`local-build` task (**NOTE:** we currently assume this is OS X, that
-should be fixed) and copies the builds to `release/deployer.linux` and
+`local-build` task and copies the builds to `release/deployer.linux` and
 `release/deployer.darwin`.
