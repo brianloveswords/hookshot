@@ -2,6 +2,34 @@
 
 Add self-deployment capability to a site.
 
+# Installation
+
+If you are deployer to an Ubuntu server you can use the playbook
+provided in this repo to install `deployer` and the associated upstart
+script to manage it.
+
+## Ubuntu
+
+```bash
+$ git clone
+$ cd /path/to/deployer
+$ DEPLOYER_SECRET=super-secret-stuff \
+  DEPLOYER_PLAYBOOK=/mnt/bocoup.com/live/deploy/ansible/provision.yml \
+  ansible-playbook -i 192.168.100.100, deploy/ansible/deploy.yml
+```
+
+Make sure the remote server has [ansible installed](http://docs.ansible.com/intro_installation.html#installing-the-control-machine).
+
+```bash
+# this is on the server with the app you want to redeploy
+# `deployer` should be somewhere on the path and the user running it
+# should have whatever privileges necessary for the playbook
+$ export DEPLOYER_SECRET="example-secret"
+$ export DEPLOYER_PLAYBOOK="/path/to/playbook.yml"
+$ export DEPLOYER_PORT=5189
+$ nohup deployer > deployer.log &
+```
+
 # Building
 
 ## Native
@@ -62,15 +90,6 @@ ansible will overwrite whats in the environment.
 | `DEPLOYER_SECRET`   | `deployer_secret`   | Shared client/server secret.
 | `DEPLOYER_PLAYBOOK` | `deployer_playbook` | Path to the playbook to run on the server
 
-## Example using Environment Variables
-
-```bash
-$ cd /path/to/deployer
-$ DEPLOYER_SECRET=super-secret-stuff \
-  DEPLOYER_PLAYBOOK=/mnt/bocoup.com/live/deploy/ansible/provision.yml \
-  ansible-playbook -i 192.168.100.100, deploy/ansible/deploy.yml
-```
-
 ## Example with CLI Ansible Variables
 
 ```bash
@@ -79,6 +98,6 @@ $ ansible-playbook -i 192.168.100.100, deploy/ansible/deploy.yml \
   -e "deployer_secret=super-secret-stuff deployer_playbook=/mnt/bocoup.com/live/deploy/ansible/provision.yml"
 ```
 
-# App Expectations
+# Usage
 
 TODO: fill this out
