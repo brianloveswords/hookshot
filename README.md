@@ -1,6 +1,26 @@
 # deployer
 
-Add self-deployment capability to a site.
+A tiny TCP server that listens for commands and triggers a self-deploy
+on a server.
+
+Currently depends server being provisioned with
+[ansible](http://docs.ansible.com/).
+
+# Table of Contents
+
+- [Installation](#installation)
+  - [Ubuntu](#ubuntu)
+  - [Other OSes](#other-oses)
+  - [Variables](#variables)
+- [Client](#client)
+  - [Message Format](#message-format)
+  - [Message Example](#message-example)
+  - [Errors](#errors)
+- [Building](#building)
+  - [Local](#local)
+  - [Linux From Another OS](#linux-from-another-os)
+- [Testing](#testing)
+  - [Writing New Tests](#writing-new-tests)
 
 # Installation
 
@@ -34,9 +54,73 @@ $ export DEPLOYER_PORT=5189
 $ nohup deployer > deployer.log &
 ```
 
+## Variables
+
+Variables can come from the environment or from ansible when
+installing. Anything defined by ansible will overwrite whats in the
+environment.
+
+| Environment         | Ansible             | Description
+|---------------------|---------------------|-------------
+| `DEPLOYER_PORT`     | `deployer_port`     | Port to listen on. Defaults to **1469**
+| `DEPLOYER_SECRET`   | `deployer_secret`   | Shared client/server secret.
+| `DEPLOYER_PLAYBOOK` | `deployer_playbook` | Path to the playbook to run on the server
+
+
+# Client
+
+## Message Format
+
+The client takes messages in JSON format with the following fields:
+
+* `secret`: Should match `DEPLOYER_SECRET`
+* `config`: Will be passed as [--extra-vars](http://docs.ansible.com/playbooks_variables.html#passing-variables-on-the-command-line) to the `ansible-playbook` command. Can contain any number of keys and values. **NOTE**: currently all values must be `String`s.
+
+## Message Example
+
+Assume `deployer` is running on `192.168.100.128` on port `1469`
+
+```bash
+$ echo '{"secret": "shhh", "config": {"test_var1": "Pico", "test_var2": "Loki"}}' |\
+  nc 192.168.100.128 1469
+
+okay, message received
+
+PLAY [all] ********************************************************************
+
+TASK: [store test_var1 in /tmp/test_var1] *************************************
+changed: [127.0.0.1]
+
+TASK: [store test_var2 in /tmp/test_var2] *************************************
+changed: [127.0.0.1]
+
+PLAY RECAP ********************************************************************
+127.0.0.1                  : ok=2    changed=2    unreachable=0    failed=0
+
+exit code: 0
+okay, see ya later!
+```
+
+`deployer` pipes output of `ansible-command` back to the client
+followed by the exit code.
+
+## Errors
+* If the secret is wrong, `deployer` sends "error, wrong secret" and
+closes the connection.
+
+* If the message couldn't be parsed because it's invalid JSON or has
+missing/invalid fields, `deployer` will send "error, could not parse
+message" and close the connection.
+
+* If `ansible-playbook` couldn't be launched, `deployer` will send
+"error, could not spawn ansible-playbook"
+
+* If `ansible-playbook` exits with a non-zero exit code, its stderr will
+  be sent followed by "exit code: <number>"
+
 # Building
 
-## Native
+## Local
 
 ```bash
 $ cargo build --release
@@ -44,7 +128,7 @@ $ cargo build --release
 
 The file will be output to `target/release/deployer`.
 
-## Linux from another host
+## Linux From Another OS
 
 A `Vagrantfile` is provided and doing `vagrant up` will provision the
 machine, build the binary and copy it back to the local machine to the
@@ -73,26 +157,3 @@ Look at the following files to get a sense of how testing works:
 * `deploy/ansible/test.yml`: Main test runner
 * `test/test-playbook.yml`: Playbook that gets run by the deployer
 * `test/test-vars.json`: JSON message that gets sent to the deployer
-
-# Variables
-
-Variables can come from the environment or ansible. Anything defined by
-ansible will overwrite whats in the environment.
-
-| Environment         | Ansible             | Description
-|---------------------|---------------------|-------------
-| `DEPLOYER_PORT`     | `deployer_port`     | Port to listen on. Defaults to **1469**
-| `DEPLOYER_SECRET`   | `deployer_secret`   | Shared client/server secret.
-| `DEPLOYER_PLAYBOOK` | `deployer_playbook` | Path to the playbook to run on the server
-
-## Example with CLI Ansible Variables
-
-```bash
-$ cd /path/to/deployer
-$ ansible-playbook -i 192.168.100.100, deploy/ansible/deploy.yml \
-  -e "deployer_secret=super-secret-stuff deployer_playbook=/mnt/bocoup.com/live/deploy/ansible/provision.yml"
-```
-
-# Usage
-
-TODO: fill this out
