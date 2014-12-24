@@ -11,7 +11,7 @@ linux-build:
 local-build:
 	@cargo build --release
 
-release: build-all
+release: test local-build
 	@cp deploy/ansible/roles/install/files/deployer.linux release/deployer.linux
 	@cp target/release/deployer release/deployer.darwin
 

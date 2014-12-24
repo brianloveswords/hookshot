@@ -23,7 +23,7 @@ type Object = BTreeMap<String, String>;
 #[deriving(RustcDecodable, Show)]
 struct RemoteCommandMsg {
     secret: String,
-    ansible: Object,
+    config: Object,
 }
 
 fn get_from_env_or_panic(key: &str) -> String {
@@ -92,7 +92,7 @@ fn handle_client(mut stream: TcpStream) {
     ansible.detached();
     ansible.arg("--connection=local");
     ansible.arg("-i").arg("127.0.0.1,");
-    ansible.arg("-e").arg(json::encode(&command.ansible));
+    ansible.arg("-e").arg(json::encode(&command.config));
     ansible.arg(playbook);
 
     println!("{}: spawning ansible", peer_name);

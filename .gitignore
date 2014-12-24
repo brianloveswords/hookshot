@@ -3,3 +3,4 @@
 /deploy/ansible/roles/deploy/files
 !/deploy/ansible/roles/deploy/files/.gitkeep
 /client.js
+/deploy/ansible/roles/install/files/deployer.linux
