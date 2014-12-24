@@ -8,7 +8,7 @@ Currently depends server being provisioned with
 
 # Table of Contents
 
-- [Installation](#installation)
+- [Installing](#installing)
   - [Ubuntu](#ubuntu)
     - [Updating](#updating)
   - [Other OSes](#other-oses)
@@ -25,7 +25,7 @@ Currently depends server being provisioned with
     - [Writing New Tests](#writing-new-tests)
   - [Releases](#releases)
 
-# Installation
+# Installing
 
 If you are deployer to an Ubuntu server you can use the playbook
 provided in this repo to install `deployer` and the associated upstart
