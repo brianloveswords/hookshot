@@ -10,15 +10,19 @@ script to manage it.
 
 ## Ubuntu
 
+Tested against Ubuntu 14.04 LTS
+
 ```bash
-$ git clone
-$ cd /path/to/deployer
-$ DEPLOYER_SECRET=super-secret-stuff \
-  DEPLOYER_PLAYBOOK=/mnt/bocoup.com/live/deploy/ansible/provision.yml \
-  ansible-playbook -i 192.168.100.100, deploy/ansible/deploy.yml
+$ git clone https://github.com/brianloveswords/deployer.git
+$ cd deployer
+$ bin/install <host> <secret> <path_to_remote_playbook>
 ```
 
-Make sure the remote server has [ansible installed](http://docs.ansible.com/intro_installation.html#installing-the-control-machine).
+e.g., `bin/install 192.168.100.100 shhh-secret /srv/app/provision.yml`
+
+## Other OSes
+
+Make sure the remote machine has [ansible installed](http://docs.ansible.com/intro_installation.html#installing-the-control-machine). This is required so the machine can run playbooks against itself.
 
 ```bash
 # this is on the server with the app you want to redeploy
@@ -40,23 +44,14 @@ $ cargo build --release
 
 The file will be output to `target/release/deployer`.
 
-You can also use the following command to build & run in one step:
-
-```bash
-$ cargo run --release
-```
-
-Make sure to read below about Variables.
-
 ## Linux from another host
 
-We deploy to linux boxes so users of another OS will need to use
-Vagrant. A `Vagrantfile` is provided – doing `vagrant up` will provision
-the machine, build the binary and copy it back to the local machine to
-the proper location for deployment.
+A `Vagrantfile` is provided and doing `vagrant up` will provision the
+machine, build the binary and copy it back to the local machine to the
+proper location for running the install playbook.
 
 If you need to modify `src/main.rs` for any reason, be sure to rebuild
-the linux binary by doing `vagrant provision`.
+the linux binary by doing `make linux-build`.
 
 # Testing
 
