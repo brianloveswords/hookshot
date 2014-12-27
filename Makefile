@@ -12,7 +12,6 @@ local-build:
 	@cargo build --release
 
 release: test local-build
-	@cp deploy/ansible/roles/install/files/deployer.linux release/deployer.linux
 	@cp target/release/deployer release/deployer.darwin
 
 clean:
