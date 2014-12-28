@@ -288,7 +288,7 @@ pub mod config {
                     None => false,
                     Some(secret) => secret == provided,
                 },
-                None => match self.default_secret.clone() {
+                None => match self.default_secret {
                     None => false,
                     Some(secret) => secret == provided,
                 },
