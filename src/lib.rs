@@ -24,6 +24,42 @@ pub mod config {
     }
 
     impl<'a> Config<'a> {
+
+        pub fn from_file(path: &'a str) -> Result<Config, ConfigError> {
+            let mut file = match File::open(&Path::new(path)) {
+                Ok(f) => f,
+                Err(e) => return Err(ConfigError {
+                    desc: "could not load file",
+                    field: None,
+                    detail: Some(format!("path: {}, error: {}", path, e)),
+                }),
+            };
+            let contents: String = match file.read_to_string() {
+                Ok(contents) => contents,
+                Err(e) => return Err(ConfigError {
+                    desc: "could not read file as utf-8",
+                    field: None,
+                    detail: Some(format!("path: {}, error: {}", path, e)),
+                }),
+            };
+            Config::from_string(contents)
+        }
+
+        pub fn from_string(s: String) -> Result<Config<'a>, ConfigError> {
+            let mut parser = toml::Parser::new(s.as_slice());
+
+            match parser.parse() {
+                Some(config) => Ok(Config{
+                    config: config,
+                }),
+                None => Err(ConfigError {
+                    desc: "config is not valid TOML",
+                    field: None,
+                    detail: None,
+                }),
+            }
+        }
+
         pub fn app(&self, name: &'a str) -> Option<ConfigApp> {
             match self.config.get(name) {
                 Some(app) => match app.as_table() {
@@ -48,42 +84,6 @@ pub mod config {
             match self.config.get("default_secret") {
                 Some(secret) => secret.as_str(),
                 None => None,
-            }
-        }
-
-        pub fn from_file(path: &'a str) -> Result<Config, ConfigError> {
-            let mut file = match File::open(&Path::new(path)) {
-                Ok(f) => f,
-                Err(e) => return Err(ConfigError {
-                    desc: "could not load file",
-                    field: None,
-                    detail: Some(format!("path: {}, error: {}", path, e)),
-                }),
-            };
-            let contents: String = match file.read_to_string() {
-                Ok(contents) => contents,
-                Err(e) => return Err(ConfigError {
-                    desc: "could not read file as utf-8",
-                    field: None,
-                    detail: Some(format!("path: {}, error: {}", path, e)),
-                }),
-            };
-            Config::from_string(contents)
-        }
-
-        /// Load configuration from a string
-        pub fn from_string(s: String) -> Result<Config<'a>, ConfigError> {
-            let mut parser = toml::Parser::new(s.as_slice());
-
-            match parser.parse() {
-                Some(config) => Ok(Config{
-                    config: config,
-                }),
-                None => Err(ConfigError {
-                    desc: "config is not valid TOML",
-                    field: None,
-                    detail: None,
-                }),
             }
         }
 
