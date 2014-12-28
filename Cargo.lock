@@ -2,11 +2,20 @@
 name = "deployer"
 version = "0.0.1"
 dependencies = [
- "rustc-serialize 0.1.4 (git+https://github.com/rust-lang/rustc-serialize.git)",
+ "rustc-serialize 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "toml 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "rustc-serialize"
-version = "0.1.4"
-source = "git+https://github.com/rust-lang/rustc-serialize.git#d528a1f5b7a25ab30de335b3cad257447de07ed7"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "toml"
+version = "0.1.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "rustc-serialize 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
+]
 
