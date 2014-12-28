@@ -336,7 +336,23 @@ mod tests {
     use super::config::Config;
 
     fn load_basic_config<'a>() -> Config<'a> {
-        let config_string = include_str!("test/basic-config.conf");
+        let config_string = r#"
+            port = 5000
+
+            default_secret = "default secret"
+
+            [test-app]
+            secret = "test app secret"
+            default_playbook = "deploy"
+
+            [test-app.playbooks]
+            deploy = "/test-app/deploy.yml"
+            provision = "/test-app/provision.yml"
+
+            [no-secret.playbooks]
+            sports = "/no-secret/sports.yml"
+        "#;
+
         Config::from_string(config_string.to_string()).unwrap()
     }
 
