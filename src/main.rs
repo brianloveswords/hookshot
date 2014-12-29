@@ -1,30 +1,21 @@
 extern crate "rustc-serialize" as rustc_serialize;
+extern crate deployer;
 
 use std::io::{TcpListener, TcpStream};
 use std::io::{Acceptor, Listener};
 use std::io::process::Command;
-
 use std::thread::Thread;
-use std::collections::BTreeMap;
-
 use std::str;
 use std::os;
 
 use rustc_serialize::json;
+use deployer::message::{RemoteCommand, get_extra_vars};
 
 static DEFAULT_PORT: &'static str = "1469";
 static ANSIBLE_CMD: &'static str = "ansible-playbook";
 
 static SECRET_ENV_KEY: &'static str = "DEPLOYER_SECRET";
 static PLAYBOOK_ENV_KEY: &'static str = "DEPLOYER_PLAYBOOK";
-
-type Object = BTreeMap<String, String>;
-
-#[deriving(RustcDecodable, Show)]
-struct RemoteCommandMsg {
-    secret: String,
-    config: Object,
-}
 
 fn get_from_env_or_panic(key: &str) -> String {
     match os::getenv(key) {
@@ -71,7 +62,7 @@ fn handle_client(mut stream: TcpStream) {
     let msg = str::from_utf8(bytes.as_slice()).unwrap();
 
     // Decode the incoming message or panic
-    let command: RemoteCommandMsg = match json::decode(msg) {
+    let command: RemoteCommand = match json::decode(msg) {
         Ok(command) => command,
         Err(e) => {
             stream.write("error, could not parse message".as_bytes()).ok();
@@ -92,7 +83,7 @@ fn handle_client(mut stream: TcpStream) {
     ansible.detached();
     ansible.arg("--connection=local");
     ansible.arg("-i").arg("127.0.0.1,");
-    ansible.arg("-e").arg(json::encode(&command.config));
+    ansible.arg("-e").arg(get_extra_vars(msg).unwrap());
     ansible.arg(playbook);
 
     println!("{}: spawning ansible", peer_name);
