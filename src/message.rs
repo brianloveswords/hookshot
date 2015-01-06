@@ -20,6 +20,32 @@ struct StringVars {
     config: string::String
 }
 
+/// Get the "extra" variables from a message. Currently they can come in
+/// either as an object, which will be json encoded, or as a raw string
+/// which will be passed directly to ansible as the -e parameter.
+///
+/// Example:
+///   The following message
+///   ```json
+///   {
+///     "secret": "shh",
+///     "config": {
+///       "var1": "Some value",
+///       "var2": "Other value"
+///     }
+///   }
+///   ```
+///   would return `"{"var1":"Some value", "var2":"Other value"}"`.
+///
+///   Given a message where config is a string,
+///   ```json
+///   {
+///     "secret": "shh",
+///     "config": "var1='Some value' var2='Other value'"
+///   }
+///
+///  it would return "var1='Some value' var2='Other value'".
+///
 pub fn get_extra_vars(msg: &str) -> DecodeResult<String> {
     let obj_msg: DecodeResult<ObjectVars> = json::decode(msg);
     let string_msg: DecodeResult<StringVars> = json::decode(msg);
