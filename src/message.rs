@@ -3,19 +3,19 @@ use rustc_serialize::json::DecodeResult;
 use std::collections::BTreeMap;
 use std::string;
 
-#[deriving(RustcDecodable, Clone, Show)]
+#[derive(RustcDecodable, Clone, Show)]
 pub struct RemoteCommand {
     pub secret: String,
     host: Option<String>,
     playbook: Option<String>,
 }
 
-#[deriving(RustcDecodable, Show)]
+#[derive(RustcDecodable, Show)]
 struct ObjectVars {
     config: BTreeMap<String, String>
 }
 
-#[deriving(RustcDecodable, Show)]
+#[derive(RustcDecodable, Show)]
 struct StringVars {
     config: string::String
 }

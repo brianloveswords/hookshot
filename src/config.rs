@@ -3,18 +3,18 @@ use std::io::File;
 
 static DEFAULT_PORT: i64 = 1469;
 
-#[deriving(Show)]
+#[derive(Show)]
 pub struct Config<'a> {
     config: toml::Table,
 }
 
-#[deriving(Show)]
+#[derive(Show)]
 pub struct ConfigApp<'a>{
     app: &'a toml::Table,
     default_secret: Option<&'a str>,
 }
 
-#[deriving(Show)]
+#[derive(Show)]
 pub struct ConfigError {
     desc: &'static str,
     field: Option<String>,
