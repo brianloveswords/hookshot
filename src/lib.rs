@@ -1,5 +1,3 @@
-#![feature(globs)]
-#![feature(macro_rules)]
 extern crate "rustc-serialize" as rustc_serialize;
 extern crate toml;
 

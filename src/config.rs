@@ -255,8 +255,7 @@ impl<'a> Config<'a> {
             if default_playbook.is_some() && !found_playbook {
                 return Err(ConfigError {
                     desc: "`default_playbook` must be defined in `playbooks`",
-                    detail: Some(format!("'{}.default_playbook' = '{}', which does not match a listed playbook ({})",
-                                         name, default_playbook.unwrap(), playbooks)),
+                    detail: Some(format!("'{}.default_playbook' = '{}', which does not match a listed playbook ({:?})", name, default_playbook.unwrap(), playbooks)),
                     field: Some(format!("{}.default_playbook", name)),
                 })
             }

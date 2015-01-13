@@ -1,3 +1,5 @@
+#![allow(unstable)]
+
 extern crate "rustc-serialize" as rustc_serialize;
 extern crate deployer;
 
@@ -27,7 +29,7 @@ fn get_from_env_or_panic(key: &str) -> String {
 fn get_from_env_or_default(key: &str, default: &str) -> String {
     match os::getenv(key) {
         Some(val) => val,
-        None => String::from_str(default),
+        None => default.to_string(),
     }
 }
 
@@ -66,7 +68,7 @@ fn handle_client(mut stream: TcpStream) {
         Ok(command) => command,
         Err(e) => {
             stream.write("error, could not parse message".as_bytes()).ok();
-            panic!("Error converting message to command: {}", e)
+            panic!("Error converting message to command: {:?}", e)
         }
     };
 
@@ -76,7 +78,7 @@ fn handle_client(mut stream: TcpStream) {
     }
 
     stream.write("okay, message received\n".as_bytes()).ok();
-    println!("{}: {}", peer_name, command);
+    println!("{}: {:?}", peer_name, command);
 
     // Start a detached ansible process and set up the cli args
     let mut ansible = Command::new(ANSIBLE_CMD);
@@ -139,9 +141,11 @@ fn main() {
     for stream in acceptor.incoming() {
         match stream {
             Err(e) => panic!("Listening failed: {}", e),
-            Ok(stream) => Thread::spawn(move|| {
-                handle_client(stream)
-            }).detach(),
+            Ok(stream) =>  {
+                Thread::spawn(move|| {
+                    handle_client(stream)
+                });
+            },
         }
     }
     println!("Done listening, dropping acceptor");
