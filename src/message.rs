@@ -6,8 +6,9 @@ use std::string;
 #[derive(RustcDecodable, Clone, Show)]
 pub struct RemoteCommand {
     pub secret: String,
-    host: Option<String>,
-    playbook: Option<String>,
+    pub target: Option<String>,
+    pub host: Option<String>,
+    pub playbook: Option<String>,
 }
 
 #[derive(RustcDecodable, Show)]

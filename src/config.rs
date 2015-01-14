@@ -3,13 +3,13 @@ use std::io::File;
 
 static DEFAULT_PORT: i64 = 1469;
 
-#[derive(Show)]
+#[derive(Show, Clone)]
 pub struct Config<'a> {
     config: toml::Table,
 }
 
 #[derive(Show)]
-pub struct ConfigApp<'a>{
+pub struct ConfigApp<'a> {
     app: &'a toml::Table,
     default_secret: Option<&'a str>,
 }
@@ -70,16 +70,23 @@ impl<'a> Config<'a> {
         }
     }
 
-    pub fn port(&self) -> Option<i64> {
+    pub fn port(&self) -> i64 {
         match self.config.get("port") {
-            Some(port) => port.as_integer(),
-            None => Some(DEFAULT_PORT),
+            Some(port) => port.as_integer().unwrap(),
+            None => DEFAULT_PORT,
         }
     }
 
     pub fn default_secret(&'a self) -> Option<&'a str> {
         match self.config.get("default_secret") {
             Some(secret) => secret.as_str(),
+            None => None,
+        }
+    }
+
+    pub fn default_target(&'a self) -> Option<&'a str> {
+        match self.config.get("default_target") {
+            Some(target) => target.as_str(),
             None => None,
         }
     }
@@ -292,10 +299,10 @@ impl<'a> ConfigApp<'a> {
     }
 
     /// Get the full path of a playbook from the configuration.
-    pub fn playbook(&'a self, name: &'a str) -> Option<&'a str> {
+    pub fn playbook(&'a self, name: &'a String) -> Option<&'a str> {
         match self.app.get("playbooks") {
             None => None,
-            Some(playbooks) => match playbooks.lookup(name) {
+            Some(playbooks) => match playbooks.lookup(name.as_slice()) {
                 None => None,
                 Some(playbook) => playbook.as_str(),
             }
@@ -306,10 +313,16 @@ impl<'a> ConfigApp<'a> {
     pub fn default_playbook(&'a self) -> Option<&'a str> {
         match self.app.get("default_playbook") {
             None => None,
-            Some(name) => match name.as_str() {
-                None => None,
-                Some(name) => self.playbook(name)
-            }
+            Some(name) => name.as_str(),
+        }
+    }
+
+    /// Get the default host for the app. If there isn't an explicit
+    /// default set in the configuration, returns "localhost".
+    pub fn default_host(&'a self) -> &'a str {
+        match self.app.get("default_host") {
+            None => "localhost",
+            Some(host) => host.as_str().unwrap(),
         }
     }
 }
@@ -354,7 +367,7 @@ mod tests {
     #[test]
     fn test_basic_config() {
         let c = load_basic_config();
-        assert_eq!(5000, c.port().unwrap());
+        assert_eq!(5000, c.port());
         assert_eq!("default secret", c.default_secret().unwrap());
     }
 
@@ -377,8 +390,10 @@ mod tests {
         let app = c.app("test-app").unwrap();
 
         assert_eq!("/test-app/deploy.yml", app.default_playbook().unwrap());
-        assert_eq!("/test-app/deploy.yml", app.playbook("deploy").unwrap());
-        assert_eq!("/test-app/provision.yml", app.playbook("provision").unwrap());
+        assert_eq!("/test-app/deploy.yml",
+                   app.playbook(&"deploy".to_string()).unwrap());
+        assert_eq!("/test-app/provision.yml",
+                   app.playbook(&"provision".to_string()).unwrap());
     }
 
     #[test]
