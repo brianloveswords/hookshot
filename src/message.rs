@@ -53,6 +53,13 @@ pub fn get_extra_vars(msg: &str) -> DecodeResult<String> {
     match (obj_msg, string_msg) {
         (Ok(m), _) => Ok(json::encode(&m.config)),
         (_, Ok(m)) => Ok(m.config),
+        // TODO: improve error handling: if both parse attempts fail, we
+        // currently use the error from the parse into ObjectVar and
+        // spit that back out when ideally we'd like a way to represent
+        // both errors. Also we should have a special case for when
+        // "config" is totally missing from the message so messages can
+        // leave it out when it's not necessary to include extra
+        // variables.
         (Err(e), Err(_)) => Err(e),
     }
 }
