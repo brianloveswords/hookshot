@@ -1,27 +1,30 @@
 use toml;
-use std::io::File;
+use std::path::Path;
+use std::fs::File;
+use std::io::Read;
+
 
 static DEFAULT_PORT: i64 = 1469;
 
-#[derive(Show, Clone)]
-pub struct Config<'a> {
+#[derive(Debug, Clone)]
+pub struct Config {
     config: toml::Table,
 }
 
-#[derive(Show)]
+#[derive(Debug)]
 pub struct ConfigApp<'a> {
     app: &'a toml::Table,
     default_secret: Option<&'a str>,
 }
 
-#[derive(Show)]
+#[derive(Debug)]
 pub struct ConfigError {
     desc: &'static str,
     field: Option<String>,
     detail: Option<String>,
 }
 
-impl<'a> Config<'a> {
+impl<'a> Config {
     pub fn from_file(path: &'a str) -> Result<Config, ConfigError> {
         let mut file = match File::open(&Path::new(path)) {
             Ok(f) => f,
@@ -31,8 +34,9 @@ impl<'a> Config<'a> {
                 detail: Some(format!("path: {}, error: {}", path, e)),
             }),
         };
-        let contents: String = match file.read_to_string() {
-            Ok(contents) => contents,
+        let mut s = String::new();
+        let contents: String = match file.read_to_string(&mut s) {
+            Ok(_) => s,
             Err(e) => return Err(ConfigError {
                 desc: "could not read file as utf-8",
                 field: None,
@@ -42,8 +46,8 @@ impl<'a> Config<'a> {
         Config::from_string(contents)
     }
 
-    pub fn from_string(s: String) -> Result<Config<'a>, ConfigError> {
-        let mut parser = toml::Parser::new(s.as_slice());
+    pub fn from_string(s: String) -> Result<Config, ConfigError> {
+        let mut parser = toml::Parser::new(s.as_ref());
 
         match parser.parse() {
             Some(config) => Ok(Config{
@@ -302,7 +306,7 @@ impl<'a> ConfigApp<'a> {
     pub fn playbook(&'a self, name: &'a String) -> Option<&'a str> {
         match self.app.get("playbooks") {
             None => None,
-            Some(playbooks) => match playbooks.lookup(name.as_slice()) {
+            Some(playbooks) => match playbooks.lookup(name.as_ref()) {
                 None => None,
                 Some(playbook) => playbook.as_str(),
             }
@@ -343,7 +347,7 @@ impl ConfigError {
 mod tests {
     use super::Config;
 
-    fn load_basic_config<'a>() -> Config<'a> {
+    fn load_basic_config() -> Config {
         let config_string = r#"
             port = 5000
 
