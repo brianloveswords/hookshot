@@ -1,15 +1,16 @@
-#![allow(unstable)]
+#![feature(tcp)]
 
-extern crate "rustc-serialize" as rustc_serialize;
+extern crate rustc_serialize;
 extern crate deployer;
 
-use std::io::{TcpListener, TcpStream};
-use std::io::{Acceptor, Listener};
-use std::io::process::Command;
-use std::thread::Thread;
+use std::net::{TcpListener, TcpStream};
+use std::process::Command;
 use std::sync::Arc;
 use std::str;
-use std::os;
+use std::env;
+use std::thread;
+use std::io::Write;
+use std::io::Read;
 
 use rustc_serialize::json;
 use deployer::message::{RemoteCommand, get_extra_vars};
@@ -20,25 +21,27 @@ static CONFIG_ENV_KEY: &'static str = "DEPLOYER_CONFIG";
 static DEFAULT_CONFIG_PATH: &'static str = "/etc/deployer.d/config.toml";
 
 fn get_from_env_or_default(key: &str, default: &str) -> String {
-    match os::getenv(key) {
-        Some(val) => val,
+    match env::var_os(key) {
+        Some(val) => val.into_string().unwrap(),
         None => default.to_string(),
     }
 }
 
 
 fn handle_client(mut stream: TcpStream, config: Arc<Config>) {
-    let peer_name = stream.peer_name().unwrap();
+    let peer_addr = stream.peer_addr().unwrap();
 
     // Don't leave sockets lying around. If a socket doesn't send
     // data within 30 seconds, time it out.
-    stream.set_read_timeout(Some(30_000));
+    // stream.set_read_timeout(Some(30_000));
+    // ... that is, once Rust supports timeouts again.
 
     // Don't buffer data, send everything immediately
     stream.set_nodelay(true).ok();
 
     // Read the incoming bytes.
-    let bytes = match stream.read_to_end() {
+    let mut bytes = Vec::new();
+    match stream.read_to_end(&mut bytes) {
         Err(e) => panic!("Error reading incoming message: {}", e),
         Ok(bytes) => bytes,
     };
@@ -49,7 +52,7 @@ fn handle_client(mut stream: TcpStream, config: Arc<Config>) {
     }
 
     // json::decode requires &str
-    let msg = str::from_utf8(bytes.as_slice()).unwrap();
+    let msg = str::from_utf8(&bytes).unwrap();
 
     let command: RemoteCommand = match json::decode(msg) {
         Ok(command) => command,
@@ -59,7 +62,7 @@ fn handle_client(mut stream: TcpStream, config: Arc<Config>) {
         }
     };
 
-    println!("{}: {:?}", peer_name, &command);
+    println!("{}: {:?}", peer_addr, &command);
 
     let target = match command.target {
         Some(t) => t,
@@ -72,7 +75,7 @@ fn handle_client(mut stream: TcpStream, config: Arc<Config>) {
         }
     };
 
-    let app = match config.app(target.as_slice()) {
+    let app = match config.app(&target) {
         Some(app) => app,
         None => {
             let msg = format!("error, no application matches target '{}'", target);
@@ -81,7 +84,7 @@ fn handle_client(mut stream: TcpStream, config: Arc<Config>) {
         }
     };
 
-    if !app.confirm_secret(command.secret.as_slice()) {
+    if !app.confirm_secret(&command.secret) {
         stream.write(b"error, secret does not match").ok();
         panic!("mismatched secret");
     }
@@ -123,7 +126,7 @@ fn handle_client(mut stream: TcpStream, config: Arc<Config>) {
     // Use a local connection if the host is pointing to localhost,
     // otherwise use a "smart" connection type.
     let connection_string = {
-        let conn_type = match host.as_slice() {
+        let conn_type = match &*host {
             "localhost" | "127.0.0.1" => "local",
             _ => "smart",
         };
@@ -134,13 +137,13 @@ fn handle_client(mut stream: TcpStream, config: Arc<Config>) {
 
     // Start a detached ansible process and set up the cli args
     let mut ansible = Command::new(ANSIBLE_CMD);
-    ansible.detached();
+    // ansible.detached(); // no longer detatched
     ansible.arg(connection_string);
     ansible.arg("-i").arg(host_string);
     ansible.arg("-e").arg(extra_vars);
     ansible.arg(playbook_path);
 
-    println!("{}: spawning ansible", peer_name);
+    println!("{}: spawning ansible", peer_addr);
 
     let mut child = match ansible.spawn() {
         Err(why) => {
@@ -156,9 +159,10 @@ fn handle_client(mut stream: TcpStream, config: Arc<Config>) {
     {
         let mut stdout = child.stdout.as_mut().unwrap();
         loop {
-            match stdout.read_byte() {
-                Ok(byte) => {
-                    stream.write(&[byte]).ok();
+            let mut byte = vec![0u8; 1];
+            match stdout.read(&mut byte) {
+                Ok(_) => {
+                    stream.write(&byte).ok();
                     stream.flush().ok();
                 } ,
                 Err(_) => { break }
@@ -166,13 +170,14 @@ fn handle_client(mut stream: TcpStream, config: Arc<Config>) {
         }
     }
 
-    let stderr = child.stderr.as_mut().unwrap().read_to_end();
-    stream.write(stderr.unwrap().as_slice()).ok();
+    let mut stderr = Vec::new();
+    child.stderr.as_mut().unwrap().read_to_end(&mut stderr).unwrap();
+    stream.write(&stderr).ok();
 
     let exit_status = child.wait().unwrap();
     stream.write(format!("{}\n", exit_status).as_bytes()).ok();
 
-    println!("{}: Closing connection", peer_name);
+    println!("{}: Closing connection", peer_addr);
 
     stream.write(b"okay, see ya later!\n").ok();
     drop(stream);
@@ -185,7 +190,7 @@ fn main() {
     // we don't want to have to clone the entire `config` structure for
     // each new task, so we wrap it in an [Arc]
     // (http://doc.rust-lang.org/std/sync/struct.Arc.html)
-    let config: Arc<Config> = match Config::from_file(config_path.as_slice()) {
+    let config: Arc<Config> = match Config::from_file(&config_path) {
         Err(e) => panic!("could not load config: {:?}", e),
         Ok(c) => Arc::new(c),
     };
@@ -196,23 +201,21 @@ fn main() {
     }
 
     let address = format!("0.0.0.0:{}", config.port());
-    let listener = TcpListener::bind(address.as_slice());
+    let listener = TcpListener::bind(&*address).unwrap();
 
     println!("Listening at {}", address);
-    let mut acceptor = listener.listen();
 
-    for stream in acceptor.incoming() {
+    for stream in listener.incoming() {
         // Increments count for the Arc, does not do full clone
         let local_config = config.clone();
         match stream {
             Err(e) => panic!("Listening failed: {}", e),
             Ok(stream) =>  {
-                Thread::spawn(move|| {
+                thread::spawn(move|| {
                     handle_client(stream, local_config)
                 });
             },
         }
     }
     println!("Done listening, dropping acceptor");
-    drop(acceptor);
 }

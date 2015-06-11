@@ -3,7 +3,7 @@ use rustc_serialize::json::DecodeResult;
 use std::collections::BTreeMap;
 use std::string;
 
-#[derive(RustcDecodable, Clone, Show)]
+#[derive(RustcDecodable, Clone, Debug)]
 pub struct RemoteCommand {
     pub secret: String,
     pub target: Option<String>,
@@ -11,12 +11,12 @@ pub struct RemoteCommand {
     pub playbook: Option<String>,
 }
 
-#[derive(RustcDecodable, Show)]
+#[derive(RustcDecodable, Debug)]
 struct ObjectVars {
     config: BTreeMap<String, String>
 }
 
-#[derive(RustcDecodable, Show)]
+#[derive(RustcDecodable, Debug)]
 struct StringVars {
     config: string::String
 }
@@ -51,7 +51,7 @@ pub fn get_extra_vars(msg: &str) -> DecodeResult<String> {
     let obj_msg: DecodeResult<ObjectVars> = json::decode(msg);
     let string_msg: DecodeResult<StringVars> = json::decode(msg);
     match (obj_msg, string_msg) {
-        (Ok(m), _) => Ok(json::encode(&m.config)),
+        (Ok(m), _) => Ok(json::encode(&m.config).unwrap()),
         (_, Ok(m)) => Ok(m.config),
         // TODO: improve error handling: if both parse attempts fail, we
         // currently use the error from the parse into ObjectVar and

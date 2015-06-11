@@ -1,28 +1,30 @@
 use toml;
-use std::io::File;
+use std::fs::File;
+use std::io::Read;
+use std::path::Path;
 
 static DEFAULT_PORT: i64 = 1469;
 
-#[derive(Show, Clone)]
-pub struct Config<'a> {
+#[derive(Debug, Clone)]
+pub struct Config {
     config: toml::Table,
 }
 
-#[derive(Show)]
+#[derive(Debug)]
 pub struct ConfigApp<'a> {
     app: &'a toml::Table,
     default_secret: Option<&'a str>,
 }
 
-#[derive(Show)]
+#[derive(Debug)]
 pub struct ConfigError {
     desc: &'static str,
     field: Option<String>,
     detail: Option<String>,
 }
 
-impl<'a> Config<'a> {
-    pub fn from_file(path: &'a str) -> Result<Config, ConfigError> {
+impl Config {
+    pub fn from_file(path: &str) -> Result<Config, ConfigError> {
         let mut file = match File::open(&Path::new(path)) {
             Ok(f) => f,
             Err(e) => return Err(ConfigError {
@@ -31,8 +33,10 @@ impl<'a> Config<'a> {
                 detail: Some(format!("path: {}, error: {}", path, e)),
             }),
         };
-        let contents: String = match file.read_to_string() {
-            Ok(contents) => contents,
+        let mut contents = String::new();
+        
+        match file.read_to_string(&mut contents) {
+            Ok(_) => (),
             Err(e) => return Err(ConfigError {
                 desc: "could not read file as utf-8",
                 field: None,
@@ -42,8 +46,8 @@ impl<'a> Config<'a> {
         Config::from_string(contents)
     }
 
-    pub fn from_string(s: String) -> Result<Config<'a>, ConfigError> {
-        let mut parser = toml::Parser::new(s.as_slice());
+    pub fn from_string(s: String) -> Result<Config, ConfigError> {
+        let mut parser = toml::Parser::new(&s);
 
         match parser.parse() {
             Some(config) => Ok(Config{
@@ -57,7 +61,7 @@ impl<'a> Config<'a> {
         }
     }
 
-    pub fn app(&self, name: &'a str) -> Option<ConfigApp> {
+    pub fn app(&self, name: &str) -> Option<ConfigApp> {
         match self.config.get(name) {
             Some(app) => match app.as_table() {
                 Some(app) => Some(ConfigApp{
@@ -77,14 +81,14 @@ impl<'a> Config<'a> {
         }
     }
 
-    pub fn default_secret(&'a self) -> Option<&'a str> {
+    pub fn default_secret(&self) -> Option<&str> {
         match self.config.get("default_secret") {
             Some(secret) => secret.as_str(),
             None => None,
         }
     }
 
-    pub fn default_target(&'a self) -> Option<&'a str> {
+    pub fn default_target(&self) -> Option<&str> {
         match self.config.get("default_target") {
             Some(target) => target.as_str(),
             None => None,
@@ -285,7 +289,7 @@ impl<'a> ConfigApp<'a> {
     /// application specific secret first before falling back to the
     /// `default_secret` if that's defined. If there is a mismatch, or
     /// there are no secrets defined, returns false.
-    pub fn confirm_secret(&self, provided: &'a str) -> bool {
+    pub fn confirm_secret(&self, provided: &str) -> bool {
         match self.app.get("secret") {
             Some(secret) => match secret.as_str() {
                 None => false,
@@ -299,10 +303,10 @@ impl<'a> ConfigApp<'a> {
     }
 
     /// Get the full path of a playbook from the configuration.
-    pub fn playbook(&'a self, name: &'a String) -> Option<&'a str> {
+    pub fn playbook(&self, name: &'a String) -> Option<&'a str> {
         match self.app.get("playbooks") {
             None => None,
-            Some(playbooks) => match playbooks.lookup(name.as_slice()) {
+            Some(playbooks) => match playbooks.lookup(&name) {
                 None => None,
                 Some(playbook) => playbook.as_str(),
             }
@@ -310,7 +314,7 @@ impl<'a> ConfigApp<'a> {
     }
 
     /// Get the default playbook for the application if it exists.
-    pub fn default_playbook(&'a self) -> Option<&'a str> {
+    pub fn default_playbook(&self) -> Option<&str> {
         match self.app.get("default_playbook") {
             None => None,
             Some(name) => name.as_str(),
@@ -319,7 +323,7 @@ impl<'a> ConfigApp<'a> {
 
     /// Get the default host for the app. If there isn't an explicit
     /// default set in the configuration, returns "localhost".
-    pub fn default_host(&'a self) -> &'a str {
+    pub fn default_host(&self) -> &str {
         match self.app.get("default_host") {
             None => "localhost",
             Some(host) => host.as_str().unwrap(),
