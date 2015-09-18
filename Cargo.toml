@@ -4,5 +4,5 @@ version = "0.0.1"
 authors = ["Brian J Brennan <brianloveswords@gmail.com>"]
 
 [dependencies]
-toml = "0.1.11"
-rustc-serialize = "0.2.7"
+toml = "*"
+rustc-serialize = "*"
