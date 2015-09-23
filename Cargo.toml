@@ -6,3 +6,4 @@ authors = ["Brian J Brennan <brianloveswords@gmail.com>"]
 [dependencies]
 toml = "*"
 rustc-serialize = "*"
+regex = "*"
