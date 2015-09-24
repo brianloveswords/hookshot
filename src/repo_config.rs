@@ -1,37 +1,13 @@
 use toml;
-use std::path::Path;
 use std::io::Read;
-use std::fs::{self, File};
+use std::fs::File;
 use std::collections::BTreeMap;
 use std::string::ToString;
+use ::verified_path::VerifiedPath;
+use ::error::Error;
 
 pub type URL = String;
 pub type BranchConfigMap = BTreeMap<String, BranchConfig>;
-
-#[derive(Debug)]
-pub struct Error {
-    desc: &'static str,
-    subject: Option<String>,
-}
-
-#[derive(Debug, Clone)]
-pub struct VerifiedPath {
-    path: String,
-}
-impl VerifiedPath {
-    fn new(path: &str) -> Result<VerifiedPath, Error> {
-        match file_exists(Path::new(&path)) {
-            true => Ok(VerifiedPath { path: path.to_string() }),
-            false => Err(Error {
-                desc: "file doesn't exist",
-                subject: Some(path.to_string()),
-            }),
-        }
-    }
-}
-impl ToString for VerifiedPath {
-    fn to_string(&self) -> String { self.path.clone()  }
-}
 
 #[derive(Debug, Clone)]
 pub struct MakeTask {
@@ -283,13 +259,6 @@ fn lookup_as_string<'a>(obj: &'a toml::Value, key: &'static str) -> LookupResult
                 Some(v) => LookupResult::Value(v),
             }
         }
-    }
-}
-
-fn file_exists(full_path: &Path) -> bool {
-    match fs::metadata(full_path) {
-        Err(_) => false,
-        Ok(f) => f.is_file()
     }
 }
 
