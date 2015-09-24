@@ -1,7 +1,6 @@
-use std::any::Any;
 use regex::{Regex, Captures};
 use rustc_serialize::json::Json;
-use rustc_serialize::json;
+use std::any::Any;
 use std::thread;
 
 #[derive(Clone, Debug)]
@@ -17,6 +16,15 @@ pub struct Message {
 #[derive(Debug, Clone, Copy)]
 pub enum ErrorCode {
     InvalidRef,
+    InvalidSha,
+    InvalidRepoName,
+    InvalidRepoOwner,
+    InvalidGitUrl,
+    MissingRef,
+    MissingSha,
+    MissingRepoName,
+    MissingRepoOwner,
+    MissingGitUrl,
     InvalidJson,
     Unknown,
 }
@@ -59,7 +67,7 @@ impl Message {
                         }),
                     },
                     None => return Err(Error {
-                        code: ErrorCode::InvalidRef,
+                        code: ErrorCode::MissingRef,
                         detail: "ref must exist",
                         original_error: None,
                     })
@@ -84,18 +92,79 @@ impl Message {
                 (branch, tag)
             };
 
+            // TODO: turn these into macros, this is a ton of boilerplate
+            let head_sha = match root_obj.find("after") {
+                Some(v) => match v.as_string() {
+                    Some(v) => v.to_string(),
+                    None => return Err(Error {
+                        code: ErrorCode::InvalidSha,
+                        detail: "'after' must be a string",
+                        original_error: None,
+                    })
+                },
+                None => return Err(Error {
+                    code: ErrorCode::MissingSha,
+                    detail: "'after' must be present",
+                    original_error: None,
+                }),
+            };
+
+
+            let repo_name = match root_obj.find_path(&["repository", "name"]) {
+                Some(v) => match v.as_string() {
+                    Some(v) => v.to_string(),
+                    None => return Err(Error {
+                        code: ErrorCode::InvalidRepoName,
+                        detail: "'repository.name' must be a string",
+                        original_error: None,
+                    })
+                },
+                None => return Err(Error {
+                    code: ErrorCode::MissingRepoName,
+                    detail: "'repository.name' must be present",
+                    original_error: None,
+                }),
+            };
+
+            let owner = match root_obj.find_path(&["repository", "owner", "name"]) {
+                Some(v) => match v.as_string() {
+                    Some(v) => v.to_string(),
+                    None => return Err(Error {
+                        code: ErrorCode::InvalidRepoOwner,
+                        detail: "'repository.owner.name' must be a string",
+                        original_error: None,
+                    })
+                },
+                None => return Err(Error {
+                    code: ErrorCode::MissingRepoOwner,
+                    detail: "'repository.owner.name' must be present",
+                    original_error: None,
+                }),
+            };
+
+            let git_url = match root_obj.find_path(&["repository", "git_url"]) {
+                Some(v) => match v.as_string() {
+                    Some(v) => v.to_string(),
+                    None => return Err(Error {
+                        code: ErrorCode::InvalidGitUrl,
+                        detail: "'repository.git_url' must be a string",
+                        original_error: None,
+                    })
+                },
+                None => return Err(Error {
+                    code: ErrorCode::MissingGitUrl,
+                    detail: "'repository.git_url' must be present",
+                    original_error: None,
+                }),
+            };
 
             Ok(Message {
                 branch: branch,
                 tag: tag,
-                head_sha: root_obj.find("after")
-                    .unwrap().as_string().unwrap().to_string(),
-                repo_name: root_obj.find_path(&["repository", "name"])
-                    .unwrap().as_string().unwrap().to_string(),
-                owner: root_obj.find_path(&["repository", "owner", "name"])
-                    .unwrap().as_string().unwrap().to_string(),
-                git_url: root_obj.find_path(&["repository", "git_url"])
-                    .unwrap().as_string().unwrap().to_string(),
+                head_sha: head_sha,
+                repo_name: repo_name,
+                owner: owner,
+                git_url: git_url,
             })
         }).join();
 
@@ -164,7 +233,8 @@ mod tests {
           }
         }"#;
 
-        match Message::from_string(raw_message.to_string()) {
+        let msg = Message::from_string(raw_message.to_string());
+        match msg {
             Err(Error{ code: ErrorCode::InvalidRef, .. }) => assert!(true),
             _ => panic!("wrong error code"),
         }
@@ -183,11 +253,202 @@ mod tests {
           }
         }"#;
 
-        match Message::from_string(raw_message.to_string()) {
-            Err(Error{ code: ErrorCode::InvalidRef, .. }) => assert!(true),
-            _ => panic!("wrong error code"),
+        let msg = Message::from_string(raw_message.to_string());
+        match msg {
+            Err(Error{ code: ErrorCode::MissingRef, .. }) => assert!(true),
+            _ =>  {
+                println!("{:?}", msg);
+                panic!("wrong error code");
+            },
         }
     }
 
+    #[test]
+    fn test_missing_sha() {
+        let raw_message = r#"{
+          "ref": "refs/heads/test-branch",
+          "repository": {
+            "name": "test-repo",
+            "git_url": "git://github.com/test-owner/test-repo.git",
+            "owner": {
+              "name": "test-owner"
+            }
+          }
+        }"#;
+
+        let msg = Message::from_string(raw_message.to_string());
+        match msg {
+            Err(Error{ code: ErrorCode::MissingSha, .. }) => assert!(true),
+            _ =>  {
+                println!("{:?}", msg);
+                panic!("wrong error code");
+            },
+        }
+    }
+
+    #[test]
+    fn test_bad_sha() {
+        let raw_message = r#"{
+          "after": [],
+          "ref": "refs/heads/test-branch",
+          "repository": {
+            "name": "test-repo",
+            "git_url": "git://github.com/test-owner/test-repo.git",
+            "owner": {
+              "name": "test-owner"
+            }
+          }
+        }"#;
+
+        let msg = Message::from_string(raw_message.to_string());
+        match msg {
+            Err(Error{ code: ErrorCode::InvalidSha, .. }) => assert!(true),
+            _ =>  {
+                println!("{:?}", msg);
+                panic!("wrong error code");
+            },
+        }
+    }
+
+    #[test]
+    fn test_missing_repo_name() {
+        let raw_message = r#"{
+          "after": "abc",
+          "ref": "refs/heads/test-branch",
+          "repository": {
+            "git_url": "git://github.com/test-owner/test-repo.git",
+            "owner": {
+              "name": "test-owner"
+            }
+          }
+        }"#;
+
+        let msg = Message::from_string(raw_message.to_string());
+        match msg {
+            Err(Error{ code: ErrorCode::MissingRepoName, .. }) => assert!(true),
+            _ =>  {
+                println!("{:?}", msg);
+                panic!("wrong error code");
+            },
+        }
+    }
+
+    #[test]
+    fn test_invalid_repo_name() {
+        let raw_message = r#"{
+          "after": "abc",
+          "ref": "refs/heads/test-branch",
+          "repository": {
+            "name" : [],
+            "git_url": "git://github.com/test-owner/test-repo.git",
+            "owner": {
+              "name": "test-owner"
+            }
+          }
+        }"#;
+
+        let msg = Message::from_string(raw_message.to_string());
+        match msg {
+            Err(Error{ code: ErrorCode::InvalidRepoName, .. }) => assert!(true),
+            _ =>  {
+                println!("{:?}", msg);
+                panic!("wrong error code");
+            },
+        }
+    }
+
+    #[test]
+    fn test_missing_repo_owner() {
+        let raw_message = r#"{
+          "after": "abc",
+          "ref": "refs/heads/test-branch",
+          "repository": {
+            "name": "whatever",
+            "git_url": "git://github.com/test-owner/test-repo.git",
+            "owner": {
+            }
+          }
+        }"#;
+
+        let msg = Message::from_string(raw_message.to_string());
+        match msg {
+            Err(Error{ code: ErrorCode::MissingRepoOwner, .. }) => assert!(true),
+            _ =>  {
+                println!("{:?}", msg);
+                panic!("wrong error code");
+            },
+        }
+    }
+
+    #[test]
+    fn test_invalid_repo_owner() {
+        let raw_message = r#"{
+          "after": "abc",
+          "ref": "refs/heads/test-branch",
+          "repository": {
+            "name": "whatever",
+            "git_url": "git://github.com/test-owner/test-repo.git",
+            "owner": {
+              "name": []
+            }
+          }
+        }"#;
+
+        let msg = Message::from_string(raw_message.to_string());
+        match msg {
+            Err(Error{ code: ErrorCode::InvalidRepoOwner, .. }) => assert!(true),
+            _ =>  {
+                println!("{:?}", msg);
+                panic!("wrong error code");
+            },
+        }
+    }
+
+    #[test]
+    fn test_missing_git_url() {
+        let raw_message = r#"{
+          "after": "abc",
+          "ref": "refs/heads/test-branch",
+          "repository": {
+            "name": "whatever",
+            "owner": {
+              "name": "test-owner"
+            }
+          }
+        }"#;
+
+        let msg = Message::from_string(raw_message.to_string());
+        match msg {
+            Err(Error{ code: ErrorCode::MissingGitUrl, .. }) => assert!(true),
+            _ =>  {
+                println!("{:?}", msg);
+                panic!("wrong error code");
+            },
+        }
+    }
+
+    #[test]
+    fn test_invalid_git_url() {
+        let raw_message = r#"{
+          "after": "abc",
+          "ref": "refs/heads/test-branch",
+          "repository": {
+            "name": "whatever",
+            "git_url": [],
+            "owner": {
+              "name": "test-owner"
+            }
+          }
+        }"#;
+
+        let msg = Message::from_string(raw_message.to_string());
+        match msg {
+            Err(Error{ code: ErrorCode::InvalidGitUrl, .. }) => assert!(true),
+            _ =>  {
+                println!("{:?}", msg);
+                panic!("wrong error code");
+            },
+        }
+    }
 
 }
