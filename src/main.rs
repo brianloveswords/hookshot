@@ -19,6 +19,7 @@ use std::thread;
 use rustc_serialize::json;
 use deployer::message::{RemoteCommand, get_extra_vars};
 use deployer::config::Config;
+use deployer::repo_config::RepoConfig;
 
 static ANSIBLE_CMD: &'static str = "ansible-playbook";
 static CONFIG_ENV_KEY: &'static str = "DEPLOYER_CONFIG";
