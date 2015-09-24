@@ -7,6 +7,7 @@ use std::string::ToString;
 use ::verified_path::VerifiedPath;
 use ::error::Error;
 
+// TODO: use https://crates.io/crates/url instead
 pub type URL = String;
 pub type BranchConfigMap = BTreeMap<String, BranchConfig>;
 
@@ -79,16 +80,13 @@ pub struct RepoConfig<'a> {
     default_method: DeployMethod,
     default_task: Option<MakeTask>,
     default_playbook: Option<VerifiedPath>,
-    // TODO: create something like VerifiedUrl, make sure this looks
-    // like a URL. Maybe Iron has some validation?
     default_notify_url: Option<URL>,
     branches: BranchConfigMap,
     project_root: &'a Path,
 }
 
 impl<'a> RepoConfig<'a> {
-    pub fn from_str(string: &str,
-                    project_root: &'a Path) -> Result<RepoConfig<'a>, Error> {
+    pub fn from_str(string: &str, project_root: &'a Path) -> Result<RepoConfig<'a>, Error> {
         let root = match toml::Parser::new(string).parse() {
             Some(value) => value,
             None => return Err(Error {

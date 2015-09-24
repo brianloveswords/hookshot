@@ -7,3 +7,5 @@ authors = ["Brian J Brennan <brianloveswords@gmail.com>"]
 toml = "*"
 rustc-serialize = "*"
 regex = "*"
+uuid = "*"
+tempdir = "*"

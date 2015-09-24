@@ -33,3 +33,9 @@ pub fn file_exists(full_path: &Path) -> bool {
         Ok(f) => f.is_file()
     }
 }
+pub fn directory_exists(full_path: &Path) -> bool {
+    match fs::metadata(full_path) {
+        Err(_) => false,
+        Ok(f) => f.is_dir()
+    }
+}

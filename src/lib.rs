@@ -1,6 +1,8 @@
+extern crate tempdir;
 extern crate regex;
 extern crate rustc_serialize;
 extern crate toml;
+extern crate uuid;
 
 pub mod config;
 pub mod error;
