@@ -137,10 +137,11 @@ impl<'a> RepoConfig<'a> {
                 desc: "could not read 'defaults.playbook' as string",
                 subject: Some(String::from("defaults.playbook")),
             }),
-            LookupResult::Value(v) => match VerifiedPath::file(project_root, Path::new(v)) {
-                Ok(v) => Some(v),
-                Err(err) => return Err(err),
-            },
+            LookupResult::Value(v) =>
+                match VerifiedPath::file(Some(project_root), Path::new(v)) {
+                    Ok(v) => Some(v),
+                    Err(err) => return Err(err),
+                },
         };
 
         let default_notify_url = match lookup_as_string(defaults, "notify_url") {
@@ -209,10 +210,11 @@ impl<'a> RepoConfig<'a> {
                         desc: "branch 'playbook' not a string",
                         subject: Some(format!("branch.{}.playbook", key)),
                     }),
-                    LookupResult::Value(v) => match VerifiedPath::file(project_root, Path::new(v)) {
-                        Ok(v) => Some(v),
-                        Err(err) => return Err(err),
-                    },
+                    LookupResult::Value(v) =>
+                        match VerifiedPath::file(Some(project_root), Path::new(v)) {
+                            Ok(v) => Some(v),
+                            Err(err) => return Err(err),
+                        },
                 },
                 inventory: match lookup_as_string(table, "inventory") {
                     LookupResult::Missing => None,
@@ -220,10 +222,11 @@ impl<'a> RepoConfig<'a> {
                         desc: "branch 'inventory' not a string",
                         subject: Some(format!("branch.{}.inventory", key)),
                     }),
-                    LookupResult::Value(v) => match VerifiedPath::file(project_root, Path::new(v)) {
-                        Ok(v) => Some(v),
-                        Err(err) => return Err(err),
-                    },
+                    LookupResult::Value(v) =>
+                        match VerifiedPath::file(Some(project_root), Path::new(v)) {
+                            Ok(v) => Some(v),
+                            Err(err) => return Err(err),
+                        },
                 },
                 notify_url: match lookup_as_string(table, "notify_url") {
                     LookupResult::Missing => None,

@@ -5,18 +5,31 @@ use ::error::Error;
 #[derive(Debug, Clone)]
 pub struct VerifiedPath {
     path: String,
-    root: String,
 }
 
 impl VerifiedPath {
-    pub fn file(root: &Path, path: &Path) -> Result<VerifiedPath, Error> {
+    pub fn file(root: Option<&Path>, path: &Path) -> Result<VerifiedPath, Error> {
         let path_as_string = String::from(path.to_str().unwrap());
-        let root_as_string = String::from(root.to_str().unwrap());
-        match file_exists(&root.join(path)) {
-            true => Ok(VerifiedPath {
-                path: path_as_string,
-                root: root_as_string,
+        let full_path = match root {
+            Some(root) => root.join(path),
+            None => path.to_path_buf()
+        };
+        match file_exists(&full_path) {
+            true => Ok(VerifiedPath { path: path_as_string, }),
+            false => Err(Error {
+                desc: "file doesn't exist",
+                subject: Some(path_as_string),
             }),
+        }
+    }
+    pub fn directory(root: Option<&Path>, path: &Path) -> Result<VerifiedPath, Error> {
+        let path_as_string = String::from(path.to_str().unwrap());
+        let full_path = match root {
+            Some(root) => root.join(path),
+            None => path.to_path_buf()
+        };
+        match directory_exists(&full_path) {
+            true => Ok(VerifiedPath { path: path_as_string, }),
             false => Err(Error {
                 desc: "file doesn't exist",
                 subject: Some(path_as_string),
@@ -24,7 +37,6 @@ impl VerifiedPath {
         }
     }
     pub fn path(&self) -> String { self.path.clone()  }
-    pub fn root(&self) -> String { self.root.clone()  }
 }
 
 pub fn file_exists(full_path: &Path) -> bool {
