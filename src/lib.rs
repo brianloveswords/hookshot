@@ -5,10 +5,10 @@ extern crate rustc_serialize;
 extern crate tempdir;
 extern crate toml;
 extern crate uuid;
-
 pub mod config;
 pub mod error;
 pub mod git;
+pub mod task_manager;
 pub mod make_task;
 pub mod message;
 pub mod repo_config;
