@@ -1,24 +1,30 @@
-test:
-	@vagrant up --no-provision
-	@TEST=yes DISABLE_PLAYBOOK_CHECK=yes vagrant provision
+test: src/test/test_repo
+	cargo test
 
-build-all: local-build linux-build
+src/test/test_repo:
+	(cd src/test && tar -xzf test_repo.tgz)
 
-linux-build:
-	@vagrant up --no-provision
-	@vagrant provision
+# test:
+# 	@vagrant up --no-provision
+# 	@TEST=yes DISABLE_PLAYBOOK_CHECK=yes vagrant provision
 
-local-build:
-	@cargo build --release
+# build-all: local-build linux-build
 
-release: test local-build
-	@cp target/release/deployer release/deployer.darwin
+# linux-build:
+# 	@vagrant up --no-provision
+# 	@vagrant provision
 
-clean:
-	@rm -rf target
-	@rm -rf release/*
+# local-build:
+# 	@cargo build --release
 
-disinfect: clean
-	@vagrant destroy -f
+# release: test local-build
+# 	@cp target/release/deployer release/deployer.darwin
+
+# clean:
+# 	@rm -rf target
+# 	@rm -rf release/*
+
+# disinfect: clean
+# 	@vagrant destroy -f
 
 .PHONY: build-all build-linux build-local clean test release disinfect

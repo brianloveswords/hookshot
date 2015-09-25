@@ -1,51 +1,29 @@
 use toml;
-use std::path::Path;
 use std::io::Read;
-use std::fs::{self, File};
+use std::path::Path;
+use std::fs::File;
 use std::collections::BTreeMap;
 use std::string::ToString;
+use ::verified_path::VerifiedPath;
+use ::error::Error;
 
+// TODO: use https://crates.io/crates/url instead
 pub type URL = String;
 pub type BranchConfigMap = BTreeMap<String, BranchConfig>;
-
-#[derive(Debug)]
-pub struct Error {
-    desc: &'static str,
-    subject: Option<String>,
-}
-
-#[derive(Debug, Clone)]
-pub struct VerifiedPath {
-    path: String,
-}
-impl VerifiedPath {
-    fn new(path: &str) -> Result<VerifiedPath, Error> {
-        match file_exists(Path::new(&path)) {
-            true => Ok(VerifiedPath { path: path.to_string() }),
-            false => Err(Error {
-                desc: "file doesn't exist",
-                subject: Some(path.to_string()),
-            }),
-        }
-    }
-}
-impl ToString for VerifiedPath {
-    fn to_string(&self) -> String { self.path.clone()  }
-}
 
 #[derive(Debug, Clone)]
 pub struct MakeTask {
     task: String,
 }
 impl MakeTask {
-    fn new(task: &str) -> Result<MakeTask, Error> {
-
+    fn new(task: &str, directory: &Path) -> Result<MakeTask, Error> {
+        let path_to_makefile = directory.join("Makefile");
         let makefile_contents = {
-            let mut f = match File::open("Makefile") {
+            let mut f = match File::open(&path_to_makefile) {
                 Ok(f) => f,
                 Err(_) => return Err(Error {
                     desc: "can't open Makefile",
-                    subject: None,
+                    subject: Some(String::from(path_to_makefile.to_str().unwrap())),
                 }),
             };
 
@@ -98,17 +76,17 @@ impl ToString for DeployMethod {
 }
 
 #[derive(Debug)]
-pub struct RepoConfig {
+pub struct RepoConfig<'a> {
     default_method: DeployMethod,
     default_task: Option<MakeTask>,
     default_playbook: Option<VerifiedPath>,
-    // TODO: create VerifiedUrl, make sure this looks like a URL.
     default_notify_url: Option<URL>,
     branches: BranchConfigMap,
+    project_root: &'a Path,
 }
 
-impl RepoConfig {
-    pub fn from_str(string: &str) -> Result<RepoConfig, Error> {
+impl<'a> RepoConfig<'a> {
+    pub fn from_str(string: &str, project_root: &'a Path) -> Result<RepoConfig<'a>, Error> {
         let root = match toml::Parser::new(string).parse() {
             Some(value) => value,
             None => return Err(Error {
@@ -147,7 +125,7 @@ impl RepoConfig {
                 desc: "could not read 'defaults.task' as string",
                 subject: Some(String::from("defaults.task")),
             }),
-            LookupResult::Value(v) => match MakeTask::new(v) {
+            LookupResult::Value(v) => match MakeTask::new(v, project_root) {
                 Ok(v) => Some(v),
                 Err(err) => return Err(err),
             }
@@ -159,10 +137,11 @@ impl RepoConfig {
                 desc: "could not read 'defaults.playbook' as string",
                 subject: Some(String::from("defaults.playbook")),
             }),
-            LookupResult::Value(v) => match VerifiedPath::new(v) {
-                Ok(v) => Some(v),
-                Err(err) => return Err(err),
-            },
+            LookupResult::Value(v) =>
+                match VerifiedPath::file(Some(project_root), Path::new(v)) {
+                    Ok(v) => Some(v),
+                    Err(err) => return Err(err),
+                },
         };
 
         let default_notify_url = match lookup_as_string(defaults, "notify_url") {
@@ -205,7 +184,7 @@ impl RepoConfig {
                         desc: "branch 'task' not a string",
                         subject: Some(format!("branch.{}.task", key)),
                     }),
-                    LookupResult::Value(v) => match MakeTask::new(v) {
+                    LookupResult::Value(v) => match MakeTask::new(v, project_root) {
                         Ok(v) => Some(v),
                         Err(err) => return Err(err),
                     }
@@ -231,10 +210,11 @@ impl RepoConfig {
                         desc: "branch 'playbook' not a string",
                         subject: Some(format!("branch.{}.playbook", key)),
                     }),
-                    LookupResult::Value(v) => match VerifiedPath::new(v) {
-                        Ok(v) => Some(v),
-                        Err(err) => return Err(err),
-                    },
+                    LookupResult::Value(v) =>
+                        match VerifiedPath::file(Some(project_root), Path::new(v)) {
+                            Ok(v) => Some(v),
+                            Err(err) => return Err(err),
+                        },
                 },
                 inventory: match lookup_as_string(table, "inventory") {
                     LookupResult::Missing => None,
@@ -242,10 +222,11 @@ impl RepoConfig {
                         desc: "branch 'inventory' not a string",
                         subject: Some(format!("branch.{}.inventory", key)),
                     }),
-                    LookupResult::Value(v) => match VerifiedPath::new(v) {
-                        Ok(v) => Some(v),
-                        Err(err) => return Err(err),
-                    },
+                    LookupResult::Value(v) =>
+                        match VerifiedPath::file(Some(project_root), Path::new(v)) {
+                            Ok(v) => Some(v),
+                            Err(err) => return Err(err),
+                        },
                 },
                 notify_url: match lookup_as_string(table, "notify_url") {
                     LookupResult::Missing => None,
@@ -264,6 +245,7 @@ impl RepoConfig {
             default_playbook: default_playbook,
             default_notify_url: default_notify_url,
             branches: branches,
+            project_root: project_root,
         })
     }
 }
@@ -286,27 +268,13 @@ fn lookup_as_string<'a>(obj: &'a toml::Value, key: &'static str) -> LookupResult
     }
 }
 
-fn file_exists(full_path: &Path) -> bool {
-    match fs::metadata(full_path) {
-        Err(_) => false,
-        Ok(f) => f.is_file()
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::{RepoConfig};
-    use std::env;
     use std::path::Path;
-
-    fn reset_test_dir() {
-        assert!(env::set_current_dir(Path::new("./src/test")).is_ok());
-    }
 
     #[test]
     fn test_valid_configuration() {
-        reset_test_dir();
-
         let toml = r#"
             [defaults]
             method = "ansible"
@@ -326,21 +294,22 @@ mod tests {
             task = "self-deploy"
         "#;
 
-        let config = RepoConfig::from_str(toml).unwrap();
+        let project_root = Path::new("./src/test/repo_config");
+        let config = RepoConfig::from_str(toml, project_root).unwrap();
         println!("{:?}", config);
 
         assert_eq!(config.default_method.to_string(), "ansible");
         assert!(config.default_task.is_some());
         assert_eq!(config.default_task.unwrap().to_string(), "deploy");
         assert!(config.default_playbook.is_some());
-        assert_eq!(config.default_playbook.unwrap().to_string(), "ansible/deploy.yml");
+        assert_eq!(config.default_playbook.unwrap().path(), "ansible/deploy.yml");
         assert!(config.default_notify_url.is_none());
 
         // production config
         {
             let config = config.branches.get("production").unwrap();
-            let playbook = config.playbook.clone().unwrap().to_string();
-            let inventory = config.inventory.clone().unwrap().to_string();
+            let playbook = config.playbook.clone().unwrap().path();
+            let inventory = config.inventory.clone().unwrap().path();
             assert_eq!(playbook, "ansible/production.yml");
             assert_eq!(inventory, "ansible/inventory/production");
             assert!(config.method.is_none());
@@ -350,7 +319,7 @@ mod tests {
         // staging config
         {
             let config = config.branches.get("staging").unwrap();
-            let inventory = config.inventory.clone().unwrap().to_string();
+            let inventory = config.inventory.clone().unwrap().path();
             let notify_url = config.notify_url.clone().unwrap();
             assert_eq!(inventory, "ansible/inventory/staging");
             assert!(config.playbook.is_none());
