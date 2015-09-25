@@ -1,61 +1,19 @@
 use toml;
-use std::io::Read;
 use std::path::Path;
-use std::fs::File;
 use std::collections::BTreeMap;
 use std::string::ToString;
+use ::make_task::MakeTask;
 use ::verified_path::VerifiedPath;
 use ::error::Error;
 
 // TODO: use https://crates.io/crates/url instead
 pub type URL = String;
-pub type BranchConfigMap = BTreeMap<String, BranchConfig>;
-
-#[derive(Debug, Clone)]
-pub struct MakeTask {
-    task: String,
-}
-impl MakeTask {
-    fn new(task: &str, directory: &Path) -> Result<MakeTask, Error> {
-        let path_to_makefile = directory.join("Makefile");
-        let makefile_contents = {
-            let mut f = match File::open(&path_to_makefile) {
-                Ok(f) => f,
-                Err(_) => return Err(Error {
-                    desc: "can't open Makefile",
-                    subject: Some(String::from(path_to_makefile.to_str().unwrap())),
-                }),
-            };
-
-            let mut contents = String::new();
-            f.read_to_string(&mut contents).unwrap();
-            contents
-        };
-
-        let mut task_header = task.to_string();
-        task_header.push(':');
-
-        let has_task = makefile_contents.lines_any()
-            .any(|line| line.starts_with(&task_header));
-
-        match has_task {
-            true => Ok(MakeTask { task: task.to_string() }),
-            false => Err(Error {
-                desc: "Makefile does not have specified task",
-                subject: Some(task.to_string()),
-            }),
-        }
-    }
-
-}
-impl ToString for MakeTask {
-    fn to_string(&self) -> String { self.task.clone() }
-}
+pub type BranchConfigMap<'a> = BTreeMap<String, BranchConfig<'a>>;
 
 #[derive(Debug)]
-pub struct BranchConfig {
+pub struct BranchConfig<'a> {
     method: Option<DeployMethod>,
-    task: Option<MakeTask>,
+    task: Option<MakeTask<'a>>,
     playbook: Option<VerifiedPath>,
     inventory: Option<VerifiedPath>,
     notify_url: Option<URL>,
@@ -78,10 +36,10 @@ impl ToString for DeployMethod {
 #[derive(Debug)]
 pub struct RepoConfig<'a> {
     default_method: DeployMethod,
-    default_task: Option<MakeTask>,
+    default_task: Option<MakeTask<'a>>,
     default_playbook: Option<VerifiedPath>,
     default_notify_url: Option<URL>,
-    branches: BranchConfigMap,
+    branches: BranchConfigMap<'a>,
     project_root: &'a Path,
 }
 
@@ -125,7 +83,7 @@ impl<'a> RepoConfig<'a> {
                 desc: "could not read 'defaults.task' as string",
                 subject: Some(String::from("defaults.task")),
             }),
-            LookupResult::Value(v) => match MakeTask::new(v, project_root) {
+            LookupResult::Value(v) => match MakeTask::new(project_root, v) {
                 Ok(v) => Some(v),
                 Err(err) => return Err(err),
             }
@@ -184,7 +142,7 @@ impl<'a> RepoConfig<'a> {
                         desc: "branch 'task' not a string",
                         subject: Some(format!("branch.{}.task", key)),
                     }),
-                    LookupResult::Value(v) => match MakeTask::new(v, project_root) {
+                    LookupResult::Value(v) => match MakeTask::new(project_root, v) {
                         Ok(v) => Some(v),
                         Err(err) => return Err(err),
                     }
