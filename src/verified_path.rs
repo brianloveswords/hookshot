@@ -7,6 +7,7 @@ pub struct VerifiedPath {
     path: String,
 }
 
+// TODO: refactor this, it's basically 80% copypasta
 impl VerifiedPath {
     pub fn file(root: Option<&Path>, path: &Path) -> Result<VerifiedPath, Error> {
         let path_as_string = String::from(path.to_str().unwrap());
