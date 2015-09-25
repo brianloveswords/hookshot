@@ -7,6 +7,7 @@ extern crate uuid;
 pub mod config;
 pub mod error;
 pub mod git;
+pub mod make_task;
 pub mod message;
 pub mod repo_config;
 pub mod server_config;
