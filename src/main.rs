@@ -1,20 +1,25 @@
-#![feature(tcp)]
+#![allow(dead_code)]
+#![allow(unused_imports)]
 
 extern crate rustc_serialize;
 extern crate deployer;
 
+use std::env;
+use std::io::Read;
+use std::io::Write;
 use std::net::{TcpListener, TcpStream};
 use std::process::Command;
-use std::sync::Arc;
 use std::str;
-use std::env;
+use std::sync::Arc;
 use std::thread;
-use std::io::Write;
-use std::io::Read;
+
+
+// use std::time::Duration;
 
 use rustc_serialize::json;
 use deployer::message::{RemoteCommand, get_extra_vars};
 use deployer::config::Config;
+use deployer::repo_config::RepoConfig;
 
 static ANSIBLE_CMD: &'static str = "ansible-playbook";
 static CONFIG_ENV_KEY: &'static str = "DEPLOYER_CONFIG";
@@ -27,17 +32,16 @@ fn get_from_env_or_default(key: &str, default: &str) -> String {
     }
 }
 
-
 fn handle_client(mut stream: TcpStream, config: Arc<Config>) {
     let peer_addr = stream.peer_addr().unwrap();
 
-    // Don't leave sockets lying around. If a socket doesn't send
-    // data within 30 seconds, time it out.
-    // stream.set_read_timeout(Some(30_000));
-    // ... that is, once Rust supports timeouts again.
-
-    // Don't buffer data, send everything immediately
-    stream.set_nodelay(true).ok();
+    // Don't leave sockets lying around. If a socket doesn't send data
+    // within 30 seconds, time it out. This is currently disabled
+    // until [RFC 1047][1] becomes stable, likely in Rust 1.4.
+    //
+    // [1]: (https://github.com/rust-lang/rfcs/blob/master/text/1047-socket-timeouts.md)
+    //
+    // stream.set_read_timeout(Some(Duration::new(30, 0)));
 
     // Read the incoming bytes.
     let mut bytes = Vec::new();

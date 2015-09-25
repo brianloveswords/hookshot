@@ -34,7 +34,7 @@ impl Config {
             }),
         };
         let mut contents = String::new();
-        
+
         match file.read_to_string(&mut contents) {
             Ok(_) => (),
             Err(e) => return Err(ConfigError {
@@ -347,7 +347,7 @@ impl ConfigError {
 mod tests {
     use super::Config;
 
-    fn load_basic_config<'a>() -> Config<'a> {
+    fn load_basic_config() -> Config {
         let config_string = r#"
             port = 5000
 
@@ -393,11 +393,18 @@ mod tests {
         let c = load_basic_config();
         let app = c.app("test-app").unwrap();
 
-        assert_eq!("/test-app/deploy.yml", app.default_playbook().unwrap());
         assert_eq!("/test-app/deploy.yml",
                    app.playbook(&"deploy".to_string()).unwrap());
         assert_eq!("/test-app/provision.yml",
                    app.playbook(&"provision".to_string()).unwrap());
+    }
+
+    #[test]
+    fn test_default_playbook_discovery() {
+        let c = load_basic_config();
+        let app = c.app("test-app").unwrap();
+
+        assert_eq!("deploy", app.default_playbook().unwrap());
     }
 
     #[test]

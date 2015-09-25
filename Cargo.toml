@@ -4,5 +4,10 @@ version = "0.0.1"
 authors = ["Brian J Brennan <brianloveswords@gmail.com>"]
 
 [dependencies]
+iron = "*"
+openssl = "*"
 toml = "*"
 rustc-serialize = "*"
+regex = "*"
+uuid = "*"
+tempdir = "*"

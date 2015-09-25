@@ -4,3 +4,6 @@
 !/deploy/ansible/roles/deploy/files/.gitkeep
 /client.js
 /deploy/ansible/roles/install/files/deployer.linux
+/.plan
+/playground
+/src/test/test_repo/
