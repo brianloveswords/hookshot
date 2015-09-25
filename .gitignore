@@ -5,4 +5,5 @@
 /client.js
 /deploy/ansible/roles/install/files/deployer.linux
 /.plan
-/src/playground
+/playground
+/src/test/test_repo/
