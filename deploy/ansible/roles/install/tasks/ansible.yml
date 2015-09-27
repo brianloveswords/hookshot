@@ -1,5 +1,0 @@
-- name: ansible repo exists
-  apt_repository: repo=ppa:ansible/ansible
-
-- name: ansible is installed
-  apt: name=ansible state=present
