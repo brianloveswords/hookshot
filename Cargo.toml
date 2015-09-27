@@ -11,6 +11,7 @@ rustc-serialize = "*"
 regex = "*"
 uuid = "*"
 tempdir = "*"
+router = "*"
 
 [[bin]]
 doc = false
