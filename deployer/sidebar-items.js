@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["config",""],["error",""],["git",""],["make_task",""],["message",""],["repo_config",""],["server_config",""],["signature",""],["task_manager","A task manager for parallel queues that process tasks serially."],["verified_path",""],["webhook_message",""]]});
