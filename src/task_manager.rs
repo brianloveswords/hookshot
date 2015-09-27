@@ -8,6 +8,9 @@
 //! queue and calls its `run` method. Once there are no more tasks in
 //! the queue the worker thread will go back to sleep.
 //!
+//! See docs for the [`TaskManager`](struct.TaskManager.html) struct for more
+//! usage examples.
+//!
 //! # Limitations
 //!
 //! - Task queues can grow infinitely. We should have optional a way
@@ -270,6 +273,16 @@ impl<'a, T> TaskManager<'a, T> where T: 'static + Runnable + Send {
     ///     tasks.add_task("$", important_task1);
     /// });
     ///
+    /// // Wait 100ms then signal a shutdown for task manager.
+    /// let shared_tasks = tasks.clone();
+    /// thread::spawn(move || {
+    ///     thread::sleep_ms(100);
+    ///     let mut tasks = shared_tasks.lock().unwrap();
+    ///     tasks.shutdown();
+    /// });
+    ///
+    /// // Wait 150ms then try to add a task. This will fail because the task
+    /// // manager will have received a `shutdown()` call by this point.
     /// let shared_tasks = tasks.clone();
     /// thread::spawn(move || {
     ///     thread::sleep_ms(150);
@@ -281,14 +294,7 @@ impl<'a, T> TaskManager<'a, T> where T: 'static + Runnable + Send {
     ///     };
     /// });
     ///
-    /// let shared_tasks = tasks.clone();
-    /// thread::spawn(move || {
-    ///     thread::sleep_ms(100);
-    ///     let mut tasks = shared_tasks.lock().unwrap();
-    ///     tasks.shutdown();
-    /// });
-    ///
-    /// // Wait for the shutdown signal
+    /// // Block thread until shutdown is complete.
     /// shutdown_rx.recv();
     ///
     /// println!("all workers stopped");
