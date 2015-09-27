@@ -14,8 +14,6 @@
 //! to cap the queue size and any tasks that come in after that limit
 //! push off the oldest task.
 //!
-//! - There is no way to signal a shutdown to worker threads.
-//!
 //! # Examples
 //!
 //! ## Waiting for tasks to finish
@@ -85,40 +83,52 @@
 //! assert_eq!(task.result, Some(42));
 //! ```
 //!
-//! ## Blocking indefinitely
-//!
+//! ## Graceful shutdowns
 //! ```
-//! use std::sync::{Arc, Mutex};
 //! use deployer::task_manager::{TaskManager, Runnable};
-//! use std::thread;
+//! # use std::thread;
+//! use std::sync::{Arc, Mutex};
+//! use std::sync::mpsc::channel;
 //!
-//! # fn do_some_work() { }
-//! struct Task;
-//! impl Runnable for Task {
-//!     fn run(&mut self) { do_some_work() }
-//! }
+//! # fn event_handler<F>(name: &'static str, func: F)
+//! #     where F: FnOnce()+ Send + 'static {
+//! #         println!("adding event handler for {}", name);
+//! #         thread::spawn(func);
+//! #     }
+//! #
+//! # struct ImportantTask;
+//! # impl Runnable for ImportantTask {
+//! #     fn run(&mut self) { println!("task added") }
+//! # }
+//! # impl ImportantTask { fn new() -> ImportantTask { ImportantTask } }
 //!
-//! let task_manager = Arc::new(Mutex::new(TaskManager::new()));
+//! let (sender, receiver) = channel();
+//! let task_manager = Arc::new(Mutex::new(TaskManager::new_with_lock(sender)));
+//!
 //! {
 //!     let shared_manager = task_manager.clone();
-//!     thread::spawn(move || {
-//!         let locked_manager = shared_manager.lock().unwrap();
-//!         task_manager.ensure_queue("q");
-//!         task_manager.add_task("q", Task {});
-//!     })
+//!     event_handler("add_task", move || {
+//!         let mut locked_manager = shared_manager.lock().unwrap();
+//!         locked_manager.ensure_queue("q");
+//!         locked_manager.add_task("q", ImportantTask::new()).unwrap();
+//!     });
 //! }
 //!
 //! {
 //!     let shared_manager = task_manager.clone();
-//!     thread::spawn(move || {
-//!         let locked_manager = shared_manager.lock().unwrap();
-//!         task_manager.shutdown_gracefully();
-//!     })
+//!     event_handler("shutdown", move || {
+//!         let mut locked_manager = shared_manager.lock().unwrap();
+//!
+//!         // `shutdown()` lets each worker finish a final task if it's already
+//!         // working on one and once each worker is done it sends a message down
+//!         // the lock channel if one exists.
+//!         locked_manager.shutdown();
+//!     });
 //! }
 //!
-//! task_manager.wait();
+//! // This blocks until a call to `shutdown()` is completed.
+//! receiver.recv().unwrap();
 //! println!("task manager done");
-//! ```
 
 use std::collections::BTreeMap;
 use std::collections::VecDeque;
@@ -146,25 +156,28 @@ impl<T> Queue<T> where T: Runnable + Send {
     }
 }
 
+#[derive(Debug, PartialEq, Eq)]
+pub enum Error {
+    QueueMissing,
+    Shutdown,
+}
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", match *self {
+            Error::QueueMissing => "could not find queue in queue map",
+            Error::Shutdown => "manager is shut down",
+        })
+    }
+}
+
 type QueueMap<'a, T> = BTreeMap<&'a str, Arc<Mutex<Queue<T>>>>;
 type ThreadMap<'a> = BTreeMap<&'a str, (JoinHandle<()>, Sender<()>)>;
 
 pub struct TaskManager<'a, T> where T: 'static + Runnable + Send {
     queues: QueueMap<'a, T>,
     threads: ThreadMap<'a>,
-    shutdown_lock: (Sender<()>, Receiver<()>)
-}
-
-#[derive(Debug)]
-pub enum Error {
-    QueueMissing,
-}
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", match *self {
-            Error::QueueMissing => "could not find queue in queue map",
-        })
-    }
+    shutdown_lock: Option<Sender<()>>,
+    stopped: bool,
 }
 
 impl<'a, T> TaskManager<'a, T> where T: 'static + Runnable + Send {
@@ -173,7 +186,17 @@ impl<'a, T> TaskManager<'a, T> where T: 'static + Runnable + Send {
         TaskManager {
             queues: QueueMap::<T>::new(),
             threads: ThreadMap::new(),
-            shutdown_lock: channel(),
+            shutdown_lock: None,
+            stopped: false,
+        }
+    }
+
+    pub fn new_with_lock(lock: Sender<()>) -> TaskManager<'a, T> {
+        TaskManager {
+            queues: QueueMap::<T>::new(),
+            threads: ThreadMap::new(),
+            shutdown_lock: Some(lock),
+            stopped: false,
         }
     }
 
@@ -182,10 +205,15 @@ impl<'a, T> TaskManager<'a, T> where T: 'static + Runnable + Send {
     ///
     /// # Failures
     ///
-    /// - `QueueMissing`: could not find the queue. This will only happen if
+    /// - `QueueMissing`: Could not find the queue. This will only happen if
     /// an `add_task()` call happens before an `ensure_queue()` call for
     /// that queue.
+    ///
+    /// - `Shutdown`: Manager is not accepting new tasks at the moment. This
+    /// will happen if an `add_task()` call happens after a `shutdown()` but
+    /// before a `restart()`.
     pub fn add_task(&mut self, queue_key: &'a str, task: T) -> Result<Receiver<T>, Error> {
+        if self.stopped { return Err(Error::Shutdown) }
         let (task_tx, task_rx) = channel();
         {
             let mut locked_queue = match self.queues.get_mut(queue_key) {
@@ -216,24 +244,96 @@ impl<'a, T> TaskManager<'a, T> where T: 'static + Runnable + Send {
         Ok(task_rx)
     }
 
-    pub fn wait(&self) {
-        let (_, ref rx) = self.shutdown_lock;
-        rx.recv();
+    #[allow(unused_must_use)]
+    /// Signal worker threads to shut down after any active jobs and once they
+    /// are all done send a signal down the shutdown lock channel. Trying to add
+    /// jobs after calling `shutdown()` but before calling `restart()` will
+    /// result in an `Error::Shutdown`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use std::thread;
+    /// # use std::sync::mpsc::channel;
+    /// # use std::sync::{Arc, Mutex};
+    /// # use deployer::task_manager::{TaskManager, Runnable, Error};
+    /// # struct ImportantTask;
+    /// # impl Runnable for ImportantTask {
+    /// #     fn run(&mut self) { println!("task added") }
+    /// # }
+    /// # let important_task1 = ImportantTask;
+    /// # let important_task2 = ImportantTask;
+    /// let (shutdown_tx, shutdown_rx) = channel();
+    /// let tasks = Arc::new(Mutex::new(TaskManager::new_with_lock(shutdown_tx)));
+    ///
+    /// let shared_tasks = tasks.clone();
+    /// thread::spawn(move || {
+    ///     let mut tasks = shared_tasks.lock().unwrap();
+    ///     tasks.ensure_queue("$");
+    ///     tasks.add_task("$", important_task1);
+    /// });
+    ///
+    /// let shared_tasks = tasks.clone();
+    /// thread::spawn(move || {
+    ///     thread::sleep_ms(150);
+    ///     let mut tasks = shared_tasks.lock().unwrap();
+    ///     match tasks.add_task("$", important_task2) {
+    ///          Err(Error::Shutdown) => println!("queue was shut down"),
+    ///          // ...
+    /// #        _ => unreachable!()
+    ///     };
+    /// });
+    ///
+    /// let shared_tasks = tasks.clone();
+    /// thread::spawn(move || {
+    ///   thread::sleep_ms(100);
+    ///   let mut tasks = shared_tasks.lock().unwrap();
+    ///   tasks.shutdown();
+    /// });
+    ///
+    /// // Wait for the shutdown signal
+    /// shutdown_rx.recv();
+    ///
+    /// println!("all workers stopped");
+    /// ```
+    pub fn shutdown(&mut self) {
+        self.stopped = true;
+        for key in self.queues.keys() {
+            // Remove thread join handle from threadmap, letting senders drop
+            // out of scope so the worker thread quits instead of picking a new
+            // task then wait for the thread to finish.
+            let handle = {
+                match self.threads.remove(key) {
+                    Some((handle, _)) => handle,
+                    None => continue,
+                }
+            };
+            handle.join();
+        }
+        if let Some(ref tx) = self.shutdown_lock {
+            tx.send(());
+        }
     }
 
-    pub fn shutdown(&self) {
-
+    /// Restart all queue workers and remove `stopped` flag.
+    pub fn restart(&mut self) {
+        let keys: Vec<_> = self.queues.keys().cloned().collect();
+        for key in keys {
+            self.start_worker(key);
+        }
+        self.stopped = false;
     }
 
     /// Create a queue only if one doesn't already exist with that key
-    pub fn ensure_queue(&mut self, queue_key: &'a str) {
-        if self.queues.contains_key(queue_key) { return }
+    pub fn ensure_queue(&mut self, queue_key: &'a str) -> bool{
+        if self.queues.contains_key(queue_key) { return true }
 
         let queue = Arc::new(Mutex::new(Queue::<T>::new()));
         self.queues.insert(queue_key, queue);
 
         // Safe unwrap: We just inserted it above.
         self.start_worker(queue_key);
+        false
     }
 
     fn find(&mut self, key: &'a str) -> Option<&mut Arc<Mutex<Queue<T>>>> {
@@ -250,6 +350,9 @@ impl<'a, T> TaskManager<'a, T> where T: 'static + Runnable + Send {
     // TODO: remove once we can use the `result` from the task run.
     #[allow(unused_must_use)]
     fn start_worker(&mut self, key: &'a str) {
+        if self.stopped { return }
+        if self.threads.contains_key(key) { return }
+
         let queue = self.find(key).unwrap().clone();
         let (worker_tx, worker_rx) = channel();
         let worker = thread::spawn(move || {
