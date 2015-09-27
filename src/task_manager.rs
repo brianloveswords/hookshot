@@ -64,7 +64,7 @@
 //! }
 //! impl LongRunningTask {
 //!     fn new() -> LongRunningTask {
-//!       LongRunningTask { result: None }
+//!         LongRunningTask { result: None }
 //!     }
 //! }
 //! impl Runnable for LongRunningTask {
