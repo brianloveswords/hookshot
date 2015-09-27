@@ -111,7 +111,7 @@
 //! event_handler("add_task", move || {
 //!     let mut locked_manager = shared_manager.lock().unwrap();
 //!     let queue = locked_manager.ensure_queue(String::from("q"));
-//!     locked_manager.add_task(&key, ImportantTask::new()).unwrap();
+//!     locked_manager.add_task(&queue, ImportantTask::new()).unwrap();
 //! });
 //!
 //! let shared_manager = task_manager.clone();
