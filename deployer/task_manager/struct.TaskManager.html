@@ -86,6 +86,16 @@ jobs after calling <a href="#method.shutdown"><code>shutdown()</code></a> but be
     <span class='ident'>tasks</span>.<span class='ident'>add_task</span>(<span class='string'>&quot;$&quot;</span>, <span class='ident'>important_task1</span>);
 });
 
+<span class='comment'>// Wait 100ms then signal a shutdown for task manager.</span>
+<span class='kw'>let</span> <span class='ident'>shared_tasks</span> <span class='op'>=</span> <span class='ident'>tasks</span>.<span class='ident'>clone</span>();
+<span class='ident'>thread</span>::<span class='ident'>spawn</span>(<span class='kw'>move</span> <span class='op'>||</span> {
+    <span class='ident'>thread</span>::<span class='ident'>sleep_ms</span>(<span class='number'>100</span>);
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>tasks</span> <span class='op'>=</span> <span class='ident'>shared_tasks</span>.<span class='ident'>lock</span>().<span class='ident'>unwrap</span>();
+    <span class='ident'>tasks</span>.<span class='ident'>shutdown</span>();
+});
+
+<span class='comment'>// Wait 150ms then try to add a task. This will fail because the task</span>
+<span class='comment'>// manager will have received a `shutdown()` call by this point.</span>
 <span class='kw'>let</span> <span class='ident'>shared_tasks</span> <span class='op'>=</span> <span class='ident'>tasks</span>.<span class='ident'>clone</span>();
 <span class='ident'>thread</span>::<span class='ident'>spawn</span>(<span class='kw'>move</span> <span class='op'>||</span> {
     <span class='ident'>thread</span>::<span class='ident'>sleep_ms</span>(<span class='number'>150</span>);
@@ -96,14 +106,7 @@ jobs after calling <a href="#method.shutdown"><code>shutdown()</code></a> but be
     };
 });
 
-<span class='kw'>let</span> <span class='ident'>shared_tasks</span> <span class='op'>=</span> <span class='ident'>tasks</span>.<span class='ident'>clone</span>();
-<span class='ident'>thread</span>::<span class='ident'>spawn</span>(<span class='kw'>move</span> <span class='op'>||</span> {
-    <span class='ident'>thread</span>::<span class='ident'>sleep_ms</span>(<span class='number'>100</span>);
-    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>tasks</span> <span class='op'>=</span> <span class='ident'>shared_tasks</span>.<span class='ident'>lock</span>().<span class='ident'>unwrap</span>();
-    <span class='ident'>tasks</span>.<span class='ident'>shutdown</span>();
-});
-
-<span class='comment'>// Wait for the shutdown signal</span>
+<span class='comment'>// Block thread until shutdown is complete.</span>
 <span class='ident'>shutdown_rx</span>.<span class='ident'>recv</span>();
 
 <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;all workers stopped&quot;</span>);</pre>

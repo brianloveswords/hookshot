@@ -482,6 +482,9 @@
 <span id="440">440</span>
 <span id="441">441</span>
 <span id="442">442</span>
+<span id="443">443</span>
+<span id="444">444</span>
+<span id="445">445</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! A task manager for parallel queues that process tasks serially.</span>
 <span class='doccomment'>//!</span>
@@ -755,6 +758,16 @@
     <span class='doccomment'>///     tasks.add_task(&quot;$&quot;, important_task1);</span>
     <span class='doccomment'>/// });</span>
     <span class='doccomment'>///</span>
+    <span class='doccomment'>/// // Wait 100ms then signal a shutdown for task manager.</span>
+    <span class='doccomment'>/// let shared_tasks = tasks.clone();</span>
+    <span class='doccomment'>/// thread::spawn(move || {</span>
+    <span class='doccomment'>///     thread::sleep_ms(100);</span>
+    <span class='doccomment'>///     let mut tasks = shared_tasks.lock().unwrap();</span>
+    <span class='doccomment'>///     tasks.shutdown();</span>
+    <span class='doccomment'>/// });</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// // Wait 150ms then try to add a task. This will fail because the task</span>
+    <span class='doccomment'>/// // manager will have received a `shutdown()` call by this point.</span>
     <span class='doccomment'>/// let shared_tasks = tasks.clone();</span>
     <span class='doccomment'>/// thread::spawn(move || {</span>
     <span class='doccomment'>///     thread::sleep_ms(150);</span>
@@ -766,14 +779,7 @@
     <span class='doccomment'>///     };</span>
     <span class='doccomment'>/// });</span>
     <span class='doccomment'>///</span>
-    <span class='doccomment'>/// let shared_tasks = tasks.clone();</span>
-    <span class='doccomment'>/// thread::spawn(move || {</span>
-    <span class='doccomment'>///     thread::sleep_ms(100);</span>
-    <span class='doccomment'>///     let mut tasks = shared_tasks.lock().unwrap();</span>
-    <span class='doccomment'>///     tasks.shutdown();</span>
-    <span class='doccomment'>/// });</span>
-    <span class='doccomment'>///</span>
-    <span class='doccomment'>/// // Wait for the shutdown signal</span>
+    <span class='doccomment'>/// // Block thread until shutdown is complete.</span>
     <span class='doccomment'>/// shutdown_rx.recv();</span>
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// println!(&quot;all workers stopped&quot;);</span>
