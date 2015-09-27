@@ -85,11 +85,11 @@
 //!
 //! ## Graceful shutdowns
 //! ```
-//! use deployer::task_manager::{TaskManager, Runnable};
+//! # use deployer::task_manager::{TaskManager, Runnable};
 //! # use std::thread;
-//! use std::sync::{Arc, Mutex};
-//! use std::sync::mpsc::channel;
-//!
+//! # use std::sync::{Arc, Mutex};
+//! # use std::sync::mpsc::channel;
+//! #
 //! # fn event_handler<F>(name: &'static str, func: F)
 //! #     where F: FnOnce()+ Send + 'static {
 //! #         println!("adding event handler for {}", name);
@@ -101,33 +101,28 @@
 //! #     fn run(&mut self) { println!("task added") }
 //! # }
 //! # impl ImportantTask { fn new() -> ImportantTask { ImportantTask } }
+//! let (shutdown_tx, shutdown_rx) = channel();
+//! let task_manager = Arc::new(Mutex::new(TaskManager::new_with_lock(shutdown_tx)));
 //!
-//! let (sender, receiver) = channel();
-//! let task_manager = Arc::new(Mutex::new(TaskManager::new_with_lock(sender)));
+//! let shared_manager = task_manager.clone();
+//! event_handler("add_task", move || {
+//!     let mut locked_manager = shared_manager.lock().unwrap();
+//!     locked_manager.ensure_queue("q");
+//!     locked_manager.add_task("q", ImportantTask::new()).unwrap();
+//! });
 //!
-//! {
-//!     let shared_manager = task_manager.clone();
-//!     event_handler("add_task", move || {
-//!         let mut locked_manager = shared_manager.lock().unwrap();
-//!         locked_manager.ensure_queue("q");
-//!         locked_manager.add_task("q", ImportantTask::new()).unwrap();
-//!     });
-//! }
+//! let shared_manager = task_manager.clone();
+//! event_handler("shutdown", move || {
+//!     let mut locked_manager = shared_manager.lock().unwrap();
 //!
-//! {
-//!     let shared_manager = task_manager.clone();
-//!     event_handler("shutdown", move || {
-//!         let mut locked_manager = shared_manager.lock().unwrap();
-//!
-//!         // `shutdown()` lets each worker finish a final task if it's already
-//!         // working on one and once each worker is done it sends a message down
-//!         // the lock channel if one exists.
-//!         locked_manager.shutdown();
-//!     });
-//! }
+//!     // `shutdown()` lets each worker finish a final task if it's already
+//!     // working on one and once each worker is done it sends a message down
+//!     // the lock channel if one exists.
+//!     locked_manager.shutdown();
+//! });
 //!
 //! // This blocks until a call to `shutdown()` is completed.
-//! receiver.recv().unwrap();
+//! shutdown_rx.recv().unwrap();
 //! println!("task manager done");
 
 use std::collections::BTreeMap;
@@ -191,6 +186,8 @@ impl<'a, T> TaskManager<'a, T> where T: 'static + Runnable + Send {
         }
     }
 
+    /// Create a new TaskManager that takes a shutdown receiver which can be
+    /// used to block a thread until [`shutdown()`](#method.shutdown) is called.
     pub fn new_with_lock(lock: Sender<()>) -> TaskManager<'a, T> {
         TaskManager {
             queues: QueueMap::<T>::new(),
@@ -200,31 +197,32 @@ impl<'a, T> TaskManager<'a, T> where T: 'static + Runnable + Send {
         }
     }
 
-    /// Add a task to a queue. When the task is complete it will be sent over
-    /// the returned `Receiver`.
+    /// Add a task to a queue. When the task is complete it will be sent back
+    /// over the returned `Receiver`.
     ///
     /// # Failures
     ///
-    /// - `QueueMissing`: Could not find the queue. This will only happen if
-    /// an `add_task()` call happens before an `ensure_queue()` call for
-    /// that queue.
+    /// - `QueueMissing`: Could not find the queue. This will only happen if an
+    /// [`add_task()`](#method.add_task) call happens before an
+    /// [`ensure_queue()`](#method.ensure_queue) call for that queue.
     ///
     /// - `Shutdown`: Manager is not accepting new tasks at the moment. This
-    /// will happen if an `add_task()` call happens after a `shutdown()` but
-    /// before a `restart()`.
+    /// will happen if an [`add_task()`](#method.add_task) call happens after a
+    /// [`shutdown()`](#method.shutdown) but before a
+    /// [`restart()`](#method.restart).
     pub fn add_task(&mut self, queue_key: &'a str, task: T) -> Result<Receiver<T>, Error> {
         if self.stopped { return Err(Error::Shutdown) }
         let (task_tx, task_rx) = channel();
         {
             let mut locked_queue = match self.queues.get_mut(queue_key) {
-                // Safe unwrap: With the current implementation it's
-                // impossible for a lock to get poisoned. There is exactly
-                // one other spot where we acquire a lock: in the worker
-                // thread and the only thing we do is `pop_task`, an alias
-                // for `pop_front` on the underlying VecDeque, which cannot
-                // cause a thread panic. In this method we only do one thing
-                // while holding the lock, `push_task` (an alias for
-                // `push_back`) which also cannot cause a thread panic.
+                // Safe unwrap: With the current implementation it's impossible
+                // for a lock to get poisoned. There is exactly one other spot
+                // where we acquire a queue lock, in the worker thread, and the
+                // only thing we do is `pop_task`, an alias for `pop_front` on
+                // the underlying VecDeque, which cannot cause a thread
+                // panic. In this method we only do one thing while holding the
+                // lock, `push_task` (an alias for `push_back`) which also
+                // cannot cause a thread panic.
                 Some(queue_mutex) => queue_mutex.lock().unwrap(),
                 None => return Err(Error::QueueMissing),
             };
@@ -232,13 +230,12 @@ impl<'a, T> TaskManager<'a, T> where T: 'static + Runnable + Send {
         }
 
         // Safe unwrap: If the queue exists, a corresponding thread in the
-        // thread map is guaranteed to exist because both maps are private
-        // and we always create a thread map entry when we create a queue
-        // map entry.
+        // thread map is guaranteed to exist because both maps are private and
+        // we always create a thread map entry when we create a queue map entry.
         let worker_tx = self.get_channel(queue_key).unwrap();
 
-        // Safe unwrap: The worker thread doesn't perform any operations
-        // that can cause a panic.
+        // Safe unwrap: The worker thread doesn't perform any operations that
+        // can cause a panic.
         worker_tx.send(()).unwrap();
 
         Ok(task_rx)
@@ -247,8 +244,8 @@ impl<'a, T> TaskManager<'a, T> where T: 'static + Runnable + Send {
     #[allow(unused_must_use)]
     /// Signal worker threads to shut down after any active jobs and once they
     /// are all done send a signal down the shutdown lock channel. Trying to add
-    /// jobs after calling `shutdown()` but before calling `restart()` will
-    /// result in an `Error::Shutdown`.
+    /// jobs after calling [`shutdown()`](#method.shutdown) but before calling
+    /// [`restart()`](#method.restart) will result in an `Error::Shutdown`.
     ///
     /// # Examples
     ///
@@ -286,9 +283,9 @@ impl<'a, T> TaskManager<'a, T> where T: 'static + Runnable + Send {
     ///
     /// let shared_tasks = tasks.clone();
     /// thread::spawn(move || {
-    ///   thread::sleep_ms(100);
-    ///   let mut tasks = shared_tasks.lock().unwrap();
-    ///   tasks.shutdown();
+    ///     thread::sleep_ms(100);
+    ///     let mut tasks = shared_tasks.lock().unwrap();
+    ///     tasks.shutdown();
     /// });
     ///
     /// // Wait for the shutdown signal
@@ -299,7 +296,7 @@ impl<'a, T> TaskManager<'a, T> where T: 'static + Runnable + Send {
     pub fn shutdown(&mut self) {
         self.stopped = true;
         for key in self.queues.keys() {
-            // Remove thread join handle from threadmap, letting senders drop
+            // Remove thread join handle from threadmap, letting worker_tx drop
             // out of scope so the worker thread quits instead of picking a new
             // task then wait for the thread to finish.
             let handle = {
@@ -347,7 +344,6 @@ impl<'a, T> TaskManager<'a, T> where T: 'static + Runnable + Send {
         }
     }
 
-    // TODO: remove once we can use the `result` from the task run.
     #[allow(unused_must_use)]
     fn start_worker(&mut self, key: &'a str) {
         if self.stopped { return }
