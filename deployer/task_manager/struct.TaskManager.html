@@ -45,15 +45,15 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-2696' class='srclink' href='../../src/deployer/task_manager.rs.html#174-179' title='goto source code'>[src]</a></span></h1>
-<pre class='rust struct'>pub struct TaskManager&lt;'a, T&gt; <span class='where'>where T: 'static + <a class='trait' href='../../deployer/task_manager/trait.Runnable.html' title='deployer::task_manager::Runnable'>Runnable</a> + <a class='trait' href='http://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a></span> {
+        </span><a id='src-3094' class='srclink' href='../../src/deployer/task_manager.rs.html#177-182' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct TaskManager&lt;T&gt; <span class='where'>where T: 'static + <a class='trait' href='../../deployer/task_manager/trait.Runnable.html' title='deployer::task_manager::Runnable'>Runnable</a> + <a class='trait' href='http://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a></span> {
     // some fields omitted
-}</pre><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;'a, T&gt; <a class='struct' href='../../deployer/task_manager/struct.TaskManager.html' title='deployer::task_manager::TaskManager'>TaskManager</a>&lt;'a, T&gt; <span class='where'>where T: 'static + <a class='trait' href='../../deployer/task_manager/trait.Runnable.html' title='deployer::task_manager::Runnable'>Runnable</a> + <a class='trait' href='http://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a></span></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class='struct' href='../../deployer/task_manager/struct.TaskManager.html' title='deployer::task_manager::TaskManager'>TaskManager</a>&lt;'a, T&gt;</code></h4>
+}</pre><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;'a, T&gt; <a class='struct' href='../../deployer/task_manager/struct.TaskManager.html' title='deployer::task_manager::TaskManager'>TaskManager</a>&lt;T&gt; <span class='where'>where T: 'static + <a class='trait' href='../../deployer/task_manager/trait.Runnable.html' title='deployer::task_manager::Runnable'>Runnable</a> + <a class='trait' href='http://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a></span></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class='struct' href='../../deployer/task_manager/struct.TaskManager.html' title='deployer::task_manager::TaskManager'>TaskManager</a>&lt;T&gt;</code></h4>
 <div class='docblock'><p>Create a new TaskManager</p>
-</div><h4 id='method.new_with_lock' class='method'><code>fn <a href='#method.new_with_lock' class='fnname'>new_with_lock</a>(lock: <a class='struct' href='http://doc.rust-lang.org/nightly/std/sync/mpsc/struct.Sender.html' title='std::sync::mpsc::Sender'>Sender</a>&lt;<a href='http://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;) -&gt; <a class='struct' href='../../deployer/task_manager/struct.TaskManager.html' title='deployer::task_manager::TaskManager'>TaskManager</a>&lt;'a, T&gt;</code></h4>
+</div><h4 id='method.new_with_lock' class='method'><code>fn <a href='#method.new_with_lock' class='fnname'>new_with_lock</a>(lock: <a class='struct' href='http://doc.rust-lang.org/nightly/std/sync/mpsc/struct.Sender.html' title='std::sync::mpsc::Sender'>Sender</a>&lt;<a href='http://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;) -&gt; <a class='struct' href='../../deployer/task_manager/struct.TaskManager.html' title='deployer::task_manager::TaskManager'>TaskManager</a>&lt;T&gt;</code></h4>
 <div class='docblock'><p>Create a new TaskManager that takes a shutdown receiver which can be
 used to block a thread until <a href="#method.shutdown"><code>shutdown()</code></a> is called.</p>
-</div><h4 id='method.add_task' class='method'><code>fn <a href='#method.add_task' class='fnname'>add_task</a>(&amp;mut self, queue_key: &amp;'a <a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, task: T) -&gt; <a class='enum' href='http://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='struct' href='http://doc.rust-lang.org/nightly/std/sync/mpsc/struct.Receiver.html' title='std::sync::mpsc::Receiver'>Receiver</a>&lt;T&gt;, <a class='enum' href='../../deployer/task_manager/enum.Error.html' title='deployer::task_manager::Error'>Error</a>&gt;</code></h4>
+</div><h4 id='method.add_task' class='method'><code>fn <a href='#method.add_task' class='fnname'>add_task</a>(&amp;mut self, queue_key: &amp;<a class='struct' href='../../deployer/task_manager/struct.QueueKey.html' title='deployer::task_manager::QueueKey'>QueueKey</a>, task: T) -&gt; <a class='enum' href='http://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='struct' href='http://doc.rust-lang.org/nightly/std/sync/mpsc/struct.Receiver.html' title='std::sync::mpsc::Receiver'>Receiver</a>&lt;T&gt;, <a class='enum' href='../../deployer/task_manager/enum.Error.html' title='deployer::task_manager::Error'>Error</a>&gt;</code></h4>
 <div class='docblock'><p>Add a task to a queue. When the task is complete it will be sent back
 over the returned <code>Receiver</code>.</p>
 
@@ -82,8 +82,8 @@ jobs after calling <a href="#method.shutdown"><code>shutdown()</code></a> but be
 <span class='kw'>let</span> <span class='ident'>shared_tasks</span> <span class='op'>=</span> <span class='ident'>tasks</span>.<span class='ident'>clone</span>();
 <span class='ident'>thread</span>::<span class='ident'>spawn</span>(<span class='kw'>move</span> <span class='op'>||</span> {
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>tasks</span> <span class='op'>=</span> <span class='ident'>shared_tasks</span>.<span class='ident'>lock</span>().<span class='ident'>unwrap</span>();
-    <span class='ident'>tasks</span>.<span class='ident'>ensure_queue</span>(<span class='string'>&quot;$&quot;</span>);
-    <span class='ident'>tasks</span>.<span class='ident'>add_task</span>(<span class='string'>&quot;$&quot;</span>, <span class='ident'>important_task1</span>);
+    <span class='kw'>let</span> <span class='ident'>queue</span> <span class='op'>=</span> <span class='ident'>tasks</span>.<span class='ident'>ensure_queue</span>(<span class='ident'>String</span>::<span class='ident'>from</span>(<span class='string'>&quot;$&quot;</span>));
+    <span class='ident'>tasks</span>.<span class='ident'>add_task</span>(<span class='kw-2'>&amp;</span><span class='ident'>queue</span>, <span class='ident'>important_task1</span>);
 });
 
 <span class='comment'>// Wait 100ms then signal a shutdown for task manager.</span>
@@ -100,7 +100,8 @@ jobs after calling <a href="#method.shutdown"><code>shutdown()</code></a> but be
 <span class='ident'>thread</span>::<span class='ident'>spawn</span>(<span class='kw'>move</span> <span class='op'>||</span> {
     <span class='ident'>thread</span>::<span class='ident'>sleep_ms</span>(<span class='number'>150</span>);
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>tasks</span> <span class='op'>=</span> <span class='ident'>shared_tasks</span>.<span class='ident'>lock</span>().<span class='ident'>unwrap</span>();
-    <span class='kw'>match</span> <span class='ident'>tasks</span>.<span class='ident'>add_task</span>(<span class='string'>&quot;$&quot;</span>, <span class='ident'>important_task2</span>) {
+    <span class='kw'>let</span> <span class='ident'>queue</span> <span class='op'>=</span> <span class='ident'>tasks</span>.<span class='ident'>ensure_queue</span>(<span class='ident'>String</span>::<span class='ident'>from</span>(<span class='string'>&quot;$&quot;</span>));
+    <span class='kw'>match</span> <span class='ident'>tasks</span>.<span class='ident'>add_task</span>(<span class='kw-2'>&amp;</span><span class='ident'>queue</span>, <span class='ident'>important_task2</span>) {
          <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>Shutdown</span>) <span class='op'>=&gt;</span> <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;queue was shut down&quot;</span>),
          <span class='comment'>// ...</span>
     };
@@ -112,8 +113,9 @@ jobs after calling <a href="#method.shutdown"><code>shutdown()</code></a> but be
 <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;all workers stopped&quot;</span>);</pre>
 </div><h4 id='method.restart' class='method'><code>fn <a href='#method.restart' class='fnname'>restart</a>(&amp;mut self)</code></h4>
 <div class='docblock'><p>Restart all queue workers and remove <code>stopped</code> flag.</p>
-</div><h4 id='method.ensure_queue' class='method'><code>fn <a href='#method.ensure_queue' class='fnname'>ensure_queue</a>(&amp;mut self, queue_key: &amp;'a <a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a href='http://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
-<div class='docblock'><p>Create a queue only if one doesn&#39;t already exist with that key</p>
+</div><h4 id='method.ensure_queue' class='method'><code>fn <a href='#method.ensure_queue' class='fnname'>ensure_queue</a>(&amp;mut self, queue_key: <a class='struct' href='http://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>) -&gt; <a class='struct' href='../../deployer/task_manager/struct.QueueKey.html' title='deployer::task_manager::QueueKey'>QueueKey</a></code></h4>
+<div class='docblock'><p>Create a queue only if one doesn&#39;t already exist with that key. Returns
+the QueueKey for that queue.</p>
 </div></div></section>
     <section id='search' class="content hidden"></section>
 

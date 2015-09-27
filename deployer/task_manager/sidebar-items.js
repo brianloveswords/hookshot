@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["Error",""]],"struct":[["TaskManager",""]],"trait":[["Runnable","Types that are able to be added to a TaskManager queue."]]});
+initSidebarItems({"enum":[["Error",""]],"struct":[["QueueKey",""],["TaskManager",""]],"trait":[["Runnable","Types that are able to be added to a TaskManager queue."]]});
