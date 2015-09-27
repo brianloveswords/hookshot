@@ -11,3 +11,8 @@ rustc-serialize = "*"
 regex = "*"
 uuid = "*"
 tempdir = "*"
+
+[[bin]]
+doc = false
+name = "deployer"
+path = "src/main.rs"
