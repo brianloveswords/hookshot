@@ -45,14 +45,21 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-1919' class='srclink' href='../../src/deployer/git.rs.html#7-12' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-1919' class='srclink' href='../../src/deployer/git.rs.html#15-26' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Git&lt;'a&gt; {
     // some fields omitted
-}</pre><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;'a&gt; <a class='struct' href='../../deployer/git/struct.Git.html' title='deployer::git::Git'>Git</a>&lt;'a&gt;</code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='enum' href='http://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='struct' href='http://doc.rust-lang.org/nightly/std/process/struct.Output.html' title='std::process::Output'>Output</a>, <a class='struct' href='../../deployer/error/struct.CommandError.html' title='deployer::error::CommandError'>CommandError</a>&gt;</code></h4>
-<h4 id='method.ensure_cloned' class='method'><code>fn <a href='#method.ensure_cloned' class='fnname'>ensure_cloned</a>(&amp;self) -&gt; <a class='enum' href='http://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a href='http://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>, <a class='struct' href='../../deployer/error/struct.CommandError.html' title='deployer::error::CommandError'>CommandError</a>&gt;</code></h4>
-<h4 id='method.fetch' class='method'><code>fn <a href='#method.fetch' class='fnname'>fetch</a>(&amp;self) -&gt; <a class='enum' href='http://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='struct' href='http://doc.rust-lang.org/nightly/std/process/struct.Output.html' title='std::process::Output'>Output</a>, <a class='struct' href='../../deployer/error/struct.CommandError.html' title='deployer::error::CommandError'>CommandError</a>&gt;</code></h4>
-<h4 id='method.checkout' class='method'><code>fn <a href='#method.checkout' class='fnname'>checkout</a>(&amp;self, commitish: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='enum' href='http://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='struct' href='http://doc.rust-lang.org/nightly/std/process/struct.Output.html' title='std::process::Output'>Output</a>, <a class='struct' href='../../deployer/error/struct.CommandError.html' title='deployer::error::CommandError'>CommandError</a>&gt;</code></h4>
-</div></section>
+}</pre><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;'a&gt; <a class='struct' href='../../deployer/git/struct.Git.html' title='deployer::git::Git'>Git</a>&lt;'a&gt;</code></h3><div class='impl-items'><h4 id='method.ensure_cloned' class='method'><code>fn <a href='#method.ensure_cloned' class='fnname'>ensure_cloned</a>(&amp;self) -&gt; <a class='enum' href='http://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a href='http://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>, <a class='struct' href='../../deployer/error/struct.CommandError.html' title='deployer::error::CommandError'>CommandError</a>&gt;</code></h4>
+<div class='docblock'><p>Check if a directory exists and clone if it doesn&#39;t. This is currently
+very dumb in the sense that it only checks if a directory exists, not
+whether it&#39;s the git repo represented by <code>self</code> or even whether it&#39;s a
+git repository at all.</p>
+
+<p>This is the cli equivalent of doing: <code>test -d {local_path} || git clone --depth=1 --single-branch -b {self.branch} {remote_path} {local_path}</code></p>
+</div><h4 id='method.fetch' class='method'><code>fn <a href='#method.fetch' class='fnname'>fetch</a>(&amp;self) -&gt; <a class='enum' href='http://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='struct' href='http://doc.rust-lang.org/nightly/std/process/struct.Output.html' title='std::process::Output'>Output</a>, <a class='struct' href='../../deployer/error/struct.CommandError.html' title='deployer::error::CommandError'>CommandError</a>&gt;</code></h4>
+<div class='docblock'><p>Fetch from the upstream. The same as doing <code>git fetch</code>.</p>
+</div><h4 id='method.checkout' class='method'><code>fn <a href='#method.checkout' class='fnname'>checkout</a>(&amp;self, sha: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='enum' href='http://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='struct' href='http://doc.rust-lang.org/nightly/std/process/struct.Output.html' title='std::process::Output'>Output</a>, <a class='struct' href='../../deployer/error/struct.CommandError.html' title='deployer::error::CommandError'>CommandError</a>&gt;</code></h4>
+<div class='docblock'><p>Check out a specific sha. The equivalent of doing <code>git checkout {sha}</code>.</p>
+</div></div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
