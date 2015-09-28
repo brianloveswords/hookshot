@@ -1,3 +1,9 @@
+//! A library for interacting with the git cli.
+//!
+//! This library provides an interface for operating on git repository. It is
+//! not intended to provide a 1-1 interface to the git cli but instead provide a
+//! minimal interface to create the smallest checkout for a specific sha.
+
 use std::process::{Command, Output};
 use std::path::Path;
 use ::verified_path::directory_exists;
@@ -5,18 +11,27 @@ use ::verified_path::directory_exists;
 use ::error::CommandError;
 
 pub struct Git<'a> {
-    owner: &'a str,
-    repo_name: &'a str,
-    origin: &'a str,
-    checkout_root: &'a Path,
+    /// Remote path to the repository. This can be a filesystem path if the
+    /// `file://` protocol is used.
+    pub remote_path: String,
+
+    /// Local path of where to clone the repository.
+    pub local_path: &'a Path,
+
+    /// Branch to check out. We require this so we can create the smallest
+    /// checkout possible.
+    pub branch: String,
 }
+
 impl<'a> Git<'a> {
-    pub fn clone(&self) -> Result<Output, CommandError> {
-        let local_path = self.checkout_root.join(self.prefixed_repo_name());
+    fn clone(&self) -> Result<Output, CommandError> {
         let result = match Command::new("git")
             .arg("clone")
-            .arg(self.origin)
-            .arg(local_path)
+            .arg("--depth=1")
+            .arg("--single-branch")
+            .arg("-b").arg(&self.branch)
+            .arg(&self.remote_path)
+            .arg(self.local_path)
             .output() {
                 Ok(r) => r,
                 Err(e) => return Err(CommandError {
@@ -36,9 +51,15 @@ impl<'a> Git<'a> {
         }
     }
 
+    /// Check if a directory exists and clone if it doesn't. This is currently
+    /// very dumb in the sense that it only checks if a directory exists, not
+    /// whether it's the git repo represented by `self` or even whether it's a
+    /// git repository at all.
+    ///
+    /// This is the cli equivalent of doing: `test -d {local_path} || git clone
+    /// --depth=1 --single-branch -b {self.branch} {remote_path} {local_path}`
     pub fn ensure_cloned(&self) -> Result<bool, CommandError> {
-        let local_path = self.checkout_root.join(self.prefixed_repo_name());
-        if !directory_exists(&local_path) {
+        if !directory_exists(&self.local_path) {
             return match self.clone() {
                 Ok(_) => Ok(true),
                 Err(e) => Err(e),
@@ -48,9 +69,9 @@ impl<'a> Git<'a> {
         Ok(false)
     }
 
+    /// Fetch from the upstream. The same as doing `git fetch`.
     pub fn fetch(&self) -> Result<Output, CommandError> {
-        let local_path = self.checkout_root.join(self.prefixed_repo_name());
-        if !directory_exists(&local_path) {
+        if !directory_exists(&self.local_path) {
             return Err(CommandError {
                 desc: "could not change to directory (repo not cloned?)",
                 output: None,
@@ -58,7 +79,7 @@ impl<'a> Git<'a> {
             })
         }
         let result = match Command::new("git")
-            .current_dir(local_path)
+            .current_dir(&self.local_path)
             .arg("fetch")
             .output() {
                 Ok(r) => r,
@@ -79,12 +100,12 @@ impl<'a> Git<'a> {
         }
     }
 
-    pub fn checkout(&self, commitish: &str) -> Result<Output, CommandError> {
-        let local_path = self.checkout_root.join(self.prefixed_repo_name());
+    /// Check out a specific sha. The equivalent of doing `git checkout {sha}`.
+    pub fn checkout(&self, sha: &str) -> Result<Output, CommandError> {
         let result = match Command::new("git")
-            .current_dir(local_path)
+            .current_dir(self.local_path)
             .arg("checkout")
-            .arg(commitish)
+            .arg(sha)
             .output() {
                 Ok(r) => r,
                 Err(e) => return Err(CommandError {
@@ -103,12 +124,7 @@ impl<'a> Git<'a> {
             })
         }
     }
-
-    fn prefixed_repo_name(&self) -> String {
-        format!("{}.{}", self.owner, self.repo_name)
-    }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -120,27 +136,24 @@ mod tests {
 
     #[test]
     fn test_git_clone() {
-        let tmpdir = TempDir::new("deployer-git-test").unwrap();
+        let local_path = TempDir::new("deployer-git-test").unwrap().path().join("test_repo");
         let git = Git {
-            owner: "brian",
-            repo_name: "creamsickle",
-            origin: "src/test/test_repo",
-            checkout_root: tmpdir.path(),
+            branch: String::from("master"),
+            remote_path: String::from("src/test/test_repo"),
+            local_path: local_path.as_path(),
         };
-        let checkout_path = git.checkout_root.join(git.prefixed_repo_name());
         assert!(git.clone().is_ok());
-        assert!(directory_exists(&checkout_path));
+        assert!(directory_exists(&local_path));
         assert!(git.clone().is_err());
     }
 
     #[test]
     fn test_git_ensure_cloned() {
-        let tmpdir = TempDir::new("deployer-git-test").unwrap();
+        let local_path = TempDir::new("deployer-git-test").unwrap().path().join("test_repo");
         let git = Git {
-            owner: "brian",
-            repo_name: "creamsickle",
-            origin: "src/test/test_repo",
-            checkout_root: tmpdir.path(),
+            branch: String::from("master"),
+            remote_path: String::from("src/test/test_repo"),
+            local_path: local_path.as_path(),
         };
 
         let first_run = git.ensure_cloned();
@@ -159,12 +172,11 @@ mod tests {
 
     #[test]
     fn test_git_fetch() {
-        let tmpdir = TempDir::new("deployer-git-test").unwrap();
+        let local_path = TempDir::new("deployer-git-test").unwrap().path().join("test_repo");
         let git = Git {
-            owner: "brian",
-            repo_name: "creamsickle",
-            origin: "src/test/test_repo",
-            checkout_root: tmpdir.path(),
+            branch: String::from("master"),
+            remote_path: String::from("src/test/test_repo"),
+            local_path: local_path.as_path(),
         };
 
         assert!(git.clone().is_ok());
@@ -174,24 +186,22 @@ mod tests {
 
     #[test]
     fn test_git_fetch_not_cloned() {
-        let tmpdir = TempDir::new("deployer-git-test").unwrap();
+        let local_path = TempDir::new("deployer-git-test").unwrap().path().join("test_repo");
         let git = Git {
-            owner: "brian",
-            repo_name: "creamsickle",
-            origin: "src/test/test_repo",
-            checkout_root: tmpdir.path(),
+            branch: String::from("master"),
+            remote_path: String::from("src/test/test_repo"),
+            local_path: local_path.as_path(),
         };
         assert!(git.fetch().is_err());
     }
 
     #[test]
     fn test_git_checkout() {
-        let tmpdir = TempDir::new("deployer-git-test").unwrap();
+        let local_path = TempDir::new("deployer-git-test").unwrap().path().join("test_repo");
         let git = Git {
-            owner: "brian",
-            repo_name: "creamsickle",
-            origin: "src/test/test_repo",
-            checkout_root: tmpdir.path(),
+            branch: String::from("master"),
+            remote_path: String::from("src/test/test_repo"),
+            local_path: local_path.as_path(),
         };
 
         assert!(git.ensure_cloned().is_ok());
