@@ -1,4 +1,6 @@
 use toml;
+use std::fs::File;
+use std::io::Read;
 use std::path::Path;
 use std::collections::BTreeMap;
 use std::string::ToString;
@@ -7,17 +9,7 @@ use ::verified_path::VerifiedPath;
 use ::error::Error;
 
 // TODO: use https://crates.io/crates/url instead
-pub type URL = String;
-pub type BranchConfigMap<'a> = BTreeMap<String, BranchConfig<'a>>;
 
-#[derive(Debug)]
-pub struct BranchConfig<'a> {
-    method: Option<DeployMethod>,
-    task: Option<MakeTask<'a>>,
-    playbook: Option<VerifiedPath>,
-    inventory: Option<VerifiedPath>,
-    notify_url: Option<URL>,
-}
 
 #[derive(Debug, Clone)]
 pub enum DeployMethod {
@@ -34,6 +26,26 @@ impl ToString for DeployMethod {
 }
 
 #[derive(Debug)]
+pub struct BranchConfig<'a> {
+    method: Option<DeployMethod>,
+    task: Option<MakeTask<'a>>,
+    playbook: Option<VerifiedPath>,
+    inventory: Option<VerifiedPath>,
+    notify_url: Option<URL>,
+}
+impl<'a> BranchConfig<'a> {
+    pub fn task(&self) -> Option<&MakeTask<'a>> {
+        match self.task {
+            Some(ref t) => Some(&t),
+            None => None,
+        }
+    }
+}
+
+pub type BranchConfigMap<'a> = BTreeMap<String, BranchConfig<'a>>;
+pub type URL = String;
+
+#[derive(Debug)]
 pub struct RepoConfig<'a> {
     default_method: DeployMethod,
     default_task: Option<MakeTask<'a>>,
@@ -44,6 +56,29 @@ pub struct RepoConfig<'a> {
 }
 
 impl<'a> RepoConfig<'a> {
+    pub fn lookup_branch(&self, name: &String) -> Option<&BranchConfig<'a>> {
+        self.branches.get(name)
+    }
+
+    pub fn load(project_root: &'a Path) -> Result<RepoConfig<'a>, Error> {
+        let config_path = project_root.join(".deployer.conf");
+        let mut file = match File::open(&config_path) {
+            Ok(file) => file,
+            Err(_) => return Err(Error {
+                desc: "could not open deployer configuration",
+                subject: Some(String::from(config_path.to_str().unwrap())),
+            }),
+        };
+        let mut contents = String::new();
+        if file.read_to_string(&mut contents).is_err() {
+            return Err(Error {
+                desc: "could not read file contents",
+                subject: Some(String::from(config_path.to_str().unwrap())),
+            })
+        };
+        Self::from_str(&contents, project_root)
+    }
+
     pub fn from_str(string: &str, project_root: &'a Path) -> Result<RepoConfig<'a>, Error> {
         let root = match toml::Parser::new(string).parse() {
             Some(value) => value,
@@ -233,27 +268,27 @@ mod tests {
 
     #[test]
     fn test_valid_configuration() {
-        let toml = r#"
-            [defaults]
-            method = "ansible"
-            task = "deploy"
-            playbook = "ansible/deploy.yml"
+        // let toml = r#"
+        //     [defaults]
+        //     method = "ansible"
+        //     task = "deploy"
+        //     playbook = "ansible/deploy.yml"
 
-            [branches.production]
-            playbook = "ansible/production.yml"
-            inventory = "ansible/inventory/production"
+        //     [branches.production]
+        //     playbook = "ansible/production.yml"
+        //     inventory = "ansible/inventory/production"
 
-            [branches.staging]
-            inventory = "ansible/inventory/staging"
-            notify_url = "http://example.org"
+        //     [branches.staging]
+        //     inventory = "ansible/inventory/staging"
+        //     notify_url = "http://example.org"
 
-            [branches.brian-test-branch]
-            method = "makefile"
-            task = "self-deploy"
-        "#;
+        //     [branches.brian-test-branch]
+        //     method = "makefile"
+        //     task = "self-deploy"
+        // "#;
 
         let project_root = Path::new("./src/test/repo_config");
-        let config = RepoConfig::from_str(toml, project_root).unwrap();
+        let config = RepoConfig::load(project_root).unwrap();
         println!("{:?}", config);
 
         assert_eq!(config.default_method.to_string(), "ansible");
