@@ -251,16 +251,12 @@
 <span id="209">209</span>
 <span id="210">210</span>
 <span id="211">211</span>
-<span id="212">212</span>
-<span id="213">213</span>
 </pre><pre class='rust '>
-<span class='doccomment'>//!</span>
 <span class='doccomment'>//! A library for interacting with the git cli.</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! This library provides an interface for operating on git repository. It is</span>
 <span class='doccomment'>//! not intended to provide a 1-1 interface to the git cli but instead provide a</span>
 <span class='doccomment'>//! minimal interface to create the smallest checkout for a specific sha.</span>
-<span class='doccomment'>//!</span>
 
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>process</span>::{<span class='ident'>Command</span>, <span class='ident'>Output</span>};
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>path</span>::<span class='ident'>Path</span>;
@@ -271,14 +267,14 @@
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Git</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> {
     <span class='doccomment'>/// Remote path to the repository. This can be a filesystem path if the</span>
     <span class='doccomment'>/// `file://` protocol is used.</span>
-    <span class='ident'>remote_path</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>str</span>,
+    <span class='kw'>pub</span> <span class='ident'>remote_path</span>: <span class='ident'>String</span>,
 
     <span class='doccomment'>/// Local path of where to clone the repository.</span>
-    <span class='ident'>local_path</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>Path</span>,
+    <span class='kw'>pub</span> <span class='ident'>local_path</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>Path</span>,
 
     <span class='doccomment'>/// Branch to check out. We require this so we can create the smallest</span>
     <span class='doccomment'>/// checkout possible.</span>
-    <span class='ident'>branch</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>str</span>,
+    <span class='kw'>pub</span> <span class='ident'>branch</span>: <span class='ident'>String</span>,
 }
 <span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> <span class='ident'>Git</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> {
     <span class='kw'>fn</span> <span class='ident'>clone</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Output</span>, <span class='ident'>CommandError</span><span class='op'>&gt;</span> {
@@ -286,8 +282,8 @@
             .<span class='ident'>arg</span>(<span class='string'>&quot;clone&quot;</span>)
             .<span class='ident'>arg</span>(<span class='string'>&quot;--depth=1&quot;</span>)
             .<span class='ident'>arg</span>(<span class='string'>&quot;--single-branch&quot;</span>)
-            .<span class='ident'>arg</span>(<span class='string'>&quot;-b&quot;</span>).<span class='ident'>arg</span>(<span class='self'>self</span>.<span class='ident'>branch</span>)
-            .<span class='ident'>arg</span>(<span class='self'>self</span>.<span class='ident'>remote_path</span>)
+            .<span class='ident'>arg</span>(<span class='string'>&quot;-b&quot;</span>).<span class='ident'>arg</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>branch</span>)
+            .<span class='ident'>arg</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>remote_path</span>)
             .<span class='ident'>arg</span>(<span class='self'>self</span>.<span class='ident'>local_path</span>)
             .<span class='ident'>output</span>() {
                 <span class='prelude-val'>Ok</span>(<span class='ident'>r</span>) <span class='op'>=&gt;</span> <span class='ident'>r</span>,
@@ -396,8 +392,8 @@
     <span class='kw'>fn</span> <span class='ident'>test_git_clone</span>() {
         <span class='kw'>let</span> <span class='ident'>local_path</span> <span class='op'>=</span> <span class='ident'>TempDir</span>::<span class='ident'>new</span>(<span class='string'>&quot;deployer-git-test&quot;</span>).<span class='ident'>unwrap</span>().<span class='ident'>path</span>().<span class='ident'>join</span>(<span class='string'>&quot;test_repo&quot;</span>);
         <span class='kw'>let</span> <span class='ident'>git</span> <span class='op'>=</span> <span class='ident'>Git</span> {
-            <span class='ident'>branch</span>: <span class='string'>&quot;master&quot;</span>,
-            <span class='ident'>remote_path</span>: <span class='string'>&quot;src/test/test_repo&quot;</span>,
+            <span class='ident'>branch</span>: <span class='ident'>String</span>::<span class='ident'>from</span>(<span class='string'>&quot;master&quot;</span>),
+            <span class='ident'>remote_path</span>: <span class='ident'>String</span>::<span class='ident'>from</span>(<span class='string'>&quot;src/test/test_repo&quot;</span>),
             <span class='ident'>local_path</span>: <span class='ident'>local_path</span>.<span class='ident'>as_path</span>(),
         };
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>git</span>.<span class='ident'>clone</span>().<span class='ident'>is_ok</span>());
@@ -409,8 +405,8 @@
     <span class='kw'>fn</span> <span class='ident'>test_git_ensure_cloned</span>() {
         <span class='kw'>let</span> <span class='ident'>local_path</span> <span class='op'>=</span> <span class='ident'>TempDir</span>::<span class='ident'>new</span>(<span class='string'>&quot;deployer-git-test&quot;</span>).<span class='ident'>unwrap</span>().<span class='ident'>path</span>().<span class='ident'>join</span>(<span class='string'>&quot;test_repo&quot;</span>);
         <span class='kw'>let</span> <span class='ident'>git</span> <span class='op'>=</span> <span class='ident'>Git</span> {
-            <span class='ident'>branch</span>: <span class='string'>&quot;master&quot;</span>,
-            <span class='ident'>remote_path</span>: <span class='string'>&quot;src/test/test_repo&quot;</span>,
+            <span class='ident'>branch</span>: <span class='ident'>String</span>::<span class='ident'>from</span>(<span class='string'>&quot;master&quot;</span>),
+            <span class='ident'>remote_path</span>: <span class='ident'>String</span>::<span class='ident'>from</span>(<span class='string'>&quot;src/test/test_repo&quot;</span>),
             <span class='ident'>local_path</span>: <span class='ident'>local_path</span>.<span class='ident'>as_path</span>(),
         };
 
@@ -432,8 +428,8 @@
     <span class='kw'>fn</span> <span class='ident'>test_git_fetch</span>() {
         <span class='kw'>let</span> <span class='ident'>local_path</span> <span class='op'>=</span> <span class='ident'>TempDir</span>::<span class='ident'>new</span>(<span class='string'>&quot;deployer-git-test&quot;</span>).<span class='ident'>unwrap</span>().<span class='ident'>path</span>().<span class='ident'>join</span>(<span class='string'>&quot;test_repo&quot;</span>);
         <span class='kw'>let</span> <span class='ident'>git</span> <span class='op'>=</span> <span class='ident'>Git</span> {
-            <span class='ident'>branch</span>: <span class='string'>&quot;master&quot;</span>,
-            <span class='ident'>remote_path</span>: <span class='string'>&quot;src/test/test_repo&quot;</span>,
+            <span class='ident'>branch</span>: <span class='ident'>String</span>::<span class='ident'>from</span>(<span class='string'>&quot;master&quot;</span>),
+            <span class='ident'>remote_path</span>: <span class='ident'>String</span>::<span class='ident'>from</span>(<span class='string'>&quot;src/test/test_repo&quot;</span>),
             <span class='ident'>local_path</span>: <span class='ident'>local_path</span>.<span class='ident'>as_path</span>(),
         };
 
@@ -446,8 +442,8 @@
     <span class='kw'>fn</span> <span class='ident'>test_git_fetch_not_cloned</span>() {
         <span class='kw'>let</span> <span class='ident'>local_path</span> <span class='op'>=</span> <span class='ident'>TempDir</span>::<span class='ident'>new</span>(<span class='string'>&quot;deployer-git-test&quot;</span>).<span class='ident'>unwrap</span>().<span class='ident'>path</span>().<span class='ident'>join</span>(<span class='string'>&quot;test_repo&quot;</span>);
         <span class='kw'>let</span> <span class='ident'>git</span> <span class='op'>=</span> <span class='ident'>Git</span> {
-            <span class='ident'>branch</span>: <span class='string'>&quot;master&quot;</span>,
-            <span class='ident'>remote_path</span>: <span class='string'>&quot;src/test/test_repo&quot;</span>,
+            <span class='ident'>branch</span>: <span class='ident'>String</span>::<span class='ident'>from</span>(<span class='string'>&quot;master&quot;</span>),
+            <span class='ident'>remote_path</span>: <span class='ident'>String</span>::<span class='ident'>from</span>(<span class='string'>&quot;src/test/test_repo&quot;</span>),
             <span class='ident'>local_path</span>: <span class='ident'>local_path</span>.<span class='ident'>as_path</span>(),
         };
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>git</span>.<span class='ident'>fetch</span>().<span class='ident'>is_err</span>());
@@ -457,8 +453,8 @@
     <span class='kw'>fn</span> <span class='ident'>test_git_checkout</span>() {
         <span class='kw'>let</span> <span class='ident'>local_path</span> <span class='op'>=</span> <span class='ident'>TempDir</span>::<span class='ident'>new</span>(<span class='string'>&quot;deployer-git-test&quot;</span>).<span class='ident'>unwrap</span>().<span class='ident'>path</span>().<span class='ident'>join</span>(<span class='string'>&quot;test_repo&quot;</span>);
         <span class='kw'>let</span> <span class='ident'>git</span> <span class='op'>=</span> <span class='ident'>Git</span> {
-            <span class='ident'>branch</span>: <span class='string'>&quot;master&quot;</span>,
-            <span class='ident'>remote_path</span>: <span class='string'>&quot;src/test/test_repo&quot;</span>,
+            <span class='ident'>branch</span>: <span class='ident'>String</span>::<span class='ident'>from</span>(<span class='string'>&quot;master&quot;</span>),
+            <span class='ident'>remote_path</span>: <span class='ident'>String</span>::<span class='ident'>from</span>(<span class='string'>&quot;src/test/test_repo&quot;</span>),
             <span class='ident'>local_path</span>: <span class='ident'>local_path</span>.<span class='ident'>as_path</span>(),
         };
 
