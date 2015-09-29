@@ -1,6 +1,7 @@
 doc: doc-site test
 	@cargo doc
-	@cp -r target/doc/* doc-site
+	@rm -rf ./doc-site/*
+	@cp -r ./target/doc/* doc-site
 	@(cd doc-site											&& \
 		git pull												&& \
 		git add *												&& \
@@ -13,7 +14,16 @@ doc-site:
 test: src/test/test_repo
 	cargo test
 
+release:
+	cargo build --release
+
+repack-test-repo:
+	cd src/test && tar -czf test_repo.tgz test_repo
+
 src/test/test_repo:
 	cd src/test && tar -xzf test_repo.tgz
+
+test-hook:
+	echo `date` >> messages.txt
 
 .PHONY: test docs

@@ -1,3 +1,4 @@
+extern crate hyper;
 extern crate iron;
 extern crate openssl;
 extern crate regex;
@@ -8,11 +9,10 @@ extern crate uuid;
 pub mod config;
 pub mod error;
 pub mod git;
-pub mod task_manager;
 pub mod make_task;
 pub mod message;
 pub mod repo_config;
 pub mod server_config;
 pub mod signature;
+pub mod task_manager;
 pub mod verified_path;
-pub mod webhook_message;

@@ -4,7 +4,7 @@ use openssl::crypto::hmac::hmac;
 use std::string::ToString;
 use std::fmt;
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone, Copy)]
 pub enum HashType {
     MD5,
     SHA1,
@@ -15,16 +15,16 @@ pub enum HashType {
     RIPEMD160,
 }
 impl HashType {
-    pub fn from_str(hasher: &str) -> HashType {
+    pub fn from_str(hasher: &str) -> Option<HashType> {
         match hasher {
-            "md5" => HashType::MD5,
-            "sha1" => HashType::SHA1,
-            "sha224" => HashType::SHA224,
-            "sha256" => HashType::SHA256,
-            "sha384" => HashType::SHA384,
-            "sha512" => HashType::SHA512,
-            "ripemd160" => HashType::RIPEMD160,
-            _ => unimplemented!(),
+            "md5" => Some(HashType::MD5),
+            "sha1" => Some(HashType::SHA1),
+            "sha224" => Some(HashType::SHA224),
+            "sha256" => Some(HashType::SHA256),
+            "sha384" => Some(HashType::SHA384),
+            "sha512" => Some(HashType::SHA512),
+            "ripemd160" => Some(HashType::RIPEMD160),
+            _ => None,
         }
     }
     fn to_openssl(&self) -> OpenSSLType {
@@ -61,29 +61,38 @@ fn bytes_to_hex(bytes: &Vec<u8>) -> String {
     hex_string
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub struct Signature {
     alg: HashType,
     hex: String,
 }
 impl Signature {
-    pub fn from(sig: &str) -> Option<Signature> {
+    pub fn from(sig: String) -> Option<Signature> {
         let re = Regex::new(r"^([:word:]+)=([:xdigit:]+)$").unwrap();
 
-        match re.captures(sig) {
-            None => None,
-            Some(caps) => {
-                let hash_type = HashType::from_str(caps.at(1).unwrap());
-                let hex_string = caps.at(2).unwrap();
-                Some(Signature {alg: hash_type, hex: String::from(hex_string) })
-            }
+        let (hash, hex) = match re.captures(&sig) {
+            None => return None,
+            Some(caps) => match (caps.at(1), caps.at(2)) {
+                (Some(hash), Some(hex)) => (hash, hex),
+                _ => return None
+            },
+        };
+
+        if let Some(alg) = HashType::from_str(hash) {
+            return Some(Signature { alg: alg, hex: String::from(hex) })
         }
+
+        None
     }
 
     pub fn create(alg: HashType, data: &str, key: &str) -> Signature {
         let mac = hmac(alg.to_openssl(), key.as_bytes(), data.as_bytes());
         let hex = bytes_to_hex(&mac);
         Signature { alg: alg, hex: hex }
+    }
+
+    pub fn verify(&self, data: &str, key: &str) -> bool {
+        *self == Self::create(self.alg, data, key)
     }
 }
 impl fmt::Display for Signature {
@@ -99,9 +108,10 @@ mod tests {
     #[test]
     fn test_equality() {
         // generated with `echo -n "data" | openssl dgst -sha1 -hmac "key"`
-        let sigstring = "sha1=104152c5bfdca07bc633eebd46199f0255c9f49d";
+        let sigstring = String::from("sha1=104152c5bfdca07bc633eebd46199f0255c9f49d");
         let sig1 = Signature::create(HashType::SHA1, "data", "key");
         let sig2 = Signature::from(sigstring).unwrap();
         assert_eq!(sig1, sig2);
+        assert!(sig1.verify("data", "key"));
     }
 }

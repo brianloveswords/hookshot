@@ -1,105 +1,165 @@
 use rustc_serialize::json;
-use rustc_serialize::json::DecodeResult;
-use std::collections::BTreeMap;
-use std::string;
+use rustc_serialize::json::Json;
+use ::git::{GitRepo, ToGitRepo};
+
+#[derive(Clone, Debug)]
+pub struct GitHubMessage {
+    branch: String,
+    repo_name: String,
+    owner: String,
+    git_url: String,
+}
+
+impl ToGitRepo for GitHubMessage {
+    fn to_git_repo(self, root: &str) -> GitRepo {
+        // Make the end part of the local_path. Do some very basic safety on the
+        // string so it can't escape the container directory. This is intended
+        // to prevent accidents, not malicious behavior -- that's what the
+        // signature is (hopefully) for.
+        let local_path_component = {
+            let prefix = self.owner;
+            let path = format!("{}.{}.{}", prefix, self.repo_name, self.branch);
+            path.replace("/", "!").replace("\\", "!")
+        };
+
+        GitRepo {
+            // TODO: fix this, use paths or something
+            local_path: format!("{}/{}", root, local_path_component),
+            remote_path: self.git_url,
+            branch: self.branch,
+        }
+    }
+}
+
+impl GitHubMessage {
+    pub fn from(json_string: &str) -> Result<GitHubMessage, &'static str> {
+
+        let data = match Json::from_str(&json_string) {
+            Ok(data) => data,
+            Err(_) => return Err("could not parse json"),
+        };
+
+        let root_obj = data;
+
+        let branch = {
+            // "refs/heads/webhook-receiver"
+            // "refs/tags/v1.0.0"
+            let parts: Vec<_> = match root_obj.find("ref") {
+                None => return Err("missing required field `ref`"),
+                Some(v) => match v.as_string() {
+                    None => return Err("could not read `ref` as string"),
+                    Some(v) => v.split("/").collect(),
+                }
+            };
+            match (parts.get(0), parts.get(1), parts.get(2)) {
+                (Some(b), Some(reftype), Some(branch))
+                    if *b == "refs"  && (*reftype == "heads" || *reftype == "tags") => branch,
+                _ => return Err("could not unpack `ref`")
+            }.to_string()
+        };
+
+        let repo_name = match root_obj.find_path(&["repository", "name"]) {
+            Some(v) => match v.as_string() {
+                Some(v) => v.to_string(),
+                None => return Err("couldn't read `repository.name` as a string")
+            },
+            None => return Err("missing `repository.name`"),
+        };
+
+        let owner = match root_obj.find_path(&["repository", "owner", "name"]) {
+            Some(v) => match v.as_string() {
+                Some(v) => v.to_string(),
+                None => return Err("couldn't read `repository.owner.name` as a string")
+            },
+            None => return Err("missing `repository.owner.name`"),
+        };
+
+        let git_url = match root_obj.find_path(&["repository", "git_url"]) {
+            Some(v) => match v.as_string() {
+                Some(v) => v.to_string(),
+                None => return Err("couldn't read `repository.git_url` as a string")
+            },
+            None => return Err("missing `repository.git_url`"),
+        };
+
+        Ok(GitHubMessage {
+            branch: branch,
+            repo_name: repo_name,
+            owner: owner,
+            git_url: git_url,
+        })
+    }
+}
 
 #[derive(RustcDecodable, Clone, Debug)]
-pub struct RemoteCommand {
-    pub secret: String,
-    pub target: Option<String>,
-    pub host: Option<String>,
-    pub playbook: Option<String>,
+pub struct SimpleMessage {
+    /// The prefix to differentiate this deployment from another with
+    /// possibly the same name.
+    pub prefix: Option<String>,
+
+    /// Branch to check out.
+    pub branch: String,
+
+    /// Remote path to the repository.
+    pub remote: String,
+
+    /// Name of the repository. Used to construct the local path where
+    /// the clone will be stored
+    pub repository_name: String,
 }
 
-#[derive(RustcDecodable, Debug)]
-struct ObjectVars {
-    config: BTreeMap<String, String>
+impl SimpleMessage {
+    pub fn from(json: &str) -> Result<SimpleMessage, &'static str> {
+        match json::decode::<SimpleMessage>(json) {
+            Ok(msg) => Ok(msg),
+            Err(_) => Err("could not decode json to message"),
+        }
+    }
 }
+impl ToGitRepo for SimpleMessage {
+    fn to_git_repo(self, root: &str) -> GitRepo {
+        // Make the end part of the local_path. Do some very basic safety on the
+        // string so it can't escape the container directory. This is intended
+        // to prevent accidents, not malicious behavior -- that's what the
+        // signature is (hopefully) for.
+        let local_path_component = {
+            let prefix = self.prefix.unwrap_or("$".to_owned()).replace(".", "!");
+            let path = format!("{}.{}.{}", prefix, self.repository_name, self.branch);
+            path.replace("/", "!").replace("\\", "!")
+        };
 
-#[derive(RustcDecodable, Debug)]
-struct StringVars {
-    config: string::String
-}
-
-/// Get the "extra" variables from a message. Currently they can come in
-/// either as an object, which will be json encoded, or as a raw string
-/// which will be passed directly to ansible as the -e parameter.
-///
-/// Example:
-///   The following message
-///   ```json
-///   {
-///     "secret": "shh",
-///     "config": {
-///       "var1": "Some value",
-///       "var2": "Other value"
-///     }
-///   }
-///   ```
-///   would return `"{"var1":"Some value", "var2":"Other value"}"`.
-///
-///   Given a message where config is a string,
-///   ```json
-///   {
-///     "secret": "shh",
-///     "config": "var1='Some value' var2='Other value'"
-///   }
-///
-///  it would return "var1='Some value' var2='Other value'".
-///
-pub fn get_extra_vars(msg: &str) -> DecodeResult<String> {
-    let obj_msg: DecodeResult<ObjectVars> = json::decode(msg);
-    let string_msg: DecodeResult<StringVars> = json::decode(msg);
-    match (obj_msg, string_msg) {
-        (Ok(m), _) => Ok(json::encode(&m.config).unwrap()),
-        (_, Ok(m)) => Ok(m.config),
-        // TODO: improve error handling: if both parse attempts fail, we
-        // currently use the error from the parse into ObjectVar and
-        // spit that back out when ideally we'd like a way to represent
-        // both errors. Also we should have a special case for when
-        // "config" is totally missing from the message so messages can
-        // leave it out when it's not necessary to include extra
-        // variables.
-        (Err(e), Err(_)) => Err(e),
+        GitRepo {
+            // TODO: fix this, use paths or something
+            local_path: format!("{}/{}", root, local_path_component),
+            remote_path: self.remote,
+            branch: self.branch,
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{RemoteCommand, get_extra_vars};
-    use rustc_serialize::json;
+    use super::*;
 
     #[test]
-    fn test_string_message() {
-        let msg = r#"{
-            "secret": "shh",
-            "host": "127.0.0.1",
-            "playbook": "deploy",
-            "config": "var1=a var2=b"
-        }"#;
+    fn test_simple_message() {
+        let json = r#"
+        {
+          "prefix": "brian",
+          "branch": "master",
+          "remote": "the internet",
+          "repository_name": "stuff"
+        }
+        "#;
 
-        let command: RemoteCommand = json::decode(msg).unwrap();
+        let msg = match SimpleMessage::from(json) {
+            Err(_) => panic!("expected to be able to decode message"),
+            Ok(msg) => msg,
+        };
 
-        let expect = "var1=a var2=b";
-        assert_eq!(expect, get_extra_vars(msg).unwrap());
-        assert_eq!("shh", command.secret);
-        assert_eq!("127.0.0.1", command.host.unwrap());
-        assert_eq!("deploy", command.playbook.unwrap());
-    }
-
-    #[test]
-    fn test_object_message() {
-        let msg = r#"{
-            "secret": "shh",
-            "config": {"var1":"a"}
-        }"#;
-
-        let command: RemoteCommand = json::decode(msg).unwrap();
-
-        let expect = "{\"var1\":\"a\"}";
-        assert_eq!(expect, get_extra_vars(msg).unwrap());
-        assert_eq!("shh", command.secret);
-        assert_eq!(None, command.host);
-        assert_eq!(None, command.playbook);
+        assert_eq!(msg.prefix, Some("brian".to_owned()));
+        assert_eq!(msg.branch, "master");
+        assert_eq!(msg.remote, "the internet");
+        assert_eq!(msg.repository_name, "stuff");
     }
 }

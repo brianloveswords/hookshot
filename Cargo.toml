@@ -12,6 +12,7 @@ regex = "*"
 uuid = "*"
 tempdir = "*"
 router = "*"
+hyper = "*"
 
 [[bin]]
 doc = false

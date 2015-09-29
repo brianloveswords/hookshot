@@ -1,225 +1,181 @@
-#![allow(dead_code)]
-#![allow(unused_imports)]
+#[macro_use]
+extern crate hyper;
 
-extern crate rustc_serialize;
 extern crate deployer;
+extern crate iron;
+extern crate router;
+extern crate rustc_serialize;
+extern crate uuid;
 
-use std::env;
-use std::io::Read;
-use std::io::Write;
-use std::net::{TcpListener, TcpStream};
-use std::process::Command;
-use std::str;
-use std::sync::Arc;
-use std::thread;
-
-
-// use std::time::Duration;
-
-use rustc_serialize::json;
-use deployer::message::{RemoteCommand, get_extra_vars};
-use deployer::config::Config;
+use deployer::git::GitRepo;
+use deployer::message::{SimpleMessage, GitHubMessage};
 use deployer::repo_config::RepoConfig;
+use deployer::signature::Signature;
+use deployer::task_manager::{TaskManager, Runnable};
+use iron::status;
+use iron::{Iron, Request, Response};
+use iron::headers::{Connection, Location};
+use iron::modifiers::Header;
+use router::{Router};
+use std::io::Read;
+use std::path::Path;
+use std::sync::{Arc, Mutex};
+use uuid::Uuid;
 
-static ANSIBLE_CMD: &'static str = "ansible-playbook";
-static CONFIG_ENV_KEY: &'static str = "DEPLOYER_CONFIG";
-static DEFAULT_CONFIG_PATH: &'static str = "/etc/deployer.d/config.toml";
-
-fn get_from_env_or_default(key: &str, default: &str) -> String {
-    match env::var_os(key) {
-        Some(val) => val.into_string().unwrap(),
-        None => default.to_string(),
-    }
+struct DeployTask {
+    repo: GitRepo,
+    id: Uuid,
 }
-
-fn handle_client(mut stream: TcpStream, config: Arc<Config>) {
-    let peer_addr = stream.peer_addr().unwrap();
-
-    // Don't leave sockets lying around. If a socket doesn't send data
-    // within 30 seconds, time it out. This is currently disabled
-    // until [RFC 1047][1] becomes stable, likely in Rust 1.4.
-    //
-    // [1]: (https://github.com/rust-lang/rfcs/blob/master/text/1047-socket-timeouts.md)
-    //
-    // stream.set_read_timeout(Some(Duration::new(30, 0)));
-
-    // Read the incoming bytes.
-    let mut bytes = Vec::new();
-    match stream.read_to_end(&mut bytes) {
-        Err(e) => panic!("Error reading incoming message: {}", e),
-        Ok(bytes) => bytes,
-    };
-
-    // Bail early if we don't have a message to process
-    if bytes.len() == 0 {
-        return
-    }
-
-    // json::decode requires &str
-    let msg = str::from_utf8(&bytes).unwrap();
-
-    let command: RemoteCommand = match json::decode(msg) {
-        Ok(command) => command,
-        Err(e) => {
-            stream.write(b"error, could not parse message").ok();
-            panic!("Error converting message to command: {:?}", e)
-        }
-    };
-
-    println!("{}: {:?}", peer_addr, &command);
-
-    let target = match command.target {
-        Some(t) => t,
-        None => match config.default_target() {
-            Some(t) => t.to_string(),
-            None => {
-                stream.write(b"error, missing target").ok();
-                panic!("Missing target")
-            }
-        }
-    };
-
-    let app = match config.app(&target) {
-        Some(app) => app,
-        None => {
-            let msg = format!("error, no application matches target '{}'", target);
-            stream.write(msg.as_bytes()).ok();
-            panic!("Missing application");
-        }
-    };
-
-    if !app.confirm_secret(&command.secret) {
-        stream.write(b"error, secret does not match").ok();
-        panic!("mismatched secret");
-    }
-
-    let playbook_name = match command.playbook {
-        Some(name) => name,
-        None => match app.default_playbook() {
-            Some(name) => name.to_string(),
-            None => {
-                stream.write(b"error, missing playbook (no default)").ok();
-                panic!("missing playbook, no default");
-            }
-        }
-    };
-
-    let playbook_path = match app.playbook(&playbook_name) {
-        Some(path) => path,
-        None => {
-            stream.write(b"error, no playbook by that name").ok();
-            panic!("invalid playbook");
-        }
-    };
-
-    let host = match command.host {
-        Some(host) => host,
-        None => app.default_host().to_string(),
-    };
-
-    stream.write(b"okay, message received\n").ok();
-
-    let extra_vars = match get_extra_vars(msg) {
-        Ok(vars) => vars,
-        Err(e) => {
-            stream.write(b"error, could not parse `config` field").ok();
-            panic!("invalid config field, {:?}", e);
-        }
-    };
-
-    // Use a local connection if the host is pointing to localhost,
-    // otherwise use a "smart" connection type.
-    let connection_string = {
-        let conn_type = match &*host {
-            "localhost" | "127.0.0.1" => "local",
-            _ => "smart",
+impl Runnable for DeployTask {
+    fn run(&mut self) {
+        // clone the repo
+        // read the repo config
+        if let Err(git_error) = self.repo.get_latest() {
+            // TODO: better error handling, this is dumb
+            return println!("{}: {}", git_error.desc, String::from_utf8(git_error.output.unwrap().stderr).unwrap());
         };
-        format!("--connection={}", conn_type)
-    };
 
-    let host_string = format!("{},", host);
+        let project_root = Path::new(&self.repo.local_path);
+        let config = match RepoConfig::load(&project_root) {
+            // TODO: handle errors loading the repo config;
+            Err(_) => return,
+            Ok(config) => config,
+        };
+        let branch_config = match config.lookup_branch(&self.repo.branch) {
+            // TODO: handle errors;
+            None => return println!("No config for branch '{}'", &self.repo.branch),
+            Some(config) => config,
+        };
 
-    // Start a detached ansible process and set up the cli args
-    let mut ansible = Command::new(ANSIBLE_CMD);
-    // ansible.detached(); // no longer detatched
-    ansible.arg(connection_string);
-    ansible.arg("-i").arg(host_string);
-    ansible.arg("-e").arg(extra_vars);
-    ansible.arg(playbook_path);
+        let task = match branch_config.task() {
+            // TODO: notify that there's nothing to do
+            None => return println!("No task for branch '{}'", &self.repo.branch),
+            Some(task) => task,
+        };
 
-    println!("{}: spawning ansible", peer_addr);
+        println!("[{}]: {:?}", self.id, task);
 
-    let mut child = match ansible.spawn() {
-        Err(why) => {
-            stream.write(b"error, could not spawn ansible-playbook").ok();
-            panic!("Could not spawn `ansible-playbook`: {}", why)
-        },
-        Ok(child) => child
-    };
-
-    // Create a new short-lived scope to borrow a mutable reference to
-    // `child` or else when we try to do `child.wait()` later the
-    // compiler will get mad at us.
-    {
-        let mut stdout = child.stdout.as_mut().unwrap();
-        loop {
-            let mut byte = vec![0u8; 1];
-            match stdout.read(&mut byte) {
-                Ok(_) => {
-                    stream.write(&byte).ok();
-                    stream.flush().ok();
-                } ,
-                Err(_) => { break }
-            }
+        match task.run() {
+            Ok(_) => println!("[{}]: success", self.id),
+            Err(e) => println!("[{}]: task failed: {}", self.id, e.desc),
         }
     }
-
-    let mut stderr = Vec::new();
-    child.stderr.as_mut().unwrap().read_to_end(&mut stderr).unwrap();
-    stream.write(&stderr).ok();
-
-    let exit_status = child.wait().unwrap();
-    stream.write(format!("{}\n", exit_status).as_bytes()).ok();
-
-    println!("{}: Closing connection", peer_addr);
-
-    stream.write(b"okay, see ya later!\n").ok();
-    drop(stream);
 }
 
+const CHECKOUT_ROOT: &'static str = "/tmp/";
+const HMAC_KEY: &'static str = "secret";
+
+header! { (XHubSignature, "X-Hub-Signature") => [String] }
+header! { (XSignature, "X-Signature") => [String] }
+
+
+// TODO: Note that we always send Connection: close. This is a workaround for a
+// bug in hyper: https://github.com/hyperium/hyper/issues/658 (link is to the
+// one I filed for my specific issue which links to the ticket it's a dupe
+// of). Once this is fixed we can remove the Connection::close() modifiers.
+//
+// In the meantime we should probably implement that Connection::close() thing
+// as Iron middleware, but I don't wanna look up how to do that right now.
 fn main() {
-    let config_path = get_from_env_or_default(CONFIG_ENV_KEY, DEFAULT_CONFIG_PATH);
+    let mut router = Router::new();
+    let global_manager = Arc::new(Mutex::new(TaskManager::new()));
 
-    // We are going to spawn a new task for each incoming connection and
-    // we don't want to have to clone the entire `config` structure for
-    // each new task, so we wrap it in an [Arc]
-    // (http://doc.rust-lang.org/std/sync/struct.Arc.html)
-    let config: Arc<Config> = match Config::from_file(&config_path) {
-        Err(e) => panic!("could not load config: {:?}", e),
-        Ok(c) => Arc::new(c),
-    };
+    router.get("/health", move |_: &mut Request| {
+        Ok(Response::with((Header(Connection::close()), status::Ok, "okay")))
+    });
 
-    match config.validate() {
-        Err(e) => panic!("invalid configuration: {:?}", e),
-        Ok(_) => (),
-    }
+    let shared_manager = global_manager.clone();
+    router.post("/hookshot", move |req: &mut Request| {
+        let task_id = Uuid::new_v4();
+        println!("[{}]: request received, processing", task_id);
 
-    let address = format!("0.0.0.0:{}", config.port());
-    let listener = TcpListener::bind(&*address).unwrap();
-
-    println!("Listening at {}", address);
-
-    for stream in listener.incoming() {
-        // Increments count for the Arc, does not do full clone
-        let local_config = config.clone();
-        match stream {
-            Err(e) => panic!("Listening failed: {}", e),
-            Ok(stream) =>  {
-                thread::spawn(move|| {
-                    handle_client(stream, local_config)
-                });
-            },
+        println!("[{}]: loading body into string", task_id);
+        let mut payload = String::new();
+        if req.body.read_to_string(&mut payload).is_err() {
+            println!("[{}]: could not read body into string", task_id);
+            return Ok(Response::with((Header(Connection::close()), status::InternalServerError)))
         }
-    }
-    println!("Done listening, dropping acceptor");
+
+        // Get the signature from the header. We support both `X-Hub-Signature` and
+        // `X-Signature` but they both represent the same type underneath, a
+        // string. It might eventually be better to put this functionality on the
+        // Signature type itself.
+        println!("[{}]: looking up signature", task_id);
+        let signature = {
+            let possible_headers = (req.headers.get::<XSignature>(), req.headers.get::<XHubSignature>());
+
+            let signature_string = match possible_headers {
+                (Some(h), None) => h.to_string(),
+                (None, Some(h)) => h.to_string(),
+                (None, None) => {
+                    println!("[{}]: missing signature", task_id);
+                    return Ok(Response::with((Header(Connection::close()), status::Unauthorized, "missing signature")))
+                },
+                (Some(_), Some(_)) =>{
+                    println!("[{}]: too many signatures", task_id);
+                    return Ok(Response::with((Header(Connection::close()), status::Unauthorized, "too many signatures")))
+                },
+            };
+
+            match Signature::from(signature_string) {
+                Some(signature) => signature,
+                None => {
+                    println!("[{}]: could not parse signature", task_id);
+                    return Ok(Response::with((Header(Connection::close()), status::Unauthorized, "could not parse signature")))
+                },
+            }
+        };
+
+        // Bail out if the signature doesn't match what we're expecting.
+        // TODO: don't hardcode this secret, pull from `deployer` configuration
+        println!("[{}]: signature found, verifying", task_id);
+        if signature.verify(&payload, HMAC_KEY) == false {
+            println!("[{}]: signature mismatch", task_id);
+            return Ok(Response::with((Header(Connection::close()), status::Unauthorized, "signature doesn't match")))
+        }
+
+        // Try to parse the message.
+        // TODO: we can be smarter about this. If we see the XHubSignature above, we
+        //   should try to parse as a github message, otherwise go simple message.
+        println!("[{}]: attempting to parse message from payload", task_id);
+        let repo = match SimpleMessage::from(&payload) {
+            Ok(message) => GitRepo::from(message, CHECKOUT_ROOT),
+            Err(_) => match GitHubMessage::from(&payload) {
+                Ok(message) => GitRepo::from(message, CHECKOUT_ROOT),
+                Err(_) => {
+                    println!("[{}]: could not parse message", task_id);
+                    return Ok(Response::with((Header(Connection::close()), status::BadRequest, "could not parse message")))
+                },
+            },
+        };
+
+        let task = DeployTask { repo: repo, id: task_id };
+        println!("[{}]: acquiring task manager lock", task_id);
+        {
+            let mut task_manager = shared_manager.lock().unwrap();
+            let key = task_manager.ensure_queue(task.repo.branch.clone());
+
+            println!("[{}]: attempting to schedule", task_id);
+            match task_manager.add_task(&key, task) {
+                Ok(_) => println!("[{}]: scheduled", task_id),
+                Err(_) => {
+                    println!("[{}]: could not add task to queue", task_id);
+                    return Ok(Response::with((Header(Connection::close()), status::ServiceUnavailable)))
+                },
+            };
+        }
+        println!("[{}]: releasing task manager lock", task_id);
+        println!("[{}]: request complete", task_id);
+        let location = format!("/jobs/{}",  task_id);
+        let response_body = format!("Location: {}", location);
+        Ok(Response::with((
+            Header(Connection::close()),
+            Header(Location(location)),
+            status::Accepted,
+            response_body)))
+    });
+
+    println!("listening on port 4200");
+    Iron::new(router).http("0.0.0.0:4200").unwrap();
+    global_manager.lock().unwrap().shutdown();
 }
