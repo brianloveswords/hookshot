@@ -14,7 +14,7 @@ use deployer::signature::Signature;
 use deployer::task_manager::{TaskManager, Runnable};
 use iron::status;
 use iron::{Iron, Request, Response};
-use iron::headers::Connection;
+use iron::headers::{Connection, Location};
 use iron::modifiers::Header;
 use router::{Router};
 use std::io::Read;
@@ -166,7 +166,13 @@ fn main() {
         }
         println!("[{}]: releasing task manager lock", task_id);
         println!("[{}]: request complete", task_id);
-        Ok(Response::with((Header(Connection::close()), status::Ok, task_id.to_string())))
+        let location = format!("/jobs/{}",  task_id);
+        let response_body = format!("Location: {}", location);
+        Ok(Response::with((
+            Header(Connection::close()),
+            Header(Location(location)),
+            status::Accepted,
+            response_body)))
     });
 
     println!("listening on port 4200");
