@@ -26,4 +26,4 @@ src/test/test_repo:
 test-hook:
 	echo `date` >> messages.txt
 
-.PHONY: test docs
+.PHONY: test docs release
