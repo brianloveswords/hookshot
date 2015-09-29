@@ -14,15 +14,14 @@ doc-site:
 test: src/test/test_repo
 	cargo test
 
-build:
-	cargo build
+release:
+	cargo build --release
 
 repack-test-repo:
 	cd src/test && tar -czf test_repo.tgz test_repo
 
 src/test/test_repo:
 	cd src/test && tar -xzf test_repo.tgz
-
 
 test-hook:
 	echo `date` >> messages.txt
