@@ -1,4 +1,0 @@
----
-rustup_script: /usr/local/bin/rustup
-rustc_bin: /usr/local/bin/rustc
-project_root: ../../../../..

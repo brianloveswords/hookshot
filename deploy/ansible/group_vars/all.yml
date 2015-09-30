@@ -1,7 +1,0 @@
----
-name: deployer
-build_root: /mnt/{{ name }}
-build: "{{ build_root }}/target/release/{{ name }}"
-deployer_secret: "{{ lookup('env', 'DEPLOYER_SECRET') }}"
-deployer_playbook: "{{ lookup('env', 'DEPLOYER_PLAYBOOK') }}"
-deployer_bin: ../../../release/deployer.linux
