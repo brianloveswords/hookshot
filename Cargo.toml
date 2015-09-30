@@ -13,6 +13,7 @@ uuid = "*"
 tempdir = "*"
 router = "*"
 hyper = "*"
+getopts = "*"
 
 [[bin]]
 doc = false

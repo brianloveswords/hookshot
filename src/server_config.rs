@@ -1,4 +1,6 @@
 use toml::{self, Value, Table};
+use std::io::Read;
+use std::fs::File;
 use std::path::Path;
 use std::u16;
 use std::fmt;
@@ -24,6 +26,8 @@ pub enum Error {
     MissingCheckoutRoot,
     InvalidCheckoutRoot,
     InvalidEnvironmentTable,
+    FileOpenError,
+    FileReadError,
 }
 
 impl fmt::Display for Error {
@@ -38,12 +42,26 @@ impl fmt::Display for Error {
             Error::MissingCheckoutRoot => "missing 'config.checkout_root'",
             Error::InvalidCheckoutRoot => "'config.checkout_root' must be a valid existing directory",
             Error::InvalidEnvironmentTable => "'env' table is invalid, check configuration",
+            Error::FileOpenError => "could not open config file",
+            Error::FileReadError => "could not read config file into string"
         })
     }
 }
 
 
 impl ServerConfig {
+    pub fn from_file(config_path: &Path) -> Result<ServerConfig, Error> {
+        let mut file = match File::open(&config_path) {
+            Ok(file) => file,
+            Err(_) => return Err(Error::FileOpenError),
+        };
+        let mut contents = String::new();
+        if file.read_to_string(&mut contents).is_err() {
+            return Err(Error::FileReadError)
+        };
+        Self::from(&contents)
+    }
+
     pub fn from(string: &str) -> Result<ServerConfig, Error> {
         let root = match toml::Parser::new(string).parse() {
             Some(value) => value,

@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate hyper;
 
+extern crate getopts;
 extern crate deployer;
 extern crate iron;
 extern crate router;
@@ -10,6 +11,7 @@ extern crate uuid;
 use deployer::git::GitRepo;
 use deployer::message::{SimpleMessage, GitHubMessage};
 use deployer::repo_config::RepoConfig;
+use deployer::server_config::{ServerConfig, Error};
 use deployer::signature::Signature;
 use deployer::task_manager::{TaskManager, Runnable};
 use iron::status;
@@ -21,6 +23,8 @@ use std::io::Read;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
+use std::env;
+use getopts::Options;
 
 struct DeployTask {
     repo: GitRepo,
@@ -62,12 +66,69 @@ impl Runnable for DeployTask {
     }
 }
 
-const CHECKOUT_ROOT: &'static str = "/tmp/";
-const HMAC_KEY: &'static str = "secret";
+const ENV_CONFIG_KEY: &'static str = "DEPLOYER_CONFIG";
 
 header! { (XHubSignature, "X-Hub-Signature") => [String] }
 header! { (XSignature, "X-Signature") => [String] }
 
+fn print_usage(program: &str, opts: Options) {
+    let brief = format!("Usage: {} [options]", program);
+    print!("{}", opts.usage(&brief));
+}
+
+fn main() {
+    let args: Vec<String> = env::args().collect();
+    let program = args[0].clone();
+
+    let mut opts = Options::new();
+    opts.optopt("c", "config", "configuration file to use", "FILE");
+    opts.optflag("h", "help", "print this help menu");
+
+    let matches = match opts.parse(&args[1..]) {
+        Ok(m) => { m }
+        Err(f) => {
+            println!("[error]: {}", f.to_string());
+            print_usage(&program, opts);
+            return;
+        }
+    };
+    if matches.opt_present("h") {
+        println!("printing out usage");
+        print_usage(&program, opts);
+        return;
+    }
+    let config_file = match matches.opt_str("c") {
+        Some(file) => file,
+        None => {
+            println!("[warning]: missing --config option, looking up config by environment");
+            match env::var(ENV_CONFIG_KEY) {
+                Ok(file) => file,
+                Err(_) => {
+                    println!("[error]: Could not load config from environment or command line.\n\nPass a --config <FILE> option or set the DEPLOYER_CONFIG environment variable");
+                    return;
+                },
+            }
+        }
+    };
+
+    match ServerConfig::from_file(Path::new(&config_file)) {
+        Ok(config) => start_server(config),
+        Err(e) => match e {
+            Error::FileOpenError | Error::FileReadError => {
+                println!("[error]: Error opening or reading config file {}", config_file);
+                return;
+            },
+            Error::ParseError => {
+                println!("[error]: Could not parse {}, make sure it is valid TOML", config_file);
+                return;
+            },
+            _ => {
+                println!("[error]: Could not validate file: {}", e);
+                return;
+            }
+        }
+    };
+}
 
 // TODO: Note that we always send Connection: close. This is a workaround for a
 // bug in hyper: https://github.com/hyperium/hyper/issues/658 (link is to the
@@ -76,14 +137,19 @@ header! { (XSignature, "X-Signature") => [String] }
 //
 // In the meantime we should probably implement that Connection::close() thing
 // as Iron middleware, but I don't wanna look up how to do that right now.
-fn main() {
+fn start_server(config: ServerConfig) {
     let mut router = Router::new();
     let global_manager = Arc::new(Mutex::new(TaskManager::new()));
 
+    // Create a healthcheck endpoint.
     router.get("/health", move |_: &mut Request| {
         Ok(Response::with((Header(Connection::close()), status::Ok, "okay")))
     });
 
+    let port = config.port.clone();
+    let checkout_root = String::from(config.checkout_root.path().to_str().unwrap());
+
+    // Create Webhook receiver endpoint
     let shared_manager = global_manager.clone();
     router.post("/hookshot", move |req: &mut Request| {
         let task_id = Uuid::new_v4();
@@ -129,7 +195,7 @@ fn main() {
         // Bail out if the signature doesn't match what we're expecting.
         // TODO: don't hardcode this secret, pull from `deployer` configuration
         println!("[{}]: signature found, verifying", task_id);
-        if signature.verify(&payload, HMAC_KEY) == false {
+        if signature.verify(&payload, &config.secret) == false {
             println!("[{}]: signature mismatch", task_id);
             return Ok(Response::with((Header(Connection::close()), status::Unauthorized, "signature doesn't match")))
         }
@@ -139,9 +205,9 @@ fn main() {
         //   should try to parse as a github message, otherwise go simple message.
         println!("[{}]: attempting to parse message from payload", task_id);
         let repo = match SimpleMessage::from(&payload) {
-            Ok(message) => GitRepo::from(message, CHECKOUT_ROOT),
+            Ok(message) => GitRepo::from(message, &checkout_root),
             Err(_) => match GitHubMessage::from(&payload) {
-                Ok(message) => GitRepo::from(message, CHECKOUT_ROOT),
+                Ok(message) => GitRepo::from(message,&checkout_root),
                 Err(_) => {
                     println!("[{}]: could not parse message", task_id);
                     return Ok(Response::with((Header(Connection::close()), status::BadRequest, "could not parse message")))
@@ -175,7 +241,8 @@ fn main() {
             response_body)))
     });
 
-    println!("listening on port 4200");
-    Iron::new(router).http("0.0.0.0:4200").unwrap();
+    println!("listening on port {}", &port);
+    let addr = format!("0.0.0.0:{}", &port);
+    Iron::new(router).http(&*addr).unwrap();
     global_manager.lock().unwrap().shutdown();
 }
