@@ -258,8 +258,10 @@ mod tests {
         assert_eq!(env1.get("repository").unwrap(), "deployer");
         assert_eq!(env1.get("branch").unwrap(), "master");
 
-        // let env2 = config.environment_for("brianloveswords", "deployer", "overrides");
-        // let env3 = config.environment_for("brianloveswords", "deployer", "does-not-exist");
+        let env2 = config.environment_for("brianloveswords", "d.o.t.s", "overrides").unwrap();
+        assert_eq!(env2.get("username").unwrap(), "not-brianloveswords");
+        assert_eq!(env2.get("repository").unwrap(), "not-deployer");
+        assert_eq!(env2.get("branch").unwrap(), "overrides");
     }
 
 }
