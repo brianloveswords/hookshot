@@ -1,7 +1,8 @@
-use toml::{self, Value};
+use toml::{self, Value, Table};
 use std::path::Path;
 use std::u16;
 use std::fmt;
+use std::collections::BTreeMap;
 use ::verified_path::VerifiedPath;
 
 #[derive(Debug)]
@@ -9,6 +10,7 @@ pub struct ServerConfig {
     pub secret: String,
     pub checkout_root: VerifiedPath,
     pub port: u16,
+    pub environments: Table,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -21,6 +23,7 @@ pub enum Error {
     InvalidPort,
     MissingCheckoutRoot,
     InvalidCheckoutRoot,
+    InvalidEnvironmentTable,
 }
 
 impl fmt::Display for Error {
@@ -34,13 +37,14 @@ impl fmt::Display for Error {
             Error::InvalidPort => "'config.port' must be 16 integer",
             Error::MissingCheckoutRoot => "missing 'config.checkout_root'",
             Error::InvalidCheckoutRoot => "'config.checkout_root' must be a valid existing directory",
+            Error::InvalidEnvironmentTable => "'env' table is invalid, check configuration",
         })
     }
 }
 
 
 impl ServerConfig {
-    pub fn from_str(string: &str) -> Result<ServerConfig, Error> {
+    pub fn from(string: &str) -> Result<ServerConfig, Error> {
         let root = match toml::Parser::new(string).parse() {
             Some(value) => value,
             None => return Err(Error::ParseError),
@@ -69,13 +73,60 @@ impl ServerConfig {
                     Err(_) => return Err(Error::InvalidCheckoutRoot),
                 },
         };
+        let environments = match root.get("env") {
+            None => Table::new(),
+            Some(value) => match value.as_table() {
+                None => return Err(Error::InvalidEnvironmentTable),
+                Some(table) => table.clone(),
+            },
+        };
+
         Ok(ServerConfig {
             port: port,
             checkout_root: checkout_root,
             secret: secret,
+            environments: environments,
         })
     }
+
+    pub fn environment_for<'a>(&self, owner: &'a str, repo: &'a str, branch: &'a str) -> Result<BTreeMap<&str, String>, Error> {
+        let mut result = BTreeMap::new();
+
+        let owner_table = match self.environments.get(owner) {
+            None => return Ok(result),
+            Some(value) => match value.as_table() {
+                None => return Err(Error::InvalidEnvironmentTable),
+                Some(table) => table,
+            },
+        };
+
+        let repo_table = match owner_table.get(repo) {
+            None => return Ok(result),
+            Some(value) => match value.as_table() {
+                None => return Err(Error::InvalidEnvironmentTable),
+                Some(table) => table,
+            },
+        };
+
+        let branch_table = match repo_table.get(branch) {
+            None => return Ok(result),
+            Some(value) => match value.as_table() {
+                None => return Err(Error::InvalidEnvironmentTable),
+                Some(table) => table,
+            },
+        };
+
+        for (k, v) in branch_table {
+            match v.as_str() {
+                Some(v) => result.insert(k, String::from(v)),
+                None => return Err(Error::InvalidEnvironmentTable),
+            };
+        }
+
+        Ok(result)
+    }
 }
+
 
 enum LookupResult<'a> {
     Missing,
@@ -102,7 +153,7 @@ mod tests {
 
     macro_rules! expect_error {
         ( $i:ident, $error:path ) => {{
-            let config = ServerConfig::from_str($i);
+            let config = ServerConfig::from($i);
             assert!(config.is_err());
             assert_eq!(config.err().unwrap(), $error);
         }}
@@ -117,7 +168,7 @@ mod tests {
             checkout_root = "/tmp"
         "#;
 
-        let config = ServerConfig::from_str(&toml).unwrap();
+        let config = ServerConfig::from(&toml).unwrap();
         assert_eq!(config.secret, "it's a secret to everyone");
         assert_eq!(config.port, 5712u16);
         assert_eq!(config.checkout_root.path(), Path::new("/tmp"));
@@ -179,6 +230,36 @@ mod tests {
         "#;
 
         expect_error!(toml, Error::InvalidPort);
+    }
+
+    #[test]
+    fn test_environments() {
+        let toml = r#"
+            [config]
+            port = 1212
+            secret = "it's a secret to everyone"
+            checkout_root = "/tmp"
+
+            [env.brianloveswords.deployer.master]
+            username = "brianloveswords"
+            repository = "deployer"
+            branch = "master"
+
+            [env.brianloveswords."d.o.t.s".overrides]
+            username = "not-brianloveswords"
+            repository = "not-deployer"
+            branch = "overrides"
+        "#;
+
+        let config = ServerConfig::from(&toml).unwrap();
+
+        let env1 = config.environment_for("brianloveswords", "deployer", "master").unwrap();
+        assert_eq!(env1.get("username").unwrap(), "brianloveswords");
+        assert_eq!(env1.get("repository").unwrap(), "deployer");
+        assert_eq!(env1.get("branch").unwrap(), "master");
+
+        // let env2 = config.environment_for("brianloveswords", "deployer", "overrides");
+        // let env3 = config.environment_for("brianloveswords", "deployer", "does-not-exist");
     }
 
 }
