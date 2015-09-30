@@ -37,7 +37,7 @@ impl VerifiedPath {
             }),
         }
     }
-    pub fn path(&self) -> String { self.path.clone()  }
+    pub fn path(&self) -> &Path { Path::new(&self.path) }
 }
 
 pub fn file_exists(full_path: &Path) -> bool {

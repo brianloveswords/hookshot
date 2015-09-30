@@ -295,16 +295,14 @@ mod tests {
         assert!(config.default_task.is_some());
         assert_eq!(config.default_task.unwrap().to_string(), "deploy");
         assert!(config.default_playbook.is_some());
-        assert_eq!(config.default_playbook.unwrap().path(), "ansible/deploy.yml");
+        assert_eq!(config.default_playbook.unwrap().path(), Path::new("ansible/deploy.yml"));
         assert!(config.default_notify_url.is_none());
 
         // production config
         {
             let config = config.branches.get("production").unwrap();
-            let playbook = config.playbook.clone().unwrap().path();
-            let inventory = config.inventory.clone().unwrap().path();
-            assert_eq!(playbook, "ansible/production.yml");
-            assert_eq!(inventory, "ansible/inventory/production");
+            assert_eq!(config.playbook.clone().unwrap().path(), Path::new("ansible/production.yml"));
+            assert_eq!(config.inventory.clone().unwrap().path(), Path::new("ansible/inventory/production"));
             assert!(config.method.is_none());
             assert!(config.task.is_none());
             assert!(config.notify_url.is_none());
@@ -312,9 +310,8 @@ mod tests {
         // staging config
         {
             let config = config.branches.get("staging").unwrap();
-            let inventory = config.inventory.clone().unwrap().path();
             let notify_url = config.notify_url.clone().unwrap();
-            assert_eq!(inventory, "ansible/inventory/staging");
+            assert_eq!(config.inventory.clone().unwrap().path(), Path::new("ansible/inventory/staging"));
             assert!(config.playbook.is_none());
             assert!(config.method.is_none());
             assert!(config.task.is_none());
