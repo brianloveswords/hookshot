@@ -15,6 +15,8 @@ pub struct ServerConfig {
     pub environments: Table,
 }
 
+pub type Environment = BTreeMap<String, String>;
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum Error {
     ParseError,
@@ -107,7 +109,7 @@ impl ServerConfig {
         })
     }
 
-    pub fn environment_for<'a>(&self, owner: &'a str, repo: &'a str, branch: &'a str) -> Result<BTreeMap<&str, String>, Error> {
+    pub fn environment_for<'a>(&self, owner: &'a str, repo: &'a str, branch: &'a str) -> Result<Environment, Error> {
         let mut result = BTreeMap::new();
 
         let owner_table = match self.environments.get(owner) {
@@ -136,7 +138,7 @@ impl ServerConfig {
 
         for (k, v) in branch_table {
             match v.as_str() {
-                Some(v) => result.insert(k, String::from(v)),
+                Some(v) => result.insert(k.clone(), String::from(v)),
                 None => return Err(Error::InvalidEnvironmentTable),
             };
         }
