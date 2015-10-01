@@ -11,7 +11,8 @@ use iron::status;
 use iron::{Iron, Request, Response};
 use router::{Router};
 use std::env;
-use std::io::Read;
+use std::io::{Read, Write};
+use std::fs::File;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
@@ -20,6 +21,7 @@ struct DeployTask {
     repo: GitRepo,
     id: Uuid,
     env: Environment,
+    logdir: String,
 }
 impl Runnable for DeployTask {
     fn run(&mut self) {
@@ -27,7 +29,7 @@ impl Runnable for DeployTask {
         // read the repo config
         if let Err(git_error) = self.repo.get_latest() {
             // TODO: better error handling, this is dumb
-            return println!("{}: {}", git_error.desc, String::from_utf8(git_error.output.unwrap().stderr).unwrap());
+            return println!("[{}]: {}: {}", self.id, git_error.desc, String::from_utf8(git_error.output.unwrap().stderr).unwrap());
         };
 
         let project_root = Path::new(&self.repo.local_path);
@@ -36,24 +38,37 @@ impl Runnable for DeployTask {
             Err(_) => return,
             Ok(config) => config,
         };
+
         let branch_config = match config.lookup_branch(&self.repo.branch) {
             // TODO: handle errors;
-            None => return println!("No config for branch '{}'", &self.repo.branch),
+            None => return println!("[{}]: No config for branch '{}'", self.id, &self.repo.branch),
             Some(config) => config,
         };
 
         let task = match branch_config.task() {
             // TODO: notify that there's nothing to do
-            None => return println!("No task for branch '{}'", &self.repo.branch),
+            None => return println!("[{}]: No task for branch '{}'", self.id, &self.repo.branch),
             Some(task) => task,
         };
 
         println!("[{}]: {:?}", self.id, task);
         println!("[{}]: with environment {:?}", self.id, &self.env);
-        match task.run(&self.env) {
-            Ok(_) => println!("[{}]: success", self.id),
-            Err(e) => println!("[{}]: task failed: {}", self.id, e.desc),
-        }
+        let output = match task.run(&self.env) {
+            Ok(output) => output,
+            Err(e) => return println!("[{}]: task failed: {}", self.id, e.desc),
+        };
+        println!("[{}]: success", self.id);
+
+        let logfile_path = Path::new(&self.logdir).join(format!("{}.log", self.id.to_string()));
+        let mut logfile = match File::create(&logfile_path) {
+            Ok(f) => f,
+            Err(_) => return println!("[{}]: could not open logfile for writing", self.id),
+        };
+        logfile.write_all(format!("status: {}", output.status).as_bytes());
+        logfile.write_all(b"==stdout==\n");
+        logfile.write_all(&output.stdout);
+        logfile.write_all(b"==stderr==\n");
+        logfile.write_all(&output.stderr);
     }
 }
 
@@ -214,7 +229,7 @@ fn start_server(config: ServerConfig) {
             }
         };
 
-        let task = DeployTask { repo: repo, id: task_id, env: environment };
+        let task = DeployTask { repo: repo, id: task_id, env: environment, logdir: config.log_root.to_string() };
         println!("[{}]: acquiring task manager lock", task_id);
         {
             let mut task_manager = shared_manager.lock().unwrap();

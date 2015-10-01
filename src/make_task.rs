@@ -57,21 +57,12 @@ impl<'a> MakeTask<'a> {
             cmd.env(k, v);
         }
 
-        let result = match cmd.output() {
-            Ok(r) => r,
+        match cmd.output() {
+            Ok(r) => Ok(r),
             Err(e) => return Err(CommandError {
                 desc: "failed to execute `make`, see detail",
                 output: None,
                 detail: Some(format!("{}", e)),
-            })
-        };
-
-        match result.status.success() {
-            true => Ok(result),
-            false =>  Err(CommandError {
-                desc: "make failed",
-                output: Some(result),
-                detail: None,
             })
         }
     }
