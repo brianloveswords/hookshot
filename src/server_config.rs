@@ -11,6 +11,7 @@ use ::verified_path::VerifiedPath;
 pub struct ServerConfig {
     pub secret: String,
     pub checkout_root: VerifiedPath,
+    pub log_root: VerifiedPath,
     pub port: u16,
     pub environments: Table,
 }
@@ -27,6 +28,8 @@ pub enum Error {
     InvalidPort,
     MissingCheckoutRoot,
     InvalidCheckoutRoot,
+    MissingLogRoot,
+    InvalidLogRoot,
     InvalidEnvironmentTable,
     FileOpenError,
     FileReadError,
@@ -43,13 +46,14 @@ impl fmt::Display for Error {
             Error::InvalidPort => "'config.port' must be 16 integer",
             Error::MissingCheckoutRoot => "missing 'config.checkout_root'",
             Error::InvalidCheckoutRoot => "'config.checkout_root' must be a valid existing directory",
+            Error::MissingLogRoot => "missing 'config.log_root'",
+            Error::InvalidLogRoot => "'config.log_root' must be a valid existing directory",
             Error::InvalidEnvironmentTable => "'env' table is invalid, check configuration",
             Error::FileOpenError => "could not open config file",
             Error::FileReadError => "could not read config file into string"
         })
     }
 }
-
 
 impl ServerConfig {
     pub fn from_file(config_path: &Path) -> Result<ServerConfig, Error> {
@@ -93,6 +97,15 @@ impl ServerConfig {
                     Err(_) => return Err(Error::InvalidCheckoutRoot),
                 },
         };
+        let log_root = match lookup_as_string(config, "log_root") {
+            LookupResult::Missing => return Err(Error::MissingLogRoot),
+            LookupResult::WrongType => return Err(Error::InvalidLogRoot),
+            LookupResult::Value(v) =>
+                match VerifiedPath::directory(None, Path::new(v)) {
+                    Ok(v) => v,
+                    Err(_) => return Err(Error::InvalidLogRoot),
+                },
+        };
         let environments = match root.get("env") {
             None => Table::new(),
             Some(value) => match value.as_table() {
@@ -104,6 +117,7 @@ impl ServerConfig {
         Ok(ServerConfig {
             port: port,
             checkout_root: checkout_root,
+            log_root: log_root,
             secret: secret,
             environments: environments,
         })
@@ -186,8 +200,8 @@ mod tests {
             secret = "it's a secret to everyone"
             port = 5712
             checkout_root = "/tmp"
+            log_root = "/tmp"
         "#;
-
         let config = ServerConfig::from(&toml).unwrap();
         assert_eq!(config.secret, "it's a secret to everyone");
         assert_eq!(config.port, 5712u16);
@@ -200,9 +214,9 @@ mod tests {
             [config]
             secret = "it's a secret to everyone"
             port = 5712
+            log_root = "/tmp"
             checkout_root = "/this/does/not/exist/"
         "#;
-
         expect_error!(toml, Error::InvalidCheckoutRoot);
     }
 
@@ -212,8 +226,8 @@ mod tests {
             [config]
             secret = "it's a secret to everyone"
             port = 5712
+            log_root = "/tmp"
         "#;
-
         expect_error!(toml, Error::MissingCheckoutRoot);
     }
 
@@ -224,8 +238,8 @@ mod tests {
             secret = {}
             port = 5712
             checkout_root = "/tmp"
+            log_root = "/tmp"
         "#;
-
         expect_error!(toml, Error::InvalidSecret);
     }
 
@@ -235,9 +249,32 @@ mod tests {
             [config]
             port = 5712
             checkout_root = "/tmp"
+            log_root = "/tmp"
         "#;
-
         expect_error!(toml, Error::MissingSecret);
+    }
+
+    #[test]
+    fn test_invalid_config_missing_log_root() {
+        let toml = r#"
+            [config]
+            port = 5712
+            secret = "shh"
+            checkout_root = "/tmp"
+        "#;
+        expect_error!(toml, Error::MissingLogRoot);
+    }
+
+    #[test]
+    fn test_invalid_config_invalid_log_root() {
+        let toml = r#"
+            [config]
+            port = 5712
+            secret = "shh"
+            checkout_root = "/tmp"
+            log_root = "/path/does/not/exist"
+        "#;
+        expect_error!(toml, Error::InvalidLogRoot);
     }
 
     #[test]
@@ -247,8 +284,8 @@ mod tests {
             secret = "it's a secret to everyone"
             port = "ham sandwiches"
             checkout_root = "/tmp"
+            log_root = "/tmp"
         "#;
-
         expect_error!(toml, Error::InvalidPort);
     }
 
@@ -259,6 +296,7 @@ mod tests {
             port = 1212
             secret = "it's a secret to everyone"
             checkout_root = "/tmp"
+            log_root = "/tmp"
 
             [env.brianloveswords.deployer.master]
             username = "brianloveswords"
@@ -270,7 +308,6 @@ mod tests {
             repository = "not-deployer"
             branch = "overrides"
         "#;
-
         let config = ServerConfig::from(&toml).unwrap();
 
         let env1 = config.environment_for("brianloveswords", "deployer", "master").unwrap();
