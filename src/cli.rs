@@ -25,29 +25,46 @@ struct DeployTask {
 }
 impl Runnable for DeployTask {
     fn run(&mut self) {
-        // clone the repo
-        // read the repo config
+        let logfile_path = Path::new(&self.logdir).join(format!("{}.log", self.id.to_string()));
+
+        let mut logfile = match File::create(&logfile_path) {
+            Ok(f) => f,
+            Err(_) => return println!("[{}]: could not open logfile for writing", self.id),
+        };
+
+        logfile.write_all(b"\ntask running\n");
+
         if let Err(git_error) = self.repo.get_latest() {
-            // TODO: better error handling, this is dumb
-            return println!("[{}]: {}: {}", self.id, git_error.desc, String::from_utf8(git_error.output.unwrap().stderr).unwrap());
+            let err = format!("[{}]: {}: {}", self.id, git_error.desc, String::from_utf8(git_error.output.unwrap().stderr).unwrap());
+            logfile.write_all(format!("{}", err).as_bytes());
+            return println!("{}", err);
         };
 
         let project_root = Path::new(&self.repo.local_path);
         let config = match RepoConfig::load(&project_root) {
-            // TODO: handle errors loading the repo config;
-            Err(_) => return,
+            Err(e) => {
+                let err = format!("[{}]: could not load config for repo {}: {}", self.id, self.repo.remote_path, e.desc);
+                logfile.write_all(format!("{}", err).as_bytes());
+                return println!("{}", err);
+            }
             Ok(config) => config,
         };
 
         let branch_config = match config.lookup_branch(&self.repo.branch) {
-            // TODO: handle errors;
-            None => return println!("[{}]: No config for branch '{}'", self.id, &self.repo.branch),
+            None => {
+                let err = format!("[{}]: No config for branch '{}'", self.id, &self.repo.branch);
+                logfile.write_all(format!("{}", err).as_bytes());
+                return println!("{}", err);
+            }
             Some(config) => config,
         };
 
         let task = match branch_config.task() {
-            // TODO: notify that there's nothing to do
-            None => return println!("[{}]: No task for branch '{}'", self.id, &self.repo.branch),
+            None => {
+                let err = format!("[{}]: No task for branch '{}'", self.id, &self.repo.branch);
+                logfile.write_all(format!("{}", err).as_bytes());
+                return println!("{}", err);
+            }
             Some(task) => task,
         };
 
@@ -55,19 +72,18 @@ impl Runnable for DeployTask {
         println!("[{}]: with environment {:?}", self.id, &self.env);
         let output = match task.run(&self.env) {
             Ok(output) => output,
-            Err(e) => return println!("[{}]: task failed: {}", self.id, e.desc),
+            Err(e) => {
+                let err = format!("[{}]: task failed: {}", self.id, e.desc);
+                logfile.write_all(format!("{}", err).as_bytes());
+                return println!("{}", err);
+            }
         };
         println!("[{}]: success", self.id);
 
-        let logfile_path = Path::new(&self.logdir).join(format!("{}.log", self.id.to_string()));
-        let mut logfile = match File::create(&logfile_path) {
-            Ok(f) => f,
-            Err(_) => return println!("[{}]: could not open logfile for writing", self.id),
-        };
-        logfile.write_all(format!("status: {}", output.status).as_bytes());
-        logfile.write_all(b"==stdout==\n");
+        logfile.write_all(format!("{}\n", output.status).as_bytes());
+        logfile.write_all(b"\n==stdout==\n");
         logfile.write_all(&output.stdout);
-        logfile.write_all(b"==stderr==\n");
+        logfile.write_all(b"\n==stderr==\n");
         logfile.write_all(&output.stderr);
     }
 }
