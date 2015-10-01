@@ -23,10 +23,13 @@ impl ToGitRepo for GitHubMessage {
         };
 
         GitRepo {
-            // TODO: fix this, use paths or something
+            owner: self.owner,
+            name: self.repo_name,
+            branch: self.branch,
+
+            // TODO: fix this, use paths & path.join or something
             local_path: format!("{}/{}", root, local_path_component),
             remote_path: self.git_url,
-            branch: self.branch,
         }
     }
 }
@@ -118,21 +121,26 @@ impl SimpleMessage {
 }
 impl ToGitRepo for SimpleMessage {
     fn to_git_repo(self, root: &str) -> GitRepo {
+        let owner = self.prefix.unwrap_or("$".to_owned());
+
         // Make the end part of the local_path. Do some very basic safety on the
         // string so it can't escape the container directory. This is intended
         // to prevent accidents, not malicious behavior -- that's what the
         // signature is (hopefully) for.
         let local_path_component = {
-            let prefix = self.prefix.unwrap_or("$".to_owned()).replace(".", "!");
+            let prefix = owner.replace(".", "!");
             let path = format!("{}.{}.{}", prefix, self.repository_name, self.branch);
             path.replace("/", "!").replace("\\", "!")
         };
 
         GitRepo {
             // TODO: fix this, use paths or something
+            name: self.repository_name,
+            owner: owner,
+            branch: self.branch,
+
             local_path: format!("{}/{}", root, local_path_component),
             remote_path: self.remote,
-            branch: self.branch,
         }
     }
 }

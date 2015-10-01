@@ -11,7 +11,7 @@ extern crate uuid;
 use deployer::git::GitRepo;
 use deployer::message::{SimpleMessage, GitHubMessage};
 use deployer::repo_config::RepoConfig;
-use deployer::server_config::{ServerConfig, Error};
+use deployer::server_config::{ServerConfig, Error, Environment};
 use deployer::signature::Signature;
 use deployer::task_manager::{TaskManager, Runnable};
 use iron::status;
@@ -29,6 +29,7 @@ use getopts::Options;
 struct DeployTask {
     repo: GitRepo,
     id: Uuid,
+    env: Environment,
 }
 impl Runnable for DeployTask {
     fn run(&mut self) {
@@ -215,11 +216,19 @@ fn start_server(config: ServerConfig) {
             },
         };
 
+        let environment = match config.environment_for(&repo.owner, &repo.name, &repo.branch) {
+            Ok(environment) => environment,
+            Err(_) => {
+                println!("[{}]: warning: error loading environment for {}, definition flawed", task_id, repo.fully_qualified_branch());
+                Environment::new()
+            }
+        };
+
         let task = DeployTask { repo: repo, id: task_id };
         println!("[{}]: acquiring task manager lock", task_id);
         {
             let mut task_manager = shared_manager.lock().unwrap();
-            let key = task_manager.ensure_queue(task.repo.branch.clone());
+            let key = task_manager.ensure_queue(repo.fully_qualified_branch());
 
             println!("[{}]: attempting to schedule", task_id);
             match task_manager.add_task(&key, task) {

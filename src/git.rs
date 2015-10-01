@@ -11,16 +11,22 @@ use ::verified_path::directory_exists;
 use ::error::CommandError;
 
 pub struct GitRepo {
+    /// Owner of the repository
+    pub owner: String,
+
+    /// Name of the repository
+    pub name: String,
+
+    /// Branch to check out. We require this so we can create the smallest
+    /// checkout possible.
+    pub branch: String,
+
     /// Remote path to the repository. This can be a filesystem path if the
     /// `file://` protocol is used.
     pub remote_path: String,
 
     /// Local path of where to clone the repository.
     pub local_path: String,
-
-    /// Branch to check out. We require this so we can create the smallest
-    /// checkout possible.
-    pub branch: String,
 }
 
 pub trait ToGitRepo {

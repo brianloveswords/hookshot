@@ -8,9 +8,6 @@ use ::make_task::MakeTask;
 use ::verified_path::VerifiedPath;
 use ::error::Error;
 
-// TODO: use https://crates.io/crates/url instead
-
-
 #[derive(Debug, Clone)]
 pub enum DeployMethod {
     Ansible,
@@ -43,6 +40,8 @@ impl<'a> BranchConfig<'a> {
 }
 
 pub type BranchConfigMap<'a> = BTreeMap<String, BranchConfig<'a>>;
+
+// TODO: use https://crates.io/crates/url instead
 pub type URL = String;
 
 #[derive(Debug)]
