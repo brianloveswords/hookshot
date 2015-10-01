@@ -24,6 +24,6 @@ src/test/test_repo:
 	cd src/test && tar -xzf test_repo.tgz
 
 test-hook:
-	echo `date` >> messages.txt
+	echo "date: `date`, foo: ${foo}, bar: ${bar}" >> messages.txt
 
 .PHONY: test docs release

@@ -157,6 +157,8 @@ mod tests {
     fn test_git_clone() {
         let local_path = TempDir::new("deployer-git-test").unwrap().path().join("test_repo");
         let git = GitRepo {
+            owner: String::from("test"),
+            name: String::from("test"),
             branch: String::from("master"),
             remote_path: String::from("src/test/test_repo"),
             local_path: String::from(local_path.to_str().unwrap()),
@@ -170,6 +172,8 @@ mod tests {
     fn test_git_ensure_cloned() {
         let local_path = TempDir::new("deployer-git-test").unwrap().path().join("test_repo");
         let git = GitRepo {
+            owner: String::from("test"),
+            name: String::from("test"),
             branch: String::from("master"),
             remote_path: String::from("src/test/test_repo"),
             local_path: String::from(local_path.to_str().unwrap()),
@@ -193,10 +197,24 @@ mod tests {
     fn test_git_get_latest() {
         let local_path = TempDir::new("deployer-git-test").unwrap().path().join("test_repo");
         let git = GitRepo {
+            owner: String::from("test"),
+            name: String::from("test"),
             branch: String::from("master"),
             remote_path: String::from("src/test/test_repo"),
             local_path: String::from(local_path.to_str().unwrap()),
         };
         assert!(git.get_latest().is_ok());
+    }
+
+    #[test]
+    fn test_git_fully_qualified_branch() {
+        let git = GitRepo {
+            owner: String::from("owner"),
+            name: String::from("name"),
+            branch: String::from("branch"),
+            remote_path: String::from("doesn't matter"),
+            local_path: String::from("irrelevant"),
+        };
+        assert_eq!(git.fully_qualified_branch(), "owner.name.branch");
     }
 }
