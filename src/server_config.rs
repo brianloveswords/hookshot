@@ -1,11 +1,11 @@
-use toml::{self, Value, Table};
-use std::io::Read;
+use ::verified_path::VerifiedPath;
+use std::collections::BTreeMap;
+use std::fmt;
 use std::fs::File;
+use std::io::Read;
 use std::path::Path;
 use std::u16;
-use std::fmt;
-use std::collections::BTreeMap;
-use ::verified_path::VerifiedPath;
+use toml::{self, Value, Table};
 
 #[derive(Debug)]
 pub struct ServerConfig {
