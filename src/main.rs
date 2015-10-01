@@ -224,11 +224,11 @@ fn start_server(config: ServerConfig) {
             }
         };
 
-        let task = DeployTask { repo: repo, id: task_id };
+        let task = DeployTask { repo: repo, id: task_id, env: environment };
         println!("[{}]: acquiring task manager lock", task_id);
         {
             let mut task_manager = shared_manager.lock().unwrap();
-            let key = task_manager.ensure_queue(repo.fully_qualified_branch());
+            let key = task_manager.ensure_queue(task.repo.fully_qualified_branch());
 
             println!("[{}]: attempting to schedule", task_id);
             match task_manager.add_task(&key, task) {

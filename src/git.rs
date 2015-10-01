@@ -38,6 +38,10 @@ impl GitRepo {
         other.to_git_repo(root)
     }
 
+    pub fn fully_qualified_branch(&self) -> String {
+        format!("{}.{}.{}", &self.owner, &self.name, &self.branch)
+    }
+
     fn clone(&self) -> Result<Output, CommandError> {
         let result = match Command::new("git")
             .arg("clone")

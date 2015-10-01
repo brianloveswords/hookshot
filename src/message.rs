@@ -17,7 +17,7 @@ impl ToGitRepo for GitHubMessage {
         // to prevent accidents, not malicious behavior -- that's what the
         // signature is (hopefully) for.
         let local_path_component = {
-            let prefix = self.owner;
+            let prefix = &self.owner;
             let path = format!("{}.{}.{}", prefix, self.repo_name, self.branch);
             path.replace("/", "!").replace("\\", "!")
         };
