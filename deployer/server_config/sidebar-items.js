@@ -1,1 +1,1 @@
-initSidebarItems({"static":[["DEFAULT_PORT",""]]});
+initSidebarItems({"enum":[["Error",""]],"struct":[["ServerConfig",""]],"type":[["Environment",""]]});

@@ -94,8 +94,14 @@
 <span id="52">52</span>
 <span id="53">53</span>
 <span id="54">54</span>
+<span id="55">55</span>
+<span id="56">56</span>
+<span id="57">57</span>
+<span id="58">58</span>
+<span id="59">59</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>path</span>::<span class='ident'>Path</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>string</span>::<span class='ident'>ToString</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fs</span>;
 <span class='kw'>use</span> ::<span class='ident'>error</span>::<span class='ident'>Error</span>;
 
@@ -134,7 +140,11 @@
             }),
         }
     }
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>path</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>String</span> { <span class='self'>self</span>.<span class='ident'>path</span>.<span class='ident'>clone</span>()  }
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>path</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='ident'>Path</span> { <span class='ident'>Path</span>::<span class='ident'>new</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>path</span>) }
+}
+
+<span class='kw'>impl</span> <span class='ident'>ToString</span> <span class='kw'>for</span> <span class='ident'>VerifiedPath</span> {
+    <span class='kw'>fn</span> <span class='ident'>to_string</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>String</span> { <span class='self'>self</span>.<span class='ident'>path</span>.<span class='ident'>clone</span>() }
 }
 
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>file_exists</span>(<span class='ident'>full_path</span>: <span class='kw-2'>&amp;</span><span class='ident'>Path</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {

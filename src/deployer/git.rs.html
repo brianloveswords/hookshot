@@ -240,6 +240,26 @@
 <span id="198">198</span>
 <span id="199">199</span>
 <span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! A library for interacting with the git cli.</span>
 <span class='doccomment'>//!</span>
@@ -254,19 +274,37 @@
 <span class='kw'>use</span> ::<span class='ident'>error</span>::<span class='ident'>CommandError</span>;
 
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>GitRepo</span> {
+    <span class='doccomment'>/// Owner of the repository</span>
+    <span class='kw'>pub</span> <span class='ident'>owner</span>: <span class='ident'>String</span>,
+
+    <span class='doccomment'>/// Name of the repository</span>
+    <span class='kw'>pub</span> <span class='ident'>name</span>: <span class='ident'>String</span>,
+
+    <span class='doccomment'>/// Branch to check out. We require this so we can create the smallest</span>
+    <span class='doccomment'>/// checkout possible.</span>
+    <span class='kw'>pub</span> <span class='ident'>branch</span>: <span class='ident'>String</span>,
+
     <span class='doccomment'>/// Remote path to the repository. This can be a filesystem path if the</span>
     <span class='doccomment'>/// `file://` protocol is used.</span>
     <span class='kw'>pub</span> <span class='ident'>remote_path</span>: <span class='ident'>String</span>,
 
     <span class='doccomment'>/// Local path of where to clone the repository.</span>
     <span class='kw'>pub</span> <span class='ident'>local_path</span>: <span class='ident'>String</span>,
+}
 
-    <span class='doccomment'>/// Branch to check out. We require this so we can create the smallest</span>
-    <span class='doccomment'>/// checkout possible.</span>
-    <span class='kw'>pub</span> <span class='ident'>branch</span>: <span class='ident'>String</span>,
+<span class='kw'>pub</span> <span class='kw'>trait</span> <span class='ident'>ToGitRepo</span> {
+    <span class='kw'>fn</span> <span class='ident'>to_git_repo</span>(<span class='self'>self</span>, <span class='ident'>root</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>) <span class='op'>-&gt;</span> <span class='ident'>GitRepo</span>;
 }
 
 <span class='kw'>impl</span> <span class='ident'>GitRepo</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>from</span><span class='op'>&lt;</span><span class='ident'>T</span>: <span class='ident'>ToGitRepo</span><span class='op'>&gt;</span>(<span class='ident'>other</span>: <span class='ident'>T</span>, <span class='ident'>root</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>) <span class='op'>-&gt;</span> <span class='ident'>GitRepo</span> {
+        <span class='ident'>other</span>.<span class='ident'>to_git_repo</span>(<span class='ident'>root</span>)
+    }
+
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>fully_qualified_branch</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>String</span> {
+        <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;{}.{}.{}&quot;</span>, <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>owner</span>, <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>name</span>, <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>branch</span>)
+    }
+
     <span class='kw'>fn</span> <span class='ident'>clone</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Output</span>, <span class='ident'>CommandError</span><span class='op'>&gt;</span> {
         <span class='kw'>let</span> <span class='ident'>result</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>Command</span>::<span class='ident'>new</span>(<span class='string'>&quot;git&quot;</span>)
             .<span class='ident'>arg</span>(<span class='string'>&quot;clone&quot;</span>)
@@ -300,27 +338,14 @@
                 <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> <span class='prelude-val'>Err</span>(<span class='ident'>e</span>),
             }
         }
-
         <span class='prelude-val'>Ok</span>(<span class='boolval'>false</span>)
     }
 
-    <span class='doccomment'>/// If a repo exists, fetch it. If it doesn&#39;t, clone it</span>
-    <span class='doccomment'>///</span>
-    <span class='doccomment'>/// This is currently very dumb in the sense that it only checks if</span>
-    <span class='doccomment'>/// a directory exists, not whether it&#39;s the git repo represented</span>
-    <span class='doccomment'>/// by `self` or even whether it&#39;s a git repository at all.</span>
-    <span class='doccomment'>///</span>
-    <span class='doccomment'>/// This is the equivalent of doing:</span>
-    <span class='doccomment'>///</span>
-    <span class='doccomment'>/// ```text</span>
-    <span class='doccomment'>/// (test -d &lt;local_path&gt; &amp;&amp; cd &lt;local_path&gt; &amp;&amp; git fetch) || \</span>
-    <span class='doccomment'>/// git clone --depth=1 --single-branch -b &lt;branch&gt; &lt;remote_path&gt; &lt;local_path&gt;</span>
-    <span class='doccomment'>/// ```</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>fetch</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Output</span>, <span class='ident'>CommandError</span><span class='op'>&gt;</span> {
-        <span class='kw'>let</span> <span class='ident'>check_cloned</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>ensure_cloned</span>();
-        <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=</span> <span class='ident'>check_cloned</span> {
+    <span class='kw'>fn</span> <span class='ident'>fetch</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Output</span>, <span class='ident'>CommandError</span><span class='op'>&gt;</span> {
+        <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>ensure_cloned</span>() {
             <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>e</span>);
         }
+
         <span class='kw'>let</span> <span class='ident'>result</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>Command</span>::<span class='ident'>new</span>(<span class='string'>&quot;git&quot;</span>)
             .<span class='ident'>current_dir</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>local_path</span>)
             .<span class='ident'>arg</span>(<span class='string'>&quot;fetch&quot;</span>)
@@ -343,12 +368,28 @@
         }
     }
 
-    <span class='doccomment'>/// Check out a specific sha. The equivalent of doing `git checkout {sha}`.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>checkout</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>sha</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Output</span>, <span class='ident'>CommandError</span><span class='op'>&gt;</span> {
+    <span class='doccomment'>/// If a repo exists, fetch &amp;&amp; reset it. If it doesn&#39;t, clone it</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// This is currently very dumb in the sense that it only checks if</span>
+    <span class='doccomment'>/// a directory exists, not whether it&#39;s the git repo represented</span>
+    <span class='doccomment'>/// by `self` or even whether it&#39;s a git repository at all.</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// This is the equivalent of doing:</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// ```text</span>
+    <span class='doccomment'>/// (test -d &lt;local_path&gt; &amp;&amp; cd &lt;local_path&gt; &amp;&amp; git fetch &amp;&amp; git reset --hard origin/&lt;branch&gt;) || \</span>
+    <span class='doccomment'>/// git clone --depth=1 --single-branch -b &lt;branch&gt; &lt;remote_path&gt; &lt;local_path&gt;</span>
+    <span class='doccomment'>/// ```</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>get_latest</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Output</span>, <span class='ident'>CommandError</span><span class='op'>&gt;</span> {
+        <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>fetch</span>() {
+            <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>e</span>);
+        }
+
         <span class='kw'>let</span> <span class='ident'>result</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>Command</span>::<span class='ident'>new</span>(<span class='string'>&quot;git&quot;</span>)
             .<span class='ident'>current_dir</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>local_path</span>)
-            .<span class='ident'>arg</span>(<span class='string'>&quot;checkout&quot;</span>)
-            .<span class='ident'>arg</span>(<span class='ident'>sha</span>)
+            .<span class='ident'>arg</span>(<span class='string'>&quot;reset&quot;</span>)
+            .<span class='ident'>arg</span>(<span class='string'>&quot;--hard&quot;</span>)
+            .<span class='ident'>arg</span>(<span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;origin/{}&quot;</span>, <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>branch</span>))
             .<span class='ident'>output</span>() {
                 <span class='prelude-val'>Ok</span>(<span class='ident'>r</span>) <span class='op'>=&gt;</span> <span class='ident'>r</span>,
                 <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>CommandError</span> {
@@ -361,7 +402,7 @@
         <span class='kw'>match</span> <span class='ident'>result</span>.<span class='ident'>status</span>.<span class='ident'>success</span>() {
             <span class='boolval'>true</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Ok</span>(<span class='ident'>result</span>),
             <span class='boolval'>false</span> <span class='op'>=&gt;</span>  <span class='prelude-val'>Err</span>(<span class='ident'>CommandError</span> {
-                <span class='ident'>desc</span>: <span class='string'>&quot;git checkout failed&quot;</span>,
+                <span class='ident'>desc</span>: <span class='string'>&quot;git reset failed&quot;</span>,
                 <span class='ident'>output</span>: <span class='prelude-val'>Some</span>(<span class='ident'>result</span>),
                 <span class='ident'>detail</span>: <span class='prelude-val'>None</span>,
             })
@@ -375,12 +416,12 @@
     <span class='kw'>use</span> <span class='ident'>tempdir</span>::<span class='ident'>TempDir</span>;
     <span class='kw'>use</span> ::<span class='ident'>verified_path</span>::<span class='ident'>directory_exists</span>;
 
-    <span class='kw'>static</span> <span class='ident'>KNOWN_SHA</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span> <span class='op'>=</span> <span class='string'>&quot;529f5d02eb91bc9cf797a89049bd2286815455a4&quot;</span>;
-
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_git_clone</span>() {
         <span class='kw'>let</span> <span class='ident'>local_path</span> <span class='op'>=</span> <span class='ident'>TempDir</span>::<span class='ident'>new</span>(<span class='string'>&quot;deployer-git-test&quot;</span>).<span class='ident'>unwrap</span>().<span class='ident'>path</span>().<span class='ident'>join</span>(<span class='string'>&quot;test_repo&quot;</span>);
         <span class='kw'>let</span> <span class='ident'>git</span> <span class='op'>=</span> <span class='ident'>GitRepo</span> {
+            <span class='ident'>owner</span>: <span class='ident'>String</span>::<span class='ident'>from</span>(<span class='string'>&quot;test&quot;</span>),
+            <span class='ident'>name</span>: <span class='ident'>String</span>::<span class='ident'>from</span>(<span class='string'>&quot;test&quot;</span>),
             <span class='ident'>branch</span>: <span class='ident'>String</span>::<span class='ident'>from</span>(<span class='string'>&quot;master&quot;</span>),
             <span class='ident'>remote_path</span>: <span class='ident'>String</span>::<span class='ident'>from</span>(<span class='string'>&quot;src/test/test_repo&quot;</span>),
             <span class='ident'>local_path</span>: <span class='ident'>String</span>::<span class='ident'>from</span>(<span class='ident'>local_path</span>.<span class='ident'>to_str</span>().<span class='ident'>unwrap</span>()),
@@ -394,6 +435,8 @@
     <span class='kw'>fn</span> <span class='ident'>test_git_ensure_cloned</span>() {
         <span class='kw'>let</span> <span class='ident'>local_path</span> <span class='op'>=</span> <span class='ident'>TempDir</span>::<span class='ident'>new</span>(<span class='string'>&quot;deployer-git-test&quot;</span>).<span class='ident'>unwrap</span>().<span class='ident'>path</span>().<span class='ident'>join</span>(<span class='string'>&quot;test_repo&quot;</span>);
         <span class='kw'>let</span> <span class='ident'>git</span> <span class='op'>=</span> <span class='ident'>GitRepo</span> {
+            <span class='ident'>owner</span>: <span class='ident'>String</span>::<span class='ident'>from</span>(<span class='string'>&quot;test&quot;</span>),
+            <span class='ident'>name</span>: <span class='ident'>String</span>::<span class='ident'>from</span>(<span class='string'>&quot;test&quot;</span>),
             <span class='ident'>branch</span>: <span class='ident'>String</span>::<span class='ident'>from</span>(<span class='string'>&quot;master&quot;</span>),
             <span class='ident'>remote_path</span>: <span class='ident'>String</span>::<span class='ident'>from</span>(<span class='string'>&quot;src/test/test_repo&quot;</span>),
             <span class='ident'>local_path</span>: <span class='ident'>String</span>::<span class='ident'>from</span>(<span class='ident'>local_path</span>.<span class='ident'>to_str</span>().<span class='ident'>unwrap</span>()),
@@ -414,31 +457,28 @@
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>test_git_fetch</span>() {
+    <span class='kw'>fn</span> <span class='ident'>test_git_get_latest</span>() {
         <span class='kw'>let</span> <span class='ident'>local_path</span> <span class='op'>=</span> <span class='ident'>TempDir</span>::<span class='ident'>new</span>(<span class='string'>&quot;deployer-git-test&quot;</span>).<span class='ident'>unwrap</span>().<span class='ident'>path</span>().<span class='ident'>join</span>(<span class='string'>&quot;test_repo&quot;</span>);
         <span class='kw'>let</span> <span class='ident'>git</span> <span class='op'>=</span> <span class='ident'>GitRepo</span> {
+            <span class='ident'>owner</span>: <span class='ident'>String</span>::<span class='ident'>from</span>(<span class='string'>&quot;test&quot;</span>),
+            <span class='ident'>name</span>: <span class='ident'>String</span>::<span class='ident'>from</span>(<span class='string'>&quot;test&quot;</span>),
             <span class='ident'>branch</span>: <span class='ident'>String</span>::<span class='ident'>from</span>(<span class='string'>&quot;master&quot;</span>),
             <span class='ident'>remote_path</span>: <span class='ident'>String</span>::<span class='ident'>from</span>(<span class='string'>&quot;src/test/test_repo&quot;</span>),
             <span class='ident'>local_path</span>: <span class='ident'>String</span>::<span class='ident'>from</span>(<span class='ident'>local_path</span>.<span class='ident'>to_str</span>().<span class='ident'>unwrap</span>()),
         };
-
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>git</span>.<span class='ident'>clone</span>().<span class='ident'>is_ok</span>());
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>git</span>.<span class='ident'>ensure_cloned</span>().<span class='ident'>is_ok</span>());
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>git</span>.<span class='ident'>fetch</span>().<span class='ident'>is_ok</span>());
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>git</span>.<span class='ident'>get_latest</span>().<span class='ident'>is_ok</span>());
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>test_git_checkout</span>() {
-        <span class='kw'>let</span> <span class='ident'>local_path</span> <span class='op'>=</span> <span class='ident'>TempDir</span>::<span class='ident'>new</span>(<span class='string'>&quot;deployer-git-test&quot;</span>).<span class='ident'>unwrap</span>().<span class='ident'>path</span>().<span class='ident'>join</span>(<span class='string'>&quot;test_repo&quot;</span>);
+    <span class='kw'>fn</span> <span class='ident'>test_git_fully_qualified_branch</span>() {
         <span class='kw'>let</span> <span class='ident'>git</span> <span class='op'>=</span> <span class='ident'>GitRepo</span> {
-            <span class='ident'>branch</span>: <span class='ident'>String</span>::<span class='ident'>from</span>(<span class='string'>&quot;master&quot;</span>),
-            <span class='ident'>remote_path</span>: <span class='ident'>String</span>::<span class='ident'>from</span>(<span class='string'>&quot;src/test/test_repo&quot;</span>),
-            <span class='ident'>local_path</span>: <span class='ident'>String</span>::<span class='ident'>from</span>(<span class='ident'>local_path</span>.<span class='ident'>to_str</span>().<span class='ident'>unwrap</span>()),
+            <span class='ident'>owner</span>: <span class='ident'>String</span>::<span class='ident'>from</span>(<span class='string'>&quot;owner&quot;</span>),
+            <span class='ident'>name</span>: <span class='ident'>String</span>::<span class='ident'>from</span>(<span class='string'>&quot;name&quot;</span>),
+            <span class='ident'>branch</span>: <span class='ident'>String</span>::<span class='ident'>from</span>(<span class='string'>&quot;branch&quot;</span>),
+            <span class='ident'>remote_path</span>: <span class='ident'>String</span>::<span class='ident'>from</span>(<span class='string'>&quot;doesn&#39;t matter&quot;</span>),
+            <span class='ident'>local_path</span>: <span class='ident'>String</span>::<span class='ident'>from</span>(<span class='string'>&quot;irrelevant&quot;</span>),
         };
-
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>git</span>.<span class='ident'>ensure_cloned</span>().<span class='ident'>is_ok</span>());
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>git</span>.<span class='ident'>checkout</span>(<span class='ident'>KNOWN_SHA</span>).<span class='ident'>is_ok</span>());
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>git</span>.<span class='ident'>checkout</span>(<span class='string'>&quot;not a real sha&quot;</span>).<span class='ident'>is_err</span>());
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>git</span>.<span class='ident'>fully_qualified_branch</span>(), <span class='string'>&quot;owner.name.branch&quot;</span>);
     }
 }
 </pre>

@@ -4,10 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="API documentation for the Rust `ParseResult` type in crate `deployer`.">
-    <meta name="keywords" content="rust, rustlang, rust-lang, ParseResult">
+    <meta name="description" content="API documentation for the Rust `ToGitRepo` trait in crate `deployer`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, ToGitRepo">
 
-    <title>deployer::webhook_message::ParseResult - Rust</title>
+    <title>deployer::git::ToGitRepo - Rust</title>
 
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
@@ -26,7 +26,7 @@
 
     <section class="sidebar">
         
-        <p class='location'><a href='../index.html'>deployer</a>::<wbr><a href='index.html'>webhook_message</a></p><script>window.sidebarCurrent = {name: 'ParseResult', ty: 'type', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+        <p class='location'><a href='../index.html'>deployer</a>::<wbr><a href='index.html'>git</a></p><script>window.sidebarCurrent = {name: 'ToGitRepo', ty: 'trait', relpath: ''};</script><script defer src="sidebar-items.js"></script>
     </section>
 
     <nav class="sub">
@@ -40,13 +40,25 @@
         </form>
     </nav>
 
-    <section id='main' class="content type">
-<h1 class='fqn'><span class='in-band'><a href='../index.html'>deployer</a>::<wbr><a href='index.html'>webhook_message</a>::<wbr><a class='type' href=''>ParseResult</a></span><span class='out-of-band'><span id='render-detail'>
+    <section id='main' class="content trait">
+<h1 class='fqn'><span class='in-band'>Trait <a href='../index.html'>deployer</a>::<wbr><a href='index.html'>git</a>::<wbr><a class='trait' href=''>ToGitRepo</a></span><span class='out-of-band'><span id='render-detail'>
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-6913' class='srclink' href='../../src/deployer/webhook_message.rs.html#39' title='goto source code'>[src]</a></span></h1>
-<pre class='rust typedef'>type ParseResult = <a class='enum' href='http://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='struct' href='../../deployer/webhook_message/struct.Message.html' title='deployer::webhook_message::Message'>Message</a>, <a class='struct' href='../../deployer/webhook_message/struct.Error.html' title='deployer::webhook_message::Error'>Error</a>&gt;;</pre></section>
+        </span><a id='src-5371' class='srclink' href='../../src/deployer/git.rs.html#32-34' title='goto source code'>[src]</a></span></h1>
+<pre class='rust trait'>pub trait ToGitRepo {
+    fn <a href='#tymethod.to_git_repo' class='fnname'>to_git_repo</a>(self, root: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='struct' href='../../deployer/git/struct.GitRepo.html' title='deployer::git::GitRepo'>GitRepo</a>;
+}</pre>
+            <h2 id='required-methods'>Required Methods</h2>
+            <div class='methods'>
+        <h3 id='tymethod.to_git_repo' class='method stab '><code>fn <a href='#tymethod.to_git_repo' class='fnname'>to_git_repo</a>(self, root: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='struct' href='../../deployer/git/struct.GitRepo.html' title='deployer::git::GitRepo'>GitRepo</a></code></h3></div>
+        <h2 id='implementors'>Implementors</h2>
+        <ul class='item-list' id='implementors-list'>
+    <li><code>impl <a class='trait' href='../../deployer/git/trait.ToGitRepo.html' title='deployer::git::ToGitRepo'>ToGitRepo</a> for <a class='struct' href='../../deployer/message/struct.GitHubMessage.html' title='deployer::message::GitHubMessage'>GitHubMessage</a></code></li>
+<li><code>impl <a class='trait' href='../../deployer/git/trait.ToGitRepo.html' title='deployer::git::ToGitRepo'>ToGitRepo</a> for <a class='struct' href='../../deployer/message/struct.SimpleMessage.html' title='deployer::message::SimpleMessage'>SimpleMessage</a></code></li>
+</ul><script type="text/javascript" async
+                              src="../../implementors/deployer/git/trait.ToGitRepo.js">
+                      </script></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

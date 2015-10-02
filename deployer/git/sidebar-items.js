@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["GitRepo",""]]});
+initSidebarItems({"struct":[["GitRepo",""]],"trait":[["ToGitRepo",""]]});

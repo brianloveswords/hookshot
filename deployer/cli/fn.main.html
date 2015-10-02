@@ -4,10 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="API documentation for the Rust `get_extra_vars` fn in crate `deployer`.">
-    <meta name="keywords" content="rust, rustlang, rust-lang, get_extra_vars">
+    <meta name="description" content="API documentation for the Rust `main` fn in crate `deployer`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, main">
 
-    <title>deployer::message::get_extra_vars - Rust</title>
+    <title>deployer::cli::main - Rust</title>
 
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
@@ -26,7 +26,7 @@
 
     <section class="sidebar">
         
-        <p class='location'><a href='../index.html'>deployer</a>::<wbr><a href='index.html'>message</a></p><script>window.sidebarCurrent = {name: 'get_extra_vars', ty: 'fn', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+        <p class='location'><a href='../index.html'>deployer</a>::<wbr><a href='index.html'>cli</a></p><script>window.sidebarCurrent = {name: 'main', ty: 'fn', relpath: ''};</script><script defer src="sidebar-items.js"></script>
     </section>
 
     <nav class="sub">
@@ -41,29 +41,12 @@
     </nav>
 
     <section id='main' class="content fn">
-<h1 class='fqn'><span class='in-band'>Function <a href='../index.html'>deployer</a>::<wbr><a href='index.html'>message</a>::<wbr><a class='fn' href=''>get_extra_vars</a></span><span class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Function <a href='../index.html'>deployer</a>::<wbr><a href='index.html'>cli</a>::<wbr><a class='fn' href=''>main</a></span><span class='out-of-band'><span id='render-detail'>
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-4125' class='srclink' href='../../src/deployer/message.rs.html#50-65' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn get_extra_vars(msg: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='type' href='../../rustc_serialize/json/type.DecodeResult.html' title='rustc_serialize::json::DecodeResult'>DecodeResult</a>&lt;<a class='struct' href='http://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;</pre><div class='docblock'><p>Get the &quot;extra&quot; variables from a message. Currently they can come in
-either as an object, which will be json encoded, or as a raw string
-which will be passed directly to ansible as the -e parameter.</p>
-
-<p>Example:
-  The following message
-  <code>json { &quot;secret&quot;: &quot;shh&quot;, &quot;config&quot;: { &quot;var1&quot;: &quot;Some value&quot;, &quot;var2&quot;: &quot;Other value&quot; } }</code>
-  would return <code>&quot;{&quot;var1&quot;:&quot;Some value&quot;, &quot;var2&quot;:&quot;Other value&quot;}&quot;</code>.</p>
-
-<p>Given a message where config is a string,
-  ```json
-  {
-    &quot;secret&quot;: &quot;shh&quot;,
-    &quot;config&quot;: &quot;var1=&#39;Some value&#39; var2=&#39;Other value&#39;&quot;
-  }</p>
-
-<p>it would return &quot;var1=&#39;Some value&#39; var2=&#39;Other value&#39;&quot;.</p>
-</div></section>
+        </span><a id='src-1769' class='srclink' href='../../src/deployer/cli.rs.html#124-176' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn main()</pre></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
