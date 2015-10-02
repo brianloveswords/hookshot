@@ -7,7 +7,7 @@ use std::path::Path;
 use std::u16;
 use toml::{self, Value, Table};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ServerConfig {
     pub secret: String,
     pub checkout_root: VerifiedPath,

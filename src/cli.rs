@@ -32,7 +32,7 @@ impl Runnable for DeployTask {
             Err(_) => return println!("[{}]: could not open logfile for writing", self.id),
         };
 
-        logfile.write_all(b"\ntask running\n");
+        logfile.write_all(b"\ntask running...");
 
         if let Err(git_error) = self.repo.get_latest() {
             let err = format!("[{}]: {}: {}", self.id, git_error.desc, String::from_utf8(git_error.output.unwrap().stderr).unwrap());
@@ -78,6 +78,7 @@ impl Runnable for DeployTask {
                 return println!("{}", err);
             }
         };
+        logfile.write_all(b"done.\n");
         println!("[{}]: success", self.id);
 
         logfile.write_all(format!("{}\n", output.status).as_bytes());
@@ -168,14 +169,54 @@ fn start_server(config: ServerConfig) {
         Ok(Response::with((Header(Connection::close()), status::Ok, "okay")))
     });
 
-    let port = config.port.clone();
-    let checkout_root = String::from(config.checkout_root.path().to_str().unwrap());
+    let config_clone = config.clone();
+    router.get("/jobs/:uuid", move |req: &mut Request| {
+        let file_not_found =
+            Ok(Response::with((Header(Connection::close()), status::NotFound, "Not Found")));
+
+        let ref uuid = match req.extensions.get::<Router>().unwrap().find("uuid") {
+            Some(query) => query,
+            None => return file_not_found,
+        };
+
+        let logfile_path = Path::new(&config_clone.log_root.to_string()).join(format!("{}.log", uuid.to_string()));
+
+        let mut file = {
+            match File::open(&logfile_path) {
+                Ok(file) => file,
+                Err(_) => return file_not_found,
+            }
+        };
+
+        let content = {
+            let mut content = String::new();
+            match file.read_to_string(&mut content) {
+                Ok(_) => content,
+                Err(_) => return file_not_found,
+            }
+        };
+
+        Ok(Response::with((Header(Connection::close()), status::Ok, content)))
+    });
 
     // Create Webhook receiver endpoint
     let shared_manager = global_manager.clone();
+    let checkout_root = config.checkout_root.to_string();
+    let config_clone = config.clone();
     router.post("/hookshot", move |req: &mut Request| {
         let task_id = Uuid::new_v4();
         println!("[{}]: request received, processing", task_id);
+
+        let logfile_path = Path::new(&config_clone.log_root.to_string()).join(format!("{}.log", task_id.to_string()));
+        let mut logfile = {
+            match File::create(&logfile_path) {
+                Ok(file) => file,
+                Err(_) => {
+                    println!("[{}]: could not open logfile for writing", task_id);
+                    return Ok(Response::with((Header(Connection::close()), status::InternalServerError)))
+                }
+            }
+        };
 
         println!("[{}]: loading body into string", task_id);
         let mut payload = String::new();
@@ -215,9 +256,8 @@ fn start_server(config: ServerConfig) {
         };
 
         // Bail out if the signature doesn't match what we're expecting.
-        // TODO: don't hardcode this secret, pull from `deployer` configuration
         println!("[{}]: signature found, verifying", task_id);
-        if signature.verify(&payload, &config.secret) == false {
+        if signature.verify(&payload, &config_clone.secret) == false {
             println!("[{}]: signature mismatch", task_id);
             return Ok(Response::with((Header(Connection::close()), status::Unauthorized, "signature doesn't match")))
         }
@@ -237,7 +277,7 @@ fn start_server(config: ServerConfig) {
             },
         };
 
-        let environment = match config.environment_for(&repo.owner, &repo.name, &repo.branch) {
+        let environment = match config_clone.environment_for(&repo.owner, &repo.name, &repo.branch) {
             Ok(environment) => environment,
             Err(_) => {
                 println!("[{}]: warning: error loading environment for {}, definition flawed", task_id, repo.fully_qualified_branch());
@@ -245,7 +285,7 @@ fn start_server(config: ServerConfig) {
             }
         };
 
-        let task = DeployTask { repo: repo, id: task_id, env: environment, logdir: config.log_root.to_string() };
+        let task = DeployTask { repo: repo, id: task_id, env: environment, logdir: config_clone.log_root.to_string() };
         println!("[{}]: acquiring task manager lock", task_id);
         {
             let mut task_manager = shared_manager.lock().unwrap();
@@ -262,6 +302,9 @@ fn start_server(config: ServerConfig) {
         }
         println!("[{}]: releasing task manager lock", task_id);
         println!("[{}]: request complete", task_id);
+
+        logfile.write_all(b"job pending");
+
         let location = format!("/jobs/{}",  task_id);
         let response_body = format!("Location: {}", location);
         Ok(Response::with((
@@ -271,8 +314,8 @@ fn start_server(config: ServerConfig) {
             response_body)))
     });
 
-    println!("listening on port {}", &port);
-    let addr = format!("0.0.0.0:{}", &port);
+    println!("listening on port {}", &config.port);
+    let addr = format!("0.0.0.0:{}", &config.port);
     Iron::new(router).http(&*addr).unwrap();
     global_manager.lock().unwrap().shutdown();
 }
