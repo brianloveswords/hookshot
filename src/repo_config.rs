@@ -55,6 +55,7 @@ pub struct RepoConfig<'a> {
     default_method: DeployMethod,
     default_task: Option<MakeTask<'a>>,
     default_playbook: Option<VerifiedPath>,
+    default_inventory: Option<VerifiedPath>,
     default_notify_url: Option<URL>,
     branches: BranchConfigMap<'a>,
     project_root: &'a Path,
@@ -142,6 +143,19 @@ impl<'a> RepoConfig<'a> {
                 },
         };
 
+        let default_inventory = match lookup_as_string(defaults, "inventory") {
+            LookupResult::Missing => None,
+            LookupResult::WrongType => return Err(Error {
+                desc: "could not read 'defaults.inventory' as string",
+                subject: Some(String::from("defaults.inventory")),
+            }),
+            LookupResult::Value(v) =>
+                match VerifiedPath::file(Some(project_root), Path::new(v)) {
+                    Ok(v) => Some(v),
+                    Err(err) => return Err(err),
+                },
+        };
+
         let default_notify_url = match lookup_as_string(defaults, "notify_url") {
             LookupResult::Missing => None,
             LookupResult::WrongType => return Err(Error {
@@ -217,10 +231,16 @@ impl<'a> RepoConfig<'a> {
             };
 
             let ansible_task = if method == DeployMethod::Ansible {
-                match (playbook, inventory, default_playbook.clone()) {
-                    (Some(p), Some(i), _) |
-                    (None, Some(i), Some(p)) => Some(AnsibleTask::new(p.to_string(), i.to_string(), &project_root)),
-                    (_, _, _) => return Err(Error {
+                // This complicated looking match tries to create a
+                // playbook/inventory combination by first preferring
+                // configuration for the specific branch and falling back to
+                // defaults where necessary.
+                match (playbook, inventory, default_playbook.clone(), default_inventory.clone()) {
+                    (Some(p), Some(i), _, _) |
+                    (None, Some(i), Some(p), _) |
+                    (Some(p), None, None, Some(i)) |
+                    (None, None, Some(p), Some(i))  => Some(AnsibleTask::new(p.to_string(), i.to_string(), &project_root)),
+                    (_, _, _, _) => return Err(Error {
                         desc: "could not combine default and branch config to find playbook + inventory combination",
                         subject: Some(format!("branch.{}", key)),
                     })
@@ -267,6 +287,7 @@ impl<'a> RepoConfig<'a> {
             default_method: default_method,
             default_task: default_task,
             default_playbook: default_playbook,
+            default_inventory: default_inventory,
             default_notify_url: default_notify_url,
             branches: branches,
             project_root: project_root,
