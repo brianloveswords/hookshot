@@ -1,6 +1,6 @@
 use ::git::GitRepo;
 use ::message::{SimpleMessage, GitHubMessage};
-use ::repo_config::RepoConfig;
+use ::repo_config::{RepoConfig, DeployMethod};
 use ::server_config::{ServerConfig, Error, Environment};
 use ::signature::Signature;
 use ::task_manager::{TaskManager, Runnable};
@@ -61,18 +61,37 @@ impl Runnable for DeployTask {
             Some(config) => config,
         };
 
-        let task = match branch_config.task() {
-            None => {
-                let err = format!("[{}]: No task for branch '{}'", self.id, &self.repo.branch);
-                logfile.write_all(format!("{}", err).as_bytes());
-                return println!("{}", err);
+        // TODO: refactor this, use a trait or something.
+        let output_result = {
+            match branch_config.method {
+                DeployMethod::Ansible => match branch_config.ansible_task() {
+                    None => {
+                        let err = format!("[{}]: No task for branch '{}'", self.id, &self.repo.branch);
+                        logfile.write_all(format!("{}", err).as_bytes());
+                        return println!("{}", err);
+                    }
+                    Some(task) => {
+                        println!("[{}]: {:?}", self.id, task);
+                        println!("[{}]: with environment {:?}", self.id, &self.env);
+                        task.run(&self.env)
+                    }
+                },
+                DeployMethod::Makefile => match branch_config.make_task() {
+                    None => {
+                        let err = format!("[{}]: No task for branch '{}'", self.id, &self.repo.branch);
+                        logfile.write_all(format!("{}", err).as_bytes());
+                        return println!("{}", err);
+                    }
+                    Some(task) => {
+                        println!("[{}]: {:?}", self.id, task);
+                        println!("[{}]: with environment {:?}", self.id, &self.env);
+                        task.run(&self.env)
+                    }
+                }
             }
-            Some(task) => task,
         };
 
-        println!("[{}]: {:?}", self.id, task);
-        println!("[{}]: with environment {:?}", self.id, &self.env);
-        let output = match task.run(&self.env) {
+        let output = match output_result {
             Ok(output) => output,
             Err(e) => {
                 let err = format!("[{}]: task failed: {}", self.id, e.desc);
@@ -80,6 +99,7 @@ impl Runnable for DeployTask {
                 return println!("{}", err);
             }
         };
+
         logfile.write_all(b"done.\n");
         println!("[{}]: success", self.id);
 
@@ -124,14 +144,14 @@ pub fn main() {
     }
     let config_file = match matches.opt_str("c") {
         Some(file) => file,
-        None => {
-            println!("[warning]: missing --config option, looking up config by environment");
-            match env::var(ENV_CONFIG_KEY) {
-                Ok(file) => file,
-                Err(_) => {
-                    println!("[error]: Could not load config from environment or command line.\n\nPass --config <FILE> option or set the DEPLOYER_CONFIG environment variable");
-                    return;
-                },
+    None => {
+    println!("[warning]: missing --config option, looking up config by environment");
+    match env::var(ENV_CONFIG_KEY) {
+        Ok(file) => file,
+    Err(_) => {
+    println!("[error]: Could not load config from environment or command line.\n\nPass --config <FILE> option or set the DEPLOYER_CONFIG environment variable");
+    return;
+},
             }
         }
     };

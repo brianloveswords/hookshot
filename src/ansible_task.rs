@@ -1,27 +1,37 @@
 use std::path::Path;
 use std::process::{Command, Output};
+use rustc_serialize::json;
 use ::server_config::Environment;
 use ::error::CommandError;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct AnsibleTask<'a> {
-    playbook: String,
-    inventory: String,
-    project_root: &'a Path,
+    pub playbook: String,
+    pub inventory: String,
+    pub project_root: &'a Path,
 }
 
 impl<'a> AnsibleTask<'a> {
+    pub fn new(playbook: String, inventory: String, project_root: &'a Path) -> AnsibleTask {
+        AnsibleTask {
+            playbook: playbook,
+            inventory: inventory,
+            project_root: project_root
+        }
+    }
+
     pub fn run(&self, env: &Environment) -> Result<Output, CommandError> {
         let mut command = Command::new("ansible-playbook");
         command.current_dir(&self.project_root);
         for (k, v) in env {
             command.arg("-e");
-            command.arg(format!("{}={}", k, v));
+            // We use JSON encoding on the string as a way of making it safe for
+            // use as a quoted command line variable.
+            command.arg(format!("{}={}", k, json::encode(v).unwrap()));
         }
-        command.arg("-i")
-            .arg(&self.inventory)
-            .arg(&self.playbook);
-
+        command.arg("-i");
+        command.arg(&self.inventory);
+        command.arg(&self.playbook);
         match command.output() {
             Ok(r) => Ok(r),
             Err(e) => return Err(CommandError {
