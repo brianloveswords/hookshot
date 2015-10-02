@@ -1,4 +1,5 @@
 use std::path::Path;
+use std::string::ToString;
 use std::fs;
 use ::error::Error;
 
@@ -38,6 +39,10 @@ impl VerifiedPath {
         }
     }
     pub fn path(&self) -> &Path { Path::new(&self.path) }
+}
+
+impl ToString for VerifiedPath {
+    fn to_string(&self) -> String { self.path.clone() }
 }
 
 pub fn file_exists(full_path: &Path) -> bool {

@@ -11,7 +11,8 @@ use iron::status;
 use iron::{Iron, Request, Response};
 use router::{Router};
 use std::env;
-use std::io::Read;
+use std::io::{Read, Write};
+use std::fs::File;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
@@ -20,40 +21,73 @@ struct DeployTask {
     repo: GitRepo,
     id: Uuid,
     env: Environment,
+    logdir: String,
 }
 impl Runnable for DeployTask {
+
+    #[allow(unused_must_use)]
     fn run(&mut self) {
-        // clone the repo
-        // read the repo config
+        let logfile_path = Path::new(&self.logdir).join(format!("{}.log", self.id.to_string()));
+
+        let mut logfile = match File::create(&logfile_path) {
+            Ok(f) => f,
+            Err(_) => return println!("[{}]: could not open logfile for writing", self.id),
+        };
+
+        logfile.write_all(b"\ntask running...\n");
+
         if let Err(git_error) = self.repo.get_latest() {
-            // TODO: better error handling, this is dumb
-            return println!("{}: {}", git_error.desc, String::from_utf8(git_error.output.unwrap().stderr).unwrap());
+            let err = format!("[{}]: {}: {}", self.id, git_error.desc, String::from_utf8(git_error.output.unwrap().stderr).unwrap());
+            logfile.write_all(format!("{}", err).as_bytes());
+            return println!("{}", err);
         };
 
         let project_root = Path::new(&self.repo.local_path);
         let config = match RepoConfig::load(&project_root) {
-            // TODO: handle errors loading the repo config;
-            Err(_) => return,
+            Err(e) => {
+                let err = format!("[{}]: could not load config for repo {}: {}", self.id, self.repo.remote_path, e.desc);
+                logfile.write_all(format!("{}", err).as_bytes());
+                return println!("{}", err);
+            }
             Ok(config) => config,
         };
+
         let branch_config = match config.lookup_branch(&self.repo.branch) {
-            // TODO: handle errors;
-            None => return println!("No config for branch '{}'", &self.repo.branch),
+            None => {
+                let err = format!("[{}]: No config for branch '{}'", self.id, &self.repo.branch);
+                logfile.write_all(format!("{}", err).as_bytes());
+                return println!("{}", err);
+            }
             Some(config) => config,
         };
 
         let task = match branch_config.task() {
-            // TODO: notify that there's nothing to do
-            None => return println!("No task for branch '{}'", &self.repo.branch),
+            None => {
+                let err = format!("[{}]: No task for branch '{}'", self.id, &self.repo.branch);
+                logfile.write_all(format!("{}", err).as_bytes());
+                return println!("{}", err);
+            }
             Some(task) => task,
         };
 
         println!("[{}]: {:?}", self.id, task);
         println!("[{}]: with environment {:?}", self.id, &self.env);
-        match task.run(&self.env) {
-            Ok(_) => println!("[{}]: success", self.id),
-            Err(e) => println!("[{}]: task failed: {}", self.id, e.desc),
-        }
+        let output = match task.run(&self.env) {
+            Ok(output) => output,
+            Err(e) => {
+                let err = format!("[{}]: task failed: {}", self.id, e.desc);
+                logfile.write_all(format!("{}", err).as_bytes());
+                return println!("{}", err);
+            }
+        };
+        logfile.write_all(b"done.\n");
+        println!("[{}]: success", self.id);
+
+        logfile.write_all(format!("{}\n", output.status).as_bytes());
+        logfile.write_all(b"\n==stdout==\n");
+        logfile.write_all(&output.stdout);
+        logfile.write_all(b"\n==stderr==\n");
+        logfile.write_all(&output.stderr);
     }
 }
 
@@ -128,6 +162,7 @@ pub fn main() {
 //
 // In the meantime we should probably implement that Connection::close() thing
 // as Iron middleware, but I don't wanna look up how to do that right now.
+#[allow(unused_must_use)]
 fn start_server(config: ServerConfig) {
     let mut router = Router::new();
     let global_manager = Arc::new(Mutex::new(TaskManager::new()));
@@ -137,14 +172,59 @@ fn start_server(config: ServerConfig) {
         Ok(Response::with((Header(Connection::close()), status::Ok, "okay")))
     });
 
-    let port = config.port.clone();
-    let checkout_root = String::from(config.checkout_root.path().to_str().unwrap());
+    let config_clone = config.clone();
+    router.get("/jobs/:uuid", move |req: &mut Request| {
+        let file_not_found =
+            Ok(Response::with((Header(Connection::close()), status::NotFound, "Not Found")));
+
+        let ref uuid = match req.extensions.get::<Router>().unwrap().find("uuid") {
+            Some(query) => query,
+            None => return file_not_found,
+        };
+
+        let logfile_path = Path::new(&config_clone.log_root.to_string()).join(format!("{}.log", uuid.to_string()));
+
+        let mut file = {
+            match File::open(&logfile_path) {
+                Ok(file) => file,
+                Err(_) => return file_not_found,
+            }
+        };
+
+        let content = {
+            let mut content = String::new();
+            match file.read_to_string(&mut content) {
+                Ok(_) => content,
+                Err(_) => return file_not_found,
+            }
+        };
+
+        Ok(Response::with((Header(Connection::close()), status::Ok, content)))
+    });
 
     // Create Webhook receiver endpoint
     let shared_manager = global_manager.clone();
+    let checkout_root = config.checkout_root.to_string();
+    let config_clone = config.clone();
+
     router.post("/hookshot", move |req: &mut Request| {
         let task_id = Uuid::new_v4();
+        let log_root = &config_clone.log_root.to_string();
         println!("[{}]: request received, processing", task_id);
+
+        // Try to create the log file upfront to make sure we can report
+        // back. If we aren't able to create it we shouldn't accept the task
+        // because we will be unable to report task status.
+        let logfile_path = Path::new(log_root).join(format!("{}.log", task_id.to_string()));
+        let mut logfile = {
+            match File::create(&logfile_path) {
+                Ok(file) => file,
+                Err(e) => {
+                    println!("[{}]: could not open logfile for writing: {}", task_id, e);
+                    return Ok(Response::with((Header(Connection::close()), status::InternalServerError)))
+                }
+            }
+        };
 
         println!("[{}]: loading body into string", task_id);
         let mut payload = String::new();
@@ -184,16 +264,16 @@ fn start_server(config: ServerConfig) {
         };
 
         // Bail out if the signature doesn't match what we're expecting.
-        // TODO: don't hardcode this secret, pull from `deployer` configuration
         println!("[{}]: signature found, verifying", task_id);
-        if signature.verify(&payload, &config.secret) == false {
+        if signature.verify(&payload, &config_clone.secret) == false {
             println!("[{}]: signature mismatch", task_id);
             return Ok(Response::with((Header(Connection::close()), status::Unauthorized, "signature doesn't match")))
         }
 
         // Try to parse the message.
-        // TODO: we can be smarter about this. If we see the XHubSignature above, we
-        //   should try to parse as a github message, otherwise go simple message.
+        // TODO: we can be smarter about this. If we see the XHubSignature
+        // above, we should try to parse as a github message, otherwise go
+        // simple message.
         println!("[{}]: attempting to parse message from payload", task_id);
         let repo = match SimpleMessage::from(&payload) {
             Ok(message) => GitRepo::from(message, &checkout_root),
@@ -206,7 +286,7 @@ fn start_server(config: ServerConfig) {
             },
         };
 
-        let environment = match config.environment_for(&repo.owner, &repo.name, &repo.branch) {
+        let environment = match config_clone.environment_for(&repo.owner, &repo.name, &repo.branch) {
             Ok(environment) => environment,
             Err(_) => {
                 println!("[{}]: warning: error loading environment for {}, definition flawed", task_id, repo.fully_qualified_branch());
@@ -214,7 +294,13 @@ fn start_server(config: ServerConfig) {
             }
         };
 
-        let task = DeployTask { repo: repo, id: task_id, env: environment };
+        let task = DeployTask {
+            repo: repo,
+            id: task_id,
+            env: environment,
+            logdir: config_clone.log_root.to_string()
+        };
+
         println!("[{}]: acquiring task manager lock", task_id);
         {
             let mut task_manager = shared_manager.lock().unwrap();
@@ -231,6 +317,9 @@ fn start_server(config: ServerConfig) {
         }
         println!("[{}]: releasing task manager lock", task_id);
         println!("[{}]: request complete", task_id);
+
+        logfile.write_all(b"job pending");
+
         let location = format!("/jobs/{}",  task_id);
         let response_body = format!("Location: {}", location);
         Ok(Response::with((
@@ -240,8 +329,8 @@ fn start_server(config: ServerConfig) {
             response_body)))
     });
 
-    println!("listening on port {}", &port);
-    let addr = format!("0.0.0.0:{}", &port);
+    println!("listening on port {}", &config.port);
+    let addr = format!("0.0.0.0:{}", &config.port);
     Iron::new(router).http(&*addr).unwrap();
     global_manager.lock().unwrap().shutdown();
 }
