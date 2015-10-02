@@ -1,0 +1,5 @@
+- hosts: all
+  sudo: no
+  tasks:
+    - name: test action
+      copy: content="{{ uuid1 }} $ {{ uuid2 }}" dest="{{ tmpfile }}"

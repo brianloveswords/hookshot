@@ -20,3 +20,4 @@ pub mod server_config;
 pub mod signature;
 pub mod task_manager;
 pub mod verified_path;
+pub mod ansible_task;
