@@ -232,27 +232,6 @@ fn start_server(config: ServerConfig) {
         let log_root = &config_clone.log_root.to_string();
         println!("[{}]: request received, processing", task_id);
 
-        // Try to create the log file upfront to make sure we can report
-        // back. If we aren't able to create it we shouldn't accept the task
-        // because we will be unable to report task status.
-        let logfile_path = Path::new(log_root).join(format!("{}.log", task_id.to_string()));
-        let mut logfile = {
-            match File::create(&logfile_path) {
-                Ok(file) => file,
-                Err(e) => {
-                    println!("[{}]: could not open logfile for writing: {}", task_id, e);
-                    return Ok(Response::with((Header(Connection::close()), status::InternalServerError)))
-                }
-            }
-        };
-
-        println!("[{}]: loading body into string", task_id);
-        let mut payload = String::new();
-        if req.body.read_to_string(&mut payload).is_err() {
-            println!("[{}]: could not read body into string", task_id);
-            return Ok(Response::with((Header(Connection::close()), status::InternalServerError)))
-        }
-
         // Get the signature from the header. We support both `X-Hub-Signature` and
         // `X-Signature` but they both represent the same type underneath, a
         // string. It might eventually be better to put this functionality on the
@@ -283,12 +262,20 @@ fn start_server(config: ServerConfig) {
             }
         };
 
+        println!("[{}]: loading body into string", task_id);
+        let mut payload = String::new();
+        if req.body.read_to_string(&mut payload).is_err() {
+            println!("[{}]: could not read body into string", task_id);
+            return Ok(Response::with((Header(Connection::close()), status::InternalServerError)))
+        }
+
         // Bail out if the signature doesn't match what we're expecting.
         println!("[{}]: signature found, verifying", task_id);
         if signature.verify(&payload, &config_clone.secret) == false {
             println!("[{}]: signature mismatch", task_id);
             return Ok(Response::with((Header(Connection::close()), status::Unauthorized, "signature doesn't match")))
         }
+
 
         // Try to parse the message.
         // TODO: we can be smarter about this. If we see the XHubSignature
@@ -311,6 +298,21 @@ fn start_server(config: ServerConfig) {
             Err(_) => {
                 println!("[{}]: warning: error loading environment for {}, definition flawed", task_id, repo.fully_qualified_branch());
                 Environment::new()
+            }
+        };
+
+
+        // Try to create the log file upfront to make sure we can report
+        // back. If we aren't able to create it we shouldn't accept the task
+        // because we will be unable to report task status.
+        let logfile_path = Path::new(log_root).join(format!("{}.log", task_id.to_string()));
+        let mut logfile = {
+            match File::create(&logfile_path) {
+                Ok(file) => file,
+                Err(e) => {
+                    println!("[{}]: could not open logfile for writing: {}", task_id, e);
+                    return Ok(Response::with((Header(Connection::close()), status::InternalServerError)))
+                }
             }
         };
 

@@ -17,6 +17,9 @@ test: src/test/test_repo
 release:
 	cargo build --release
 
+clean:
+	cargo clean
+
 repack-test-repo:
 	cd src/test && tar -czf test_repo.tgz test_repo
 

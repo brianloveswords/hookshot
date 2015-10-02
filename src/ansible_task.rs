@@ -24,6 +24,7 @@ impl<'a> AnsibleTask<'a> {
         let mut command = Command::new("ansible-playbook");
         command.current_dir(&self.project_root);
         for (k, v) in env {
+            command.env(k, v);
             command.arg("-e");
             // We use JSON encoding on the string as a way of making it safe for
             // use as a quoted command line variable.
