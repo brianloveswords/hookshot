@@ -24,6 +24,8 @@ struct DeployTask {
     logdir: String,
 }
 impl Runnable for DeployTask {
+
+    #[allow(unused_must_use)]
     fn run(&mut self) {
         let logfile_path = Path::new(&self.logdir).join(format!("{}.log", self.id.to_string()));
 
@@ -32,7 +34,7 @@ impl Runnable for DeployTask {
             Err(_) => return println!("[{}]: could not open logfile for writing", self.id),
         };
 
-        logfile.write_all(b"\ntask running...");
+        logfile.write_all(b"\ntask running...\n");
 
         if let Err(git_error) = self.repo.get_latest() {
             let err = format!("[{}]: {}: {}", self.id, git_error.desc, String::from_utf8(git_error.output.unwrap().stderr).unwrap());
@@ -160,6 +162,7 @@ pub fn main() {
 //
 // In the meantime we should probably implement that Connection::close() thing
 // as Iron middleware, but I don't wanna look up how to do that right now.
+#[allow(unused_must_use)]
 fn start_server(config: ServerConfig) {
     let mut router = Router::new();
     let global_manager = Arc::new(Mutex::new(TaskManager::new()));
@@ -203,16 +206,21 @@ fn start_server(config: ServerConfig) {
     let shared_manager = global_manager.clone();
     let checkout_root = config.checkout_root.to_string();
     let config_clone = config.clone();
+
     router.post("/hookshot", move |req: &mut Request| {
         let task_id = Uuid::new_v4();
+        let log_root = &config_clone.log_root.to_string();
         println!("[{}]: request received, processing", task_id);
 
-        let logfile_path = Path::new(&config_clone.log_root.to_string()).join(format!("{}.log", task_id.to_string()));
+        // Try to create the log file upfront to make sure we can report
+        // back. If we aren't able to create it we shouldn't accept the task
+        // because we will be unable to report task status.
+        let logfile_path = Path::new(log_root).join(format!("{}.log", task_id.to_string()));
         let mut logfile = {
             match File::create(&logfile_path) {
                 Ok(file) => file,
-                Err(_) => {
-                    println!("[{}]: could not open logfile for writing", task_id);
+                Err(e) => {
+                    println!("[{}]: could not open logfile for writing: {}", task_id, e);
                     return Ok(Response::with((Header(Connection::close()), status::InternalServerError)))
                 }
             }
@@ -263,8 +271,9 @@ fn start_server(config: ServerConfig) {
         }
 
         // Try to parse the message.
-        // TODO: we can be smarter about this. If we see the XHubSignature above, we
-        //   should try to parse as a github message, otherwise go simple message.
+        // TODO: we can be smarter about this. If we see the XHubSignature
+        // above, we should try to parse as a github message, otherwise go
+        // simple message.
         println!("[{}]: attempting to parse message from payload", task_id);
         let repo = match SimpleMessage::from(&payload) {
             Ok(message) => GitRepo::from(message, &checkout_root),
@@ -285,7 +294,13 @@ fn start_server(config: ServerConfig) {
             }
         };
 
-        let task = DeployTask { repo: repo, id: task_id, env: environment, logdir: config_clone.log_root.to_string() };
+        let task = DeployTask {
+            repo: repo,
+            id: task_id,
+            env: environment,
+            logdir: config_clone.log_root.to_string()
+        };
+
         println!("[{}]: acquiring task manager lock", task_id);
         {
             let mut task_manager = shared_manager.lock().unwrap();
