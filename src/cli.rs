@@ -27,36 +27,42 @@ impl Runnable for DeployTask {
 
     #[allow(unused_must_use)]
     fn run(&mut self) {
-        let logfile_path = Path::new(&self.logdir).join(format!("{}.log", self.id.to_string()));
+        let task_id = self.id.to_string();
 
+        // Insert the checkout path for the current checkout to the environment
+        self.env.insert(String::from("deployer_checkout_path"), self.repo.local_path.clone());
+
+        // Truncate the logfile and write "task running..."
+        let logfile_path = Path::new(&self.logdir).join(format!("{}.log", task_id));
         let mut logfile = match File::create(&logfile_path) {
-            Ok(f) => f,
-            Err(_) => return println!("[{}]: could not open logfile for writing", self.id),
+            Ok(logfile) => logfile,
+            Err(_) =>
+                return println!("[{}]: could not open logfile for writing", &task_id)
         };
-
         logfile.write_all(b"\ntask running...\n");
 
         if let Err(git_error) = self.repo.get_latest() {
-            let err = format!("[{}]: {}: {}", self.id, git_error.desc, String::from_utf8(git_error.output.unwrap().stderr).unwrap());
+            let stderr = String::from_utf8(git_error.output.unwrap().stderr).unwrap();
+            let err = format!("{}: {}", git_error.desc, stderr);
             logfile.write_all(format!("{}", err).as_bytes());
-            return println!("{}", err);
+            return println!("[{}]: {}", task_id, err);
         };
 
         let project_root = Path::new(&self.repo.local_path);
         let config = match RepoConfig::load(&project_root) {
             Err(e) => {
-                let err = format!("[{}]: could not load config for repo {}: {}", self.id, self.repo.remote_path, e.desc);
+                let err = format!("could not load config for repo {}: {}", self.repo.remote_path, e.desc);
                 logfile.write_all(format!("{}", err).as_bytes());
-                return println!("{}", err);
+                return println!("[{}]: {}", &task_id, err);
             }
             Ok(config) => config,
         };
 
         let branch_config = match config.lookup_branch(&self.repo.branch) {
             None => {
-                let err = format!("[{}]: No config for branch '{}'", self.id, &self.repo.branch);
+                let err = format!("No config for branch '{}'", &self.repo.branch);
                 logfile.write_all(format!("{}", err).as_bytes());
-                return println!("{}", err);
+                return println!("[{}]: {}", &task_id, err);
             }
             Some(config) => config,
         };
@@ -66,21 +72,21 @@ impl Runnable for DeployTask {
             match branch_config.method {
                 DeployMethod::Ansible => match branch_config.ansible_task() {
                     None => {
-                        let err = format!("[{}]: No task for branch '{}'", self.id, &self.repo.branch);
+                        let err = format!("No task for branch '{}'", &self.repo.branch);
                         logfile.write_all(format!("{}", err).as_bytes());
-                        return println!("{}", err);
+                        return println!("[{}]: {}", &task_id, err);
                     }
                     Some(task) => {
-                        println!("[{}]: {:?}", self.id, task);
-                        println!("[{}]: with environment {:?}", self.id, &self.env);
+                        println!("[{}]: {:?}", &task_id, task);
+                        println!("[{}]: with environment {:?}", &task_id, &self.env);
                         task.run(&self.env)
                     }
                 },
                 DeployMethod::Makefile => match branch_config.make_task() {
                     None => {
-                        let err = format!("[{}]: No task for branch '{}'", self.id, &self.repo.branch);
+                        let err = format!("No task for branch '{}'", &self.repo.branch);
                         logfile.write_all(format!("{}", err).as_bytes());
-                        return println!("{}", err);
+                        return println!("[{}]: {}", &task_id, err);
                     }
                     Some(task) => {
                         println!("[{}]: {:?}", self.id, task);
@@ -94,9 +100,9 @@ impl Runnable for DeployTask {
         let output = match output_result {
             Ok(output) => output,
             Err(e) => {
-                let err = format!("[{}]: task failed: {}", self.id, e.desc);
+                let err = format!("task failed: {}", e.desc);
                 logfile.write_all(format!("{}", err).as_bytes());
-                return println!("{}", err);
+                return println!("[{}]: {}", &task_id, err);
             }
         };
 
