@@ -86,7 +86,7 @@ repository and branch. Below you can find an example annotated `deployer.conf`:
 
 ## Defaults to use when a branch configuration is missing fields.
 ## "method" is required.
-[defaults]
+[default]
 method = "ansible"               # default task type. "makefile" or "ansible"
 task = "deploy"                  # default make task to run. Optional.
 playbook = "ansible/deploy.yml"  # default playbook to use for ansible. Optional
@@ -94,21 +94,21 @@ inventory = "ansible/inventory"  # default inventory to use for ansible. Optiona
 
 ## Configuration for branches that have tasks associated with them. This doesn't
 ## need to be comprehensive of every branch in the repository. Any configuration
-## here will override any corresponding value from `defaults`.
-[branches.production]
+## here will override any corresponding value from `default`.
+[branch.production]
 playbook = "deploy/production.yml"
 inventory = "deploy/inventory/production"
 
 ## When the staging branch is pushed ansible-playbook will be run with default
 ## playbook and the "ansible/inventory/staging" inventory, doing a path lookup
 ## starting from the root of the repository.
-[branches.staging]
+[branch.staging]
 inventory = "ansible/inventory/staging"
 
 ## When the prototype branch `make self-deploy` will be run instead of
 ## `ansible-playbook`. Any extra variables will be stored in the environment
 ## before running `make`.
-[branches.prototype]
+[branch.prototype]
 method = "makefile"
 task = "self-deploy"
 

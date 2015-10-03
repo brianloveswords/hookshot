@@ -57,13 +57,13 @@ pub struct RepoConfig<'a> {
     default_playbook: Option<VerifiedPath>,
     default_inventory: Option<VerifiedPath>,
     default_notify_url: Option<URL>,
-    branches: BranchConfigMap<'a>,
+    branch: BranchConfigMap<'a>,
     project_root: &'a Path,
 }
 
 impl<'a> RepoConfig<'a> {
     pub fn lookup_branch(&self, name: &String) -> Option<&BranchConfig<'a>> {
-        self.branches.get(name)
+        self.branch.get(name)
     }
 
     pub fn load(project_root: &'a Path) -> Result<RepoConfig<'a>, Error> {
@@ -94,35 +94,35 @@ impl<'a> RepoConfig<'a> {
             }),
         };
 
-        let defaults = match root.get("defaults") {
+        let default = match root.get("default") {
             Some(value) => value,
             None => return Err(Error {
-                desc: "missing 'defaults' section",
-                subject: Some(String::from("defaults")),
+                desc: "missing 'default' section",
+                subject: Some(String::from("default")),
             }),
         };
 
-        let default_method = match lookup_as_string(defaults, "method") {
+        let default_method = match lookup_as_string(default, "method") {
             LookupResult::Missing => DeployMethod::Makefile,
             LookupResult::WrongType => return Err(Error {
-                desc: "could not read 'defaults.method' as string",
-                subject: Some(String::from("defaults.method")),
+                desc: "could not read 'default.method' as string",
+                subject: Some(String::from("default.method")),
             }),
             LookupResult::Value(v) => match v {
                 "ansible" => DeployMethod::Ansible,
                 "makefile" | "make" => DeployMethod::Makefile,
                 _ => return Err(Error {
                     desc: "invalid type, valid values are 'ansible' and 'makefile'",
-                    subject: Some(String::from("defaults.method")),
+                    subject: Some(String::from("default.method")),
                 }),
             }
         };
 
-        let default_task = match lookup_as_string(defaults, "task") {
+        let default_task = match lookup_as_string(default, "task") {
             LookupResult::Missing => None,
             LookupResult::WrongType => return Err(Error {
-                desc: "could not read 'defaults.task' as string",
-                subject: Some(String::from("defaults.task")),
+                desc: "could not read 'default.task' as string",
+                subject: Some(String::from("default.task")),
             }),
             LookupResult::Value(v) => match MakeTask::new(project_root, v) {
                 Ok(v) => Some(v),
@@ -130,11 +130,11 @@ impl<'a> RepoConfig<'a> {
             }
         };
 
-        let default_playbook = match lookup_as_string(defaults, "playbook") {
+        let default_playbook = match lookup_as_string(default, "playbook") {
             LookupResult::Missing => None,
             LookupResult::WrongType => return Err(Error {
-                desc: "could not read 'defaults.playbook' as string",
-                subject: Some(String::from("defaults.playbook")),
+                desc: "could not read 'default.playbook' as string",
+                subject: Some(String::from("default.playbook")),
             }),
             LookupResult::Value(v) =>
                 match VerifiedPath::file(Some(project_root), Path::new(v)) {
@@ -143,11 +143,11 @@ impl<'a> RepoConfig<'a> {
                 },
         };
 
-        let default_inventory = match lookup_as_string(defaults, "inventory") {
+        let default_inventory = match lookup_as_string(default, "inventory") {
             LookupResult::Missing => None,
             LookupResult::WrongType => return Err(Error {
-                desc: "could not read 'defaults.inventory' as string",
-                subject: Some(String::from("defaults.inventory")),
+                desc: "could not read 'default.inventory' as string",
+                subject: Some(String::from("default.inventory")),
             }),
             LookupResult::Value(v) =>
                 match VerifiedPath::file(Some(project_root), Path::new(v)) {
@@ -156,35 +156,35 @@ impl<'a> RepoConfig<'a> {
                 },
         };
 
-        let default_notify_url = match lookup_as_string(defaults, "notify_url") {
+        let default_notify_url = match lookup_as_string(default, "notify_url") {
             LookupResult::Missing => None,
             LookupResult::WrongType => return Err(Error {
-                desc: "could not read 'defaults.notify_url' as string",
-                subject: Some(String::from("defaults.notify_url")),
+                desc: "could not read 'default.notify_url' as string",
+                subject: Some(String::from("default.notify_url")),
             }),
             LookupResult::Value(v) => Some(v.to_string()),
         };
 
-        let raw_branches = match root.get("branches") {
+        let raw_branch = match root.get("branch") {
             None => return Err(Error{
-                desc: "must configure at least one branch (missing [branches.*])",
-                subject: Some(String::from("branches.*")),
+                desc: "must configure at least one branch (missing [branch.*])",
+                subject: Some(String::from("branch.*")),
             }),
             Some(v) => match v.as_table() {
                 None => return Err(Error {
-                    desc: "'branches' must be a table",
-                    subject: Some(String::from("branches")),
+                    desc: "'branch' must be a table",
+                    subject: Some(String::from("branch")),
                 }),
                 Some(v) => v
             }
         };
 
-        let mut branches = BranchConfigMap::new();
+        let mut branch = BranchConfigMap::new();
 
-        for (key, table) in raw_branches.iter() {
+        for (key, table) in raw_branch.iter() {
             if table.as_table().is_none() {
                 return Err(Error {
-                    desc: "every 'branches' must be a table",
+                    desc: "every 'branch' must be a table",
                     subject: Some(key.clone()),
                 });
             }
@@ -192,15 +192,15 @@ impl<'a> RepoConfig<'a> {
             let method = match lookup_as_string(table, "method") {
                 LookupResult::Missing => default_method,
                 LookupResult::WrongType => return Err(Error {
-                    desc: "could not read 'defaults.method' as string",
-                    subject: Some(String::from("defaults.method")),
+                    desc: "could not read 'default.method' as string",
+                    subject: Some(String::from("default.method")),
                 }),
                 LookupResult::Value(v) => match v {
                     "ansible" => DeployMethod::Ansible,
                     "makefile" | "make" => DeployMethod::Makefile,
                     _ => return Err(Error {
                         desc: "invalid type, valid values are 'ansible' and 'makefile'",
-                        subject: Some(String::from("defaults.method")),
+                        subject: Some(String::from("default.method")),
                     }),
                 }
             };
@@ -234,7 +234,7 @@ impl<'a> RepoConfig<'a> {
                 // This complicated looking match tries to create a
                 // playbook/inventory combination by first preferring
                 // configuration for the specific branch and falling back to
-                // defaults where necessary.
+                // default where necessary.
                 match (playbook, inventory, default_playbook.clone(), default_inventory.clone()) {
                     (Some(p), Some(i), _, _) |
                     (None, Some(i), Some(p), _) |
@@ -263,12 +263,12 @@ impl<'a> RepoConfig<'a> {
 
             if make_task.is_none() && ansible_task.is_none() {
                 return Err(Error {
-                    desc: "cannot construct a task for branch between local config and defaults",
+                    desc: "cannot construct a task for branch between local config and default",
                     subject: Some(format!("branch.{}", key)),
                 })
             }
 
-            branches.insert(key.clone(), BranchConfig {
+            branch.insert(key.clone(), BranchConfig {
                 ansible_task: ansible_task,
                 make_task: make_task,
                 method: method,
@@ -289,7 +289,7 @@ impl<'a> RepoConfig<'a> {
             default_playbook: default_playbook,
             default_inventory: default_inventory,
             default_notify_url: default_notify_url,
-            branches: branches,
+            branch: branch,
             project_root: project_root,
         })
     }
@@ -321,20 +321,20 @@ mod tests {
     #[test]
     fn test_valid_configuration() {
         // let toml = r#"
-        //     [defaults]
+        //     [default]
         //     method = "ansible"
         //     task = "deploy"
         //     playbook = "ansible/deploy.yml"
 
-        //     [branches.production]
+        //     [branch.production]
         //     playbook = "ansible/production.yml"
         //     inventory = "ansible/inventory/production"
 
-        //     [branches.staging]
+        //     [branch.staging]
         //     inventory = "ansible/inventory/staging"
         //     notify_url = "http://example.org"
 
-        //     [branches.brian-test-branch]
+        //     [branch.brian-test-branch]
         //     method = "makefile"
         //     task = "self-deploy"
         // "#;
@@ -352,7 +352,7 @@ mod tests {
 
         // production config
         {
-            let config = config.branches.get("production").unwrap();
+            let config = config.branch.get("production").unwrap();
             let ref ansible_task = config.ansible_task().unwrap();
             assert_eq!(ansible_task.playbook, "ansible/production.yml");
             assert_eq!(ansible_task.inventory, "ansible/inventory/production");
@@ -362,7 +362,7 @@ mod tests {
         }
         // staging config
         {
-            let config = config.branches.get("staging").unwrap();
+            let config = config.branch.get("staging").unwrap();
             let notify_url = config.notify_url.clone().unwrap();
             let ansible_task = config.ansible_task().unwrap();
             assert_eq!(ansible_task.inventory, "ansible/inventory/staging");
@@ -373,7 +373,7 @@ mod tests {
         }
         // brian-test-branch config
         {
-            let config = config.branches.get("brian-test-branch").unwrap();
+            let config = config.branch.get("brian-test-branch").unwrap();
             let method = config.method.clone();
             assert!(config.ansible_task.is_none());
             assert_eq!(method.to_string(), "makefile");
