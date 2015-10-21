@@ -77,12 +77,12 @@ impl GitHubMessage {
             None => return Err("missing `repository.owner.name`"),
         };
 
-        let git_url = match root_obj.find_path(&["repository", "git_url"]) {
+        let git_url = match root_obj.find_path(&["repository", "ssh_url"]) {
             Some(v) => match v.as_string() {
                 Some(v) => v.to_string(),
-                None => return Err("couldn't read `repository.git_url` as a string")
+                None => return Err("couldn't read `repository.ssh_url` as a string")
             },
-            None => return Err("missing `repository.git_url`"),
+            None => return Err("missing `repository.ssh_url`"),
         };
 
         Ok(GitHubMessage {
