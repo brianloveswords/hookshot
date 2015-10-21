@@ -36,7 +36,7 @@ impl<'a> AnsibleTask<'a> {
         match command.output() {
             Ok(r) => Ok(r),
             Err(e) => return Err(CommandError {
-                desc: "failed to execute `make`, see detail",
+                desc: "failed to execute `ansible-playbook`, see detail",
                 output: None,
                 detail: Some(format!("{}", e)),
             })

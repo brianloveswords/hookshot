@@ -101,7 +101,8 @@ impl Runnable for DeployTask {
         let output = match output_result {
             Ok(output) => output,
             Err(e) => {
-                let err = format!("task failed: {}", e.desc);
+                let err = format!("task failed: {} ({})",
+                                  e.desc, e.detail.unwrap_or(String::from("")));
                 logfile.write_all(format!("{}", err).as_bytes());
                 return println!("[{}]: {}", &task_id, err);
             }
