@@ -17,6 +17,9 @@ test: src/test/test_repo
 release:
 	cargo build --release
 
+release-fail:
+	this-does-not-exist
+
 clean:
 	cargo clean
 
