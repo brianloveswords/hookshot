@@ -16,7 +16,7 @@ function processMessage(buffer) {
 
   const fullyQualifiedBranch = `${message.owner}.${message.repo}.${message.branch}`;
   const messageMap = new Map();
-  messageMap.set('started', `[\`${fullyQualifiedBranch}\`] 📦 Started build...`);
+  messageMap.set('started', `[\`${fullyQualifiedBranch}\`] 📦 Starting build...`);
   messageMap.set('success', `[\`${fullyQualifiedBranch}\`] 🎊 Success!`);
   messageMap.set('failed', `[\`${fullyQualifiedBranch}\`] 🚨 Build failed, see \`${message.job_url}\` for details`);
 
@@ -42,8 +42,6 @@ function processMessage(buffer) {
   }), (response) => {
     console.log('STATUS: ' + response.statusCode);
     console.log('HEADERS: ' + JSON.stringify(response.headers));
-
-    let buffer = new Buffer(0);
     response.setEncoding('utf8');
     response.pipe(process.stdout, {end: false});
   });
