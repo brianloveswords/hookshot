@@ -39,8 +39,8 @@ function processMessage(buffer) {
   const fields = [
     {
       short: true,
-      title: 'Status',
-      value: statusMap.get(status),
+      title: 'Repository',
+      value: fullyQualifiedBranch,
     },
     {
       short: true,
@@ -49,8 +49,8 @@ function processMessage(buffer) {
     },
     {
       short: true,
-      title: 'Repository',
-      value: fullyQualifiedBranch,
+      title: 'Status',
+      value: statusMap.get(status),
     },
   ];
 
