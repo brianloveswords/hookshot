@@ -169,10 +169,10 @@ mod tests {
         let json = r#"
         {
           "prefix": "brian",
+          "repository_name": "stuff"
           "branch": "master",
           "remote": "the internet",
           "sha": "HEAD",
-          "repository_name": "stuff"
         }
         "#;
 
