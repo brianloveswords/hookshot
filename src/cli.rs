@@ -1,9 +1,9 @@
+use ::deploy_task::DeployTask;
 use ::git::GitRepo;
 use ::message::{SimpleMessage, GitHubMessage};
-use ::repo_config::{RepoConfig, DeployMethod};
 use ::server_config::{ServerConfig, Error, Environment};
 use ::signature::Signature;
-use ::task_manager::{TaskManager, Runnable};
+use ::task_manager::TaskManager;
 use getopts::Options;
 use iron::headers::{Connection, Location};
 use iron::modifiers::Header;
@@ -11,113 +11,11 @@ use iron::status;
 use iron::{Iron, Request, Response};
 use router::{Router};
 use std::env;
-use std::io::{Read, Write};
 use std::fs::File;
+use std::io::{Read, Write};
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
-
-struct DeployTask {
-    repo: GitRepo,
-    id: Uuid,
-    env: Environment,
-    logdir: String,
-}
-impl Runnable for DeployTask {
-
-    #[allow(unused_must_use)]
-    fn run(&mut self) {
-        let task_id = self.id.to_string();
-
-        // Insert the checkout path for the current checkout to the environment
-        self.env.insert(String::from("deployer_checkout_path"), self.repo.local_path.clone());
-
-        // Truncate the logfile and write "task running..."
-        let logfile_path = Path::new(&self.logdir).join(format!("{}.log", task_id));
-        let mut logfile = match File::create(&logfile_path) {
-            Ok(logfile) => logfile,
-            Err(_) =>
-                return println!("[{}]: could not open logfile for writing", &task_id)
-        };
-        logfile.write_all(b"\ntask running...\n");
-
-        if let Err(git_error) = self.repo.get_latest() {
-            let stderr = String::from_utf8(git_error.output.unwrap().stderr).unwrap();
-            let err = format!("{}: {}", git_error.desc, stderr);
-            logfile.write_all(format!("{}", err).as_bytes());
-            return println!("[{}]: {}", task_id, err);
-        };
-
-        let project_root = Path::new(&self.repo.local_path);
-        let config = match RepoConfig::load(&project_root) {
-            Err(e) => {
-                let err = format!("could not load config for repo {}: {} ({})",
-                                  self.repo.remote_path, e.desc, e.subject.unwrap_or(String::from("")));
-                logfile.write_all(format!("{}", err).as_bytes());
-                return println!("[{}]: {}", &task_id, err);
-            }
-            Ok(config) => config,
-        };
-
-        let branch_config = match config.lookup_branch(&self.repo.branch) {
-            None => {
-                let err = format!("No config for branch '{}'", &self.repo.branch);
-                logfile.write_all(format!("{}", err).as_bytes());
-                return println!("[{}]: {}", &task_id, err);
-            }
-            Some(config) => config,
-        };
-
-        // TODO: refactor this, use a trait or something.
-        let output_result = {
-            match branch_config.method {
-                DeployMethod::Ansible => match branch_config.ansible_task() {
-                    None => {
-                        let err = format!("No task for branch '{}'", &self.repo.branch);
-                        logfile.write_all(format!("{}", err).as_bytes());
-                        return println!("[{}]: {}", &task_id, err);
-                    }
-                    Some(task) => {
-                        println!("[{}]: {:?}", &task_id, task);
-                        println!("[{}]: with environment {:?}", &task_id, &self.env);
-                        task.run(&self.env)
-                    }
-                },
-                DeployMethod::Makefile => match branch_config.make_task() {
-                    None => {
-                        let err = format!("No task for branch '{}'", &self.repo.branch);
-                        logfile.write_all(format!("{}", err).as_bytes());
-                        return println!("[{}]: {}", &task_id, err);
-                    }
-                    Some(task) => {
-                        println!("[{}]: {:?}", self.id, task);
-                        println!("[{}]: with environment {:?}", self.id, &self.env);
-                        task.run(&self.env)
-                    }
-                }
-            }
-        };
-
-        let output = match output_result {
-            Ok(output) => output,
-            Err(e) => {
-                let err = format!("task failed: {} ({})",
-                                  e.desc, e.detail.unwrap_or(String::from("")));
-                logfile.write_all(format!("{}", err).as_bytes());
-                return println!("[{}]: {}", &task_id, err);
-            }
-        };
-
-        logfile.write_all(b"done.\n");
-        println!("[{}]: success", self.id);
-
-        logfile.write_all(format!("{}\n", output.status).as_bytes());
-        logfile.write_all(b"\n==stdout==\n");
-        logfile.write_all(&output.stdout);
-        logfile.write_all(b"\n==stderr==\n");
-        logfile.write_all(&output.stderr);
-    }
-}
 
 const ENV_CONFIG_KEY: &'static str = "DEPLOYER_CONFIG";
 

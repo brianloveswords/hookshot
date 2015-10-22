@@ -21,3 +21,5 @@ pub mod signature;
 pub mod task_manager;
 pub mod verified_path;
 pub mod ansible_task;
+pub mod notifier;
+pub mod deploy_task;

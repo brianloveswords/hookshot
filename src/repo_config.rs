@@ -28,7 +28,7 @@ pub struct BranchConfig<'a> {
     pub method: DeployMethod,
     make_task: Option<MakeTask<'a>>,
     ansible_task: Option<AnsibleTask<'a>>,
-    notify_url: Option<URL>,
+    pub notify_url: Option<URL>,
 }
 impl<'a> BranchConfig<'a> {
     pub fn make_task(&self) -> Option<&MakeTask<'a>> {
@@ -56,7 +56,7 @@ pub struct RepoConfig<'a> {
     default_task: Option<MakeTask<'a>>,
     default_playbook: Option<VerifiedPath>,
     default_inventory: Option<VerifiedPath>,
-    default_notify_url: Option<URL>,
+    pub default_notify_url: Option<URL>,
     branch: BranchConfigMap<'a>,
     project_root: &'a Path,
 }
