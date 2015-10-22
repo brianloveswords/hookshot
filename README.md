@@ -156,6 +156,14 @@ message:
 }
 ```
 
+### Example
+
+See
+[examples/webhook-server.js](https://github.com/brianloveswords/hookshot/blob/master/examples/webhook-server.js)
+for an example notify_url receiver written in ES6. The server listens for
+hookshot notifications and sends a status update to a Slack channel so people
+can keep easily track of what's going on with a hookshot task.
+
 ## Inspecting status of a task
 
 If you need to figure out the status of a task you can find out the ID by going
@@ -164,9 +172,6 @@ rejected for any reason, github will show a red warning symbol next to the
 delivery. If there is a green check, that means the task was scheduled
 successfully (202 Accepted). Click to see more, and use the response tab to find
 the task status URL:
-
-![screeshot of the webhook delivery](https://cldup.com/Qvb1Mp7XKq.png)
-
 
 In forthcoming versions we might expose an index of tasks per queue to make this
 discovery easier.
