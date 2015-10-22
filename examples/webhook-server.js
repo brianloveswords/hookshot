@@ -35,7 +35,7 @@ function processMessage(buffer) {
   const status = message.status.toLowerCase();
   const url = process.env.SLACK_URL;
   const payload = {
-    channel: '#botplayground',
+    channel: process.env.SLACK_CHANNEL || '#botplayground',
     username: 'hookshotbot',
     attachments: [{
       fallback: `${prelude} ${messageMap.get(status)}`,
