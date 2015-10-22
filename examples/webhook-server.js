@@ -16,12 +16,12 @@ function processMessage(buffer) {
 
   const fullyQualifiedBranch = `${message.owner}.${message.repo}.${message.branch}`;
   const messageMap = new Map();
-  messageMap.set('started', `[\`${fullyQualifiedBranch}\`] 📦 Started build`);
+  messageMap.set('started', `[\`${fullyQualifiedBranch}\`] 📦 Started build...`);
   messageMap.set('success', `[\`${fullyQualifiedBranch}\`] 🎊 Success!`);
-  messageMap.set('failed', `[\`${fullyQualifiedBranch}\`] 🚨 Build failed, see ${message.job_url} for details`);
+  messageMap.set('failed', `[\`${fullyQualifiedBranch}\`] 🚨 Build failed, see \`${message.job_url}\` for details`);
 
   const status = message.status.toLowerCase();
-  const url = 'https://hooks.slack.com/services/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';
+  const url = process.env.SLACK_URL;
   const payload = {
     channel: '#bocoupcom',
     username: 'hookshotbot',
