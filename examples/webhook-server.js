@@ -24,10 +24,10 @@ function processMessage(buffer) {
   messageMap.set('success', `Success!`);
   messageMap.set('failed', `Failed, see job details page: ${message.job_url}`);
 
-  const titleMap = new Map();
-  titleMap.set('started', '📦 Hookshot Received 📦');
-  titleMap.set('success', '🎊 Hookshot Complete 🎊');
-  titleMap.set('failed', '🚨 Hookshot Failed 🚨');
+  const statusMap = new Map();
+  statusMap.set('started', '📦');
+  statusMap.set('success', '🎊');
+  statusMap.set('failed', '🚨');
 
   const colorMap = new Map();
   colorMap.set('started', '#187ac0');
@@ -37,6 +37,11 @@ function processMessage(buffer) {
   const status = message.status.toLowerCase();
   const url = process.env.SLACK_URL;
   const fields = [
+    {
+      short: true,
+      title: 'Status',
+      value: statusMap.get(status),
+    },
     {
       short: true,
       title: 'Job ID',
@@ -75,7 +80,6 @@ function processMessage(buffer) {
     attachments: [{
       fallback: `${prelude} ${messageMap.get(status)}`,
       color: colorMap.get(status),
-      title: titleMap.get(status),
       fields:  fields,
     }],
   };
