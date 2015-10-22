@@ -1,9 +1,10 @@
-use hyper::header::ContentType;
-use hyper::client::Client;
-use rustc_serialize::json;
-use std::thread;
 use ::deploy_task::DeployTask;
 use ::repo_config::RepoConfig;
+use hyper::client::Client;
+use hyper::header::ContentType;
+use rustc_serialize::json;
+use std::fmt::{self, Display, Formatter};
+use std::thread;
 
 #[derive(RustcEncodable)]
 struct Message<'a> {
@@ -16,17 +17,38 @@ struct Message<'a> {
 }
 
 
-#[derive(RustcEncodable)]
+#[derive(RustcEncodable, Clone)]
 enum TaskState {
     Started,
     Success,
     Failed,
 }
 
+impl Display for TaskState {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(f, "{}", match *self {
+            TaskState::Started => "started",
+            TaskState::Success => "success",
+            TaskState::Failed => "failed",
+        })
+    }
+}
+
 #[allow(unused_must_use)]
 pub fn started(task: &DeployTask, config: &RepoConfig) {
-    println!("[{}] notifier: looking up notify url", &task.id);
+    send_message(task, config, TaskState::Started);
+}
 
+pub fn success(task: &DeployTask, config: &RepoConfig) {
+    send_message(task, config, TaskState::Success);
+}
+
+pub fn failed(task: &DeployTask, config: &RepoConfig) {
+    send_message(task, config, TaskState::Failed);
+}
+
+fn send_message(task: &DeployTask, config: &RepoConfig, status: TaskState) {
+    println!("[{}] notifier: looking up notify url", &task.id);
     let notify_url = match get_notify_url(task, config) {
         Some(url) => url,
         None => {
@@ -39,9 +61,14 @@ pub fn started(task: &DeployTask, config: &RepoConfig) {
     let job_url = format!("/jobs/{}", &task.id);
     let (branch, owner, repo_name) = (&repo.branch, &repo.owner, &repo.name);
 
+    let failed = match status {
+        TaskState::Failed => true,
+        _ => false,
+    };
+
     let message = Message {
-        status: TaskState::Started,
-        failed: false,
+        status: status.clone(),
+        failed: failed,
         job_url: &job_url,
         owner: owner,
         branch: branch,
@@ -54,8 +81,7 @@ pub fn started(task: &DeployTask, config: &RepoConfig) {
     };
 
     let client = Client::new();
-    println!("[{}] notifier: sending message to {}", &task.id, &notify_url);
-
+    println!("[{}] notifier: sending {} message to {}", &task.id, &status, &notify_url);
 
     let task_id = task.id.clone();
     let notify_url = notify_url.clone();
@@ -68,15 +94,6 @@ pub fn started(task: &DeployTask, config: &RepoConfig) {
                 Err(e) => println!("[{}] notifier: could not send message {}", &task_id, &e),
             }
     });
-
-}
-
-pub fn success(task: &DeployTask, config: &RepoConfig) {
-
-}
-
-pub fn failed(task: &DeployTask, config: &RepoConfig) {
-
 }
 
 fn get_notify_url<'a>(task: &DeployTask, config: &'a RepoConfig) -> Option<&'a String> {
