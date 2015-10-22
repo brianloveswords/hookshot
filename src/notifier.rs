@@ -48,10 +48,16 @@ pub fn started(task: &DeployTask, config: &RepoConfig) {
     };
 
     let client = Client::new();
-    client.post(notify_url)
+    println!("[{}] notifier: sending message to {}", &task.id, &notify_url);
+
+    match client.post(notify_url)
         .header(ContentType::json())
         .body(&request_body)
-        .send();
+        .send() {
+            Ok(_) => {},
+            Err(e) => println!("[{}] notifier: could not send message {}", &task.id, e),
+        }
+
 }
 
 pub fn success(task: &DeployTask, config: &RepoConfig) {
