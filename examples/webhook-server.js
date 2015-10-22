@@ -20,7 +20,7 @@ function processMessage(buffer) {
   const messageMap = new Map();
   messageMap.set('started', `${prelude} 📦 Starting build...`);
   messageMap.set('success', `${prelude} 🎊 Success!`);
-  messageMap.set('failed', `${prelude} 🚨 Build failed, see \`${message.job_url}\` for details`);
+  messageMap.set('failed', `${prelude} 🚨 Build failed, see <${message.job_url}> for details`);
 
   const status = message.status.toLowerCase();
   const url = process.env.SLACK_URL;
