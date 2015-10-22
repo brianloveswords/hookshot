@@ -6,6 +6,8 @@ const querystring = require('querystring');
 const urilib = require('url');
 const Buffer = require('buffer').Buffer;
 
+const TASK_MAP = new Map();
+
 function processMessage(buffer) {
   let message;
   try {
@@ -34,28 +36,49 @@ function processMessage(buffer) {
 
   const status = message.status.toLowerCase();
   const url = process.env.SLACK_URL;
+  const fields = [
+    {
+      short: true,
+      title: 'Job ID',
+      value: `<${message.job_url}|${message.task_id}>`,
+    },
+    {
+      short: true,
+      title: 'Repository',
+      value: fullyQualifiedBranch,
+    },
+  ];
+
+  if (status === 'started') {
+    let startTime = new Date();
+    TASK_MAP.set(message.task_id, {start: startTime});
+    fields.push({
+      short: true,
+      title: 'Started',
+      value: `${startTime.toLocaleString()}`,
+    });
+  } else {
+    let endTime = new Date();
+    let startTime = TASK_MAP.get(message.task_id).startTime;
+    fields.push({
+      short: true,
+      title: 'Duration',
+      value: `${(endTime-startTime)/1000|0} seconds`
+    });
+    TASK_MAP.delete(message.task_id);
+  }
+
   const payload = {
     channel: process.env.SLACK_CHANNEL || '#botplayground',
     username: 'hookshotbot',
+    icon_emoji: ':shipit:',
     attachments: [{
       fallback: `${prelude} ${messageMap.get(status)}`,
       color: colorMap.get(status),
       title: titleMap.get(status),
       text: `${messageMap.get(status)}`,
-      fields: [
-        {
-          short: true,
-          title: 'Job ID',
-          value: `<${message.job_url}|${message.task_id}>`,
-        },
-        {
-          short: true,
-          title: 'Repository',
-          value: fullyQualifiedBranch,
-        },
-      ]
+      fields:  fields,
     }],
-    icon_emoji: ':shipit:',
   };
 
   const postData = querystring.stringify({
