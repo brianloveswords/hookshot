@@ -20,6 +20,9 @@ pub struct GitRepo {
     /// checkout possible.
     pub branch: String,
 
+    /// Specific SHA for this event.
+    pub sha: String,
+
     /// Remote path to the repository. This can be a filesystem path if the
     /// `file://` protocol is used.
     pub remote_path: String,

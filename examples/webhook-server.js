@@ -25,9 +25,9 @@ function processMessage(buffer) {
   messageMap.set('failed', `Failed, see task details page: ${message.task_url}`);
 
   const statusMap = new Map();
-  statusMap.set('started', '📦');
-  statusMap.set('success', '🎊');
-  statusMap.set('failed', '🚨');
+  statusMap.set('started', '📦 Started');
+  statusMap.set('success', '🎊 Success');
+  statusMap.set('failed', '🚨 Failure');
 
   const colorMap = new Map();
   colorMap.set('started', '#187ac0');
@@ -49,8 +49,8 @@ function processMessage(buffer) {
     },
     {
       short: true,
-      title: 'Status',
-      value: statusMap.get(status),
+      title: 'Commit',
+      value: `${message.sha}`,
     },
   ];
 
@@ -79,6 +79,7 @@ function processMessage(buffer) {
     icon_emoji: ':shipit:',
     attachments: [{
       fallback: `${prelude} ${messageMap.get(status)}`,
+      text: statusMap.get(status),
       color: colorMap.get(status),
       fields:  fields,
     }],

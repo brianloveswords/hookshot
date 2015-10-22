@@ -152,9 +152,23 @@ message:
   "repo": "hookshot",
 
   // Branch associated with this task
-  "branch": "master"
+  "branch": "master",
+
+  // SHA associated with the task
+  "sha": "81fe922edfd6110a7976e526af83c3ef38a95f00"
 }
 ```
+
+Requests are signed using HMAC with the secret from the server config file. The
+signature can be found in the `X-Hookshot-Signature` header:
+
+```text
+X-Hookshot-Signature: sha256=62680c8414e3b8b723749d85c1001009ec9934cc4c1c7388b4eb695fa7dcab17
+```
+
+Signature is in the format `<algorithm>=<hash>` to allow for ease of changing
+hashing algorithm if necessary, but it will be `sha256` for the foreseeable
+future.
 
 ### Example
 

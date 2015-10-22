@@ -1,10 +1,13 @@
 use ::deploy_task::DeployTask;
 use ::repo_config::RepoConfig;
+use ::signature::{Signature, HashType};
 use hyper::client::Client;
 use hyper::header::ContentType;
 use rustc_serialize::json::{self, ToJson, Json};
 use std::fmt::{self, Display, Formatter};
 use std::thread;
+
+header! { (XHookshotSignature, "X-Hookshot-Signature") => [String] }
 
 #[derive(RustcEncodable)]
 struct Message<'a> {
@@ -15,6 +18,7 @@ struct Message<'a> {
     owner: &'a String,
     branch: &'a String,
     repo: &'a String,
+    sha: &'a String,
 }
 
 #[derive(RustcEncodable, Clone)]
@@ -64,7 +68,6 @@ fn send_message(task: &DeployTask, config: &RepoConfig, status: TaskState) {
 
     let repo = &task.repo;
     let task_url = format!("http://{}/tasks/{}", &task.host, &task.id);
-    let (branch, owner, repo_name) = (&repo.branch, &repo.owner, &repo.name);
 
     let failed = match status {
         TaskState::Failed => true,
@@ -76,9 +79,10 @@ fn send_message(task: &DeployTask, config: &RepoConfig, status: TaskState) {
         failed: failed,
         task_id: &format!("{}", task.id),
         task_url: &task_url,
-        owner: owner,
-        branch: branch,
-        repo: repo_name,
+        sha: &repo.sha,
+        owner: &repo.owner,
+        branch: &repo.branch,
+        repo: &repo.name,
     };
 
     let request_body = match json::encode(&message) {
@@ -89,16 +93,22 @@ fn send_message(task: &DeployTask, config: &RepoConfig, status: TaskState) {
     let client = Client::new();
     println!("[{}]: notifier: sending {} message to {}", &task.id, &status, &notify_url);
 
+    // Spawn a new thread to send the message so we don't block the task
     let task_id = task.id.clone();
     let notify_url = notify_url.clone();
+    let secret = task.secret.clone();
     thread::spawn(move || {
-        match client.post(&notify_url)
+        let sig = Signature::create(HashType::SHA256, &request_body, &secret);
+
+        let request = client.post(&notify_url)
+            .header(XHookshotSignature(sig.to_string()))
             .header(ContentType::json())
             .body(&request_body)
-            .send() {
-                Ok(_) => {},
-                Err(e) => println!("[{}]: notifier: could not send message {}", &task_id, &e),
-            }
+            .send();
+
+        if request.is_err() {
+            println!("[{}]: notifier: could not send message {}", &task_id, &request.unwrap_err());
+        }
     });
 }
 

@@ -14,6 +14,7 @@ pub struct DeployTask {
     pub env: Environment,
     pub logdir: String,
     pub host: String,
+    pub secret: String,
 }
 impl Runnable for DeployTask {
 

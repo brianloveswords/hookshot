@@ -8,6 +8,7 @@ pub struct GitHubMessage {
     repo_name: String,
     owner: String,
     git_url: String,
+    sha: String,
 }
 
 impl ToGitRepo for GitHubMessage {
@@ -26,6 +27,7 @@ impl ToGitRepo for GitHubMessage {
             owner: self.owner,
             name: self.repo_name,
             branch: self.branch,
+            sha: self.sha,
 
             // TODO: fix this, use paths & path.join or something
             local_path: format!("{}/{}", root, local_path_component),
@@ -69,6 +71,14 @@ impl GitHubMessage {
             None => return Err("missing `repository.name`"),
         };
 
+        let sha = match root_obj.find_path(&["after"]) {
+            Some(v) => match v.as_string() {
+                Some(v) => v.to_string(),
+                None => return Err("couldn't read `after` as a string")
+            },
+            None => return Err("missing `after`"),
+        };
+
         let owner = match root_obj.find_path(&["repository", "owner", "name"]) {
             Some(v) => match v.as_string() {
                 Some(v) => v.to_string(),
@@ -89,6 +99,7 @@ impl GitHubMessage {
             branch: branch,
             repo_name: repo_name,
             owner: owner,
+            sha: sha,
             git_url: git_url,
         })
     }
@@ -105,6 +116,9 @@ pub struct SimpleMessage {
 
     /// Remote path to the repository.
     pub remote: String,
+
+    /// SHA to use. If unnecessary, just pass HEAD
+    pub sha: String,
 
     /// Name of the repository. Used to construct the local path where
     /// the clone will be stored
@@ -138,6 +152,7 @@ impl ToGitRepo for SimpleMessage {
             name: self.repository_name,
             owner: owner,
             branch: self.branch,
+            sha: self.sha,
 
             local_path: format!("{}/{}", root, local_path_component),
             remote_path: self.remote,
@@ -156,6 +171,7 @@ mod tests {
           "prefix": "brian",
           "branch": "master",
           "remote": "the internet",
+          "sha": "HEAD",
           "repository_name": "stuff"
         }
         "#;
@@ -168,6 +184,7 @@ mod tests {
         assert_eq!(msg.prefix, Some("brian".to_owned()));
         assert_eq!(msg.branch, "master");
         assert_eq!(msg.remote, "the internet");
+        assert_eq!(msg.sha, "HEAD");
         assert_eq!(msg.repository_name, "stuff");
     }
 }

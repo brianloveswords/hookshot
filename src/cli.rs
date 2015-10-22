@@ -182,7 +182,6 @@ fn start_server(config: ServerConfig) {
             return Ok(Response::with((Header(Connection::close()), status::Unauthorized, "signature doesn't match")))
         }
 
-
         // Try to parse the message.
         // TODO: we can be smarter about this. If we see the XHubSignature
         // above, we should try to parse as a github message, otherwise go
@@ -207,7 +206,6 @@ fn start_server(config: ServerConfig) {
             }
         };
 
-
         // Try to create the log file upfront to make sure we can report
         // back. If we aren't able to create it we shouldn't accept the task
         // because we will be unable to report task status.
@@ -227,7 +225,8 @@ fn start_server(config: ServerConfig) {
             id: task_id,
             env: environment,
             host: format!("{}:{}", &config_clone.hostname, &config_clone.port),
-            logdir: config_clone.log_root.to_string()
+            logdir: config_clone.log_root.to_string(),
+            secret: config_clone.secret.clone(),
         };
 
         println!("[{}]: acquiring task manager lock", task_id);
