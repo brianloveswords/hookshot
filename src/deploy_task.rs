@@ -111,8 +111,14 @@ impl Runnable for DeployTask {
         logfile.write_all(format!("done, exit code: {}.\n", exit_code).as_bytes());
 
         let exit_status = match output.status.success() {
-            true => "successful",
-            false => "failed",
+            true => {
+                notifier::success(&self, &config);
+                "successful"
+            }
+            false => {
+                notifier::failed(&self, &config);
+                "failed"
+            }
         };
         println!("[{}]: run {}", self.id, exit_status);
 

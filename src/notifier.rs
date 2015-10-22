@@ -48,11 +48,11 @@ pub fn failed(task: &DeployTask, config: &RepoConfig) {
 }
 
 fn send_message(task: &DeployTask, config: &RepoConfig, status: TaskState) {
-    println!("[{}] notifier: looking up notify url", &task.id);
+    println!("[{}]: notifier: looking up notify url", &task.id);
     let notify_url = match get_notify_url(task, config) {
         Some(url) => url,
         None => {
-            println!("[{}] notifier: could not find notify url", &task.id);
+            println!("[{}]: notifier: could not find notify url", &task.id);
             return;
         }
     };
@@ -81,7 +81,7 @@ fn send_message(task: &DeployTask, config: &RepoConfig, status: TaskState) {
     };
 
     let client = Client::new();
-    println!("[{}] notifier: sending {} message to {}", &task.id, &status, &notify_url);
+    println!("[{}]: notifier: sending {} message to {}", &task.id, &status, &notify_url);
 
     let task_id = task.id.clone();
     let notify_url = notify_url.clone();
@@ -91,7 +91,7 @@ fn send_message(task: &DeployTask, config: &RepoConfig, status: TaskState) {
             .body(&request_body)
             .send() {
                 Ok(_) => {},
-                Err(e) => println!("[{}] notifier: could not send message {}", &task_id, &e),
+                Err(e) => println!("[{}]: notifier: could not send message {}", &task_id, &e),
             }
     });
 }

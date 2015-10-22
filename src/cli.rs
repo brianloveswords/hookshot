@@ -50,14 +50,14 @@ pub fn main() {
     }
     let config_file = match matches.opt_str("c") {
         Some(file) => file,
-    None => {
-    println!("[warning]: missing --config option, looking up config by environment");
-    match env::var(ENV_CONFIG_KEY) {
-        Ok(file) => file,
-    Err(_) => {
-    println!("[error]: Could not load config from environment or command line.\n\nPass --config <FILE> option or set the DEPLOYER_CONFIG environment variable");
-    return;
-},
+        None => {
+            println!("[warning]: missing --config option, looking up config by environment");
+            match env::var(ENV_CONFIG_KEY) {
+                Ok(file) => file,
+                Err(_) => {
+                    println!("[error]: Could not load config from environment or command line.\n\nPass --config <FILE> option or set the DEPLOYER_CONFIG environment variable");
+                    return;
+                },
             }
         }
     };
