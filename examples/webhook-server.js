@@ -23,7 +23,7 @@ function processMessage(buffer) {
   const status = message.status.toLowerCase();
   const url = process.env.SLACK_URL;
   const payload = {
-    channel: '#bocoupcom',
+    channel: '#botplayground',
     username: 'hookshotbot',
     text: messageMap.get(status),
     icon_emoji: ':shipit:',
