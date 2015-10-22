@@ -42,6 +42,7 @@ function processMessage(buffer) {
       color: colorMap.get(status),
       title: titleMap.get(status),
       text: `${messageMap.get(status)}`,
+      unfurl_links: status === 'failed',
       fields: [
         {
           short: true,
