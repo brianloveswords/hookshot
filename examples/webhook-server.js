@@ -18,9 +18,14 @@ function processMessage(buffer) {
   const shortJobId = message.task_id.slice(0, 6);
   const prelude = `[\`${fullyQualifiedBranch}\`] <<${message.job_url}|${shortJobId}>>`;
   const messageMap = new Map();
-  messageMap.set('started', `📦 Starting build...`);
-  messageMap.set('success', `🎊 Success!`);
-  messageMap.set('failed', `🚨 Failed, see <${message.job_url}|job details page>`);
+  messageMap.set('started', `Starting build...`);
+  messageMap.set('success', `Success!`);
+  messageMap.set('failed', `Failed, see <${message.job_url}|job details page>`);
+
+  const titleMap = new Map();
+  titleMap.set('started', '📦 Hookshot Received');
+  titleMap.set('success', '🎊 Hookshot Complete');
+  titleMap.set('failed', '🚨 Hookshot Failed');
 
   const colorMap = new Map();
   colorMap.set('started', '#187ac0');
@@ -35,14 +40,14 @@ function processMessage(buffer) {
     attachments: [{
       fallback: `${prelude} ${messageMap.get(status)}`,
       color: colorMap.get(status),
-      title: "Hookshot Job",
+      title: titleMap.get(status),
       title_link: message.job_url,
       text: `${messageMap.get(status)}`,
       fields: [
         {
           short: true,
           title: 'Job ID',
-          value: message.task_id,
+          value: `<${message.job_url}|${message.task_id}>`,
         },
         {
           short: true,
