@@ -23,9 +23,9 @@ function processMessage(buffer) {
   messageMap.set('failed', `Failed, see <${message.job_url}|job details page>`);
 
   const titleMap = new Map();
-  titleMap.set('started', '📦 Hookshot Received');
-  titleMap.set('success', '🎊 Hookshot Complete');
-  titleMap.set('failed', '🚨 Hookshot Failed');
+  titleMap.set('started', '📦 Hookshot Received 📦');
+  titleMap.set('success', '🎊 Hookshot Complete 🎊');
+  titleMap.set('failed', '🚨 Hookshot Failed 🚨');
 
   const colorMap = new Map();
   colorMap.set('started', '#187ac0');
