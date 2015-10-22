@@ -76,7 +76,6 @@ function processMessage(buffer) {
       fallback: `${prelude} ${messageMap.get(status)}`,
       color: colorMap.get(status),
       title: titleMap.get(status),
-      text: `${messageMap.get(status)}`,
       fields:  fields,
     }],
   };
