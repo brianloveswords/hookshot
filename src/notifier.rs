@@ -2,7 +2,7 @@ use ::deploy_task::DeployTask;
 use ::repo_config::RepoConfig;
 use hyper::client::Client;
 use hyper::header::ContentType;
-use rustc_serialize::json;
+use rustc_serialize::json::{self, ToJson, Json};
 use std::fmt::{self, Display, Formatter};
 use std::thread;
 
@@ -31,6 +31,12 @@ impl Display for TaskState {
             TaskState::Success => "success",
             TaskState::Failed => "failed",
         })
+    }
+}
+
+impl ToJson for TaskState {
+    fn to_json(&self) -> Json {
+        Json::String(format!("{}", self))
     }
 }
 
