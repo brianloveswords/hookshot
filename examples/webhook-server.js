@@ -75,7 +75,7 @@ function processMessage(buffer) {
     attachments: [{
       fallback: `${prelude} ${messageMap.get(status)}`,
       color: colorMap.get(status),
-      title: titleMap.get(status),
+      text: titleMap.get(status),
       fields:  fields,
     }],
   };
