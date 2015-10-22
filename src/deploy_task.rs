@@ -1,7 +1,7 @@
 use ::git::GitRepo;
+use ::notifier::{self};
 use ::repo_config::{RepoConfig, DeployMethod};
 use ::server_config::Environment;
-use ::notifier::{self};
 use ::task_manager::Runnable;
 use std::fs::File;
 use std::io::Write;
@@ -24,7 +24,7 @@ impl Runnable for DeployTask {
         let task_id = self.id.to_string();
 
         // Insert the checkout path for the current checkout to the environment
-        self.env.insert(String::from("deployer_checkout_path"), self.repo.local_path.clone());
+        self.env.insert(String::from("hookshot_checkout_path"), self.repo.local_path.clone());
 
         // Truncate the logfile and write "task running..."
         let logfile_path = Path::new(&self.logdir).join(format!("{}.log", task_id));

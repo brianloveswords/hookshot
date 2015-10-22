@@ -1,13 +1,13 @@
-use toml;
+use ::ansible_task::AnsibleTask;
+use ::error::Error;
+use ::make_task::MakeTask;
+use ::verified_path::VerifiedPath;
+use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
-use std::collections::BTreeMap;
 use std::string::ToString;
-use ::make_task::MakeTask;
-use ::ansible_task::AnsibleTask;
-use ::verified_path::VerifiedPath;
-use ::error::Error;
+use toml;
 
 #[derive(Debug, Clone, PartialEq, Eq, Copy)]
 pub enum DeployMethod {
@@ -67,11 +67,11 @@ impl<'a> RepoConfig<'a> {
     }
 
     pub fn load(project_root: &'a Path) -> Result<RepoConfig<'a>, Error> {
-        let config_path = project_root.join(".deployer.conf");
+        let config_path = project_root.join(".hookshot.conf");
         let mut file = match File::open(&config_path) {
             Ok(file) => file,
             Err(_) => return Err(Error {
-                desc: "could not open deployer configuration",
+                desc: "could not open hookshot configuration",
                 subject: Some(String::from(config_path.to_str().unwrap())),
             }),
         };

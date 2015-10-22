@@ -1,3 +1,3 @@
-extern crate deployer;
-use deployer::cli;
+extern crate hookshot;
+use hookshot::cli;
 fn main() { cli::main(); }

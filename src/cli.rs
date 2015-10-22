@@ -17,7 +17,7 @@ use std::path::Path;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
 
-const ENV_CONFIG_KEY: &'static str = "DEPLOYER_CONFIG";
+const ENV_CONFIG_KEY: &'static str = "HOOKSHOT_CONFIG";
 
 header! { (XHubSignature, "X-Hub-Signature") => [String] }
 header! { (XSignature, "X-Signature") => [String] }
@@ -55,7 +55,7 @@ pub fn main() {
             match env::var(ENV_CONFIG_KEY) {
                 Ok(file) => file,
                 Err(_) => {
-                    println!("[error]: Could not load config from environment or command line.\n\nPass --config <FILE> option or set the DEPLOYER_CONFIG environment variable");
+                    println!("[error]: Could not load config from environment or command line.\n\nPass --config <FILE> option or set the HOOKSHOT_CONFIG environment variable");
                     return;
                 },
             }
@@ -99,7 +99,7 @@ fn start_server(config: ServerConfig) {
     });
 
     let config_clone = config.clone();
-    router.get("/jobs/:uuid", move |req: &mut Request| {
+    router.get("/tasks/:uuid", move |req: &mut Request| {
         let file_not_found =
             Ok(Response::with((Header(Connection::close()), status::NotFound, "Not Found")));
 
@@ -247,9 +247,9 @@ fn start_server(config: ServerConfig) {
         println!("[{}]: releasing task manager lock", task_id);
         println!("[{}]: request complete", task_id);
 
-        logfile.write_all(b"job pending");
+        logfile.write_all(b"task pending");
 
-        let location = format!("/jobs/{}",  task_id);
+        let location = format!("/tasks/{}",  task_id);
         let response_body = format!("Location: {}", location);
         Ok(Response::with((
             Header(Connection::close()),

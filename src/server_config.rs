@@ -309,26 +309,26 @@ mod tests {
             checkout_root = "/tmp"
             log_root = "/tmp"
 
-            [env.brianloveswords.deployer.master]
+            [env.brianloveswords.hookshot.master]
             username = "brianloveswords"
-            repository = "deployer"
+            repository = "hookshot"
             branch = "master"
 
             [env.brianloveswords."d.o.t.s".overrides]
             username = "not-brianloveswords"
-            repository = "not-deployer"
+            repository = "not-hookshot"
             branch = "overrides"
         "#;
         let config = ServerConfig::from(&toml).unwrap();
 
-        let env1 = config.environment_for("brianloveswords", "deployer", "master").unwrap();
+        let env1 = config.environment_for("brianloveswords", "hookshot", "master").unwrap();
         assert_eq!(env1.get("username").unwrap(), "brianloveswords");
-        assert_eq!(env1.get("repository").unwrap(), "deployer");
+        assert_eq!(env1.get("repository").unwrap(), "hookshot");
         assert_eq!(env1.get("branch").unwrap(), "master");
 
         let env2 = config.environment_for("brianloveswords", "d.o.t.s", "overrides").unwrap();
         assert_eq!(env2.get("username").unwrap(), "not-brianloveswords");
-        assert_eq!(env2.get("repository").unwrap(), "not-deployer");
+        assert_eq!(env2.get("repository").unwrap(), "not-hookshot");
         assert_eq!(env2.get("branch").unwrap(), "overrides");
     }
 

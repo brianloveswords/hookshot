@@ -10,13 +10,12 @@ use std::thread;
 struct Message<'a> {
     status: TaskState,
     failed: bool,
-    job_url: &'a String,
+    task_id: &'a String,
+    task_url: &'a String,
     owner: &'a String,
     branch: &'a String,
     repo: &'a String,
-    task_id: &'a String,
 }
-
 
 #[derive(RustcEncodable, Clone)]
 enum TaskState {
@@ -64,7 +63,7 @@ fn send_message(task: &DeployTask, config: &RepoConfig, status: TaskState) {
     };
 
     let repo = &task.repo;
-    let job_url = format!("http://{}/jobs/{}", &task.host, &task.id);
+    let task_url = format!("http://{}/tasks/{}", &task.host, &task.id);
     let (branch, owner, repo_name) = (&repo.branch, &repo.owner, &repo.name);
 
     let failed = match status {
@@ -75,11 +74,11 @@ fn send_message(task: &DeployTask, config: &RepoConfig, status: TaskState) {
     let message = Message {
         status: status.clone(),
         failed: failed,
-        job_url: &job_url,
+        task_id: &format!("{}", task.id),
+        task_url: &task_url,
         owner: owner,
         branch: branch,
         repo: repo_name,
-        task_id: &format!("{}", task.id),
     };
 
     let request_body = match json::encode(&message) {

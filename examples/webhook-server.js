@@ -17,12 +17,12 @@ function processMessage(buffer) {
   }
 
   const fullyQualifiedBranch = `${message.owner}.${message.repo}.${message.branch}`;
-  const shortJobId = message.task_id.slice(0, 6);
-  const prelude = `[${fullyQualifiedBranch}] <${shortJobId}>`;
+  const shortTaskId = message.task_id.slice(0, 6);
+  const prelude = `[${fullyQualifiedBranch}] <${shortTaskId}>`;
   const messageMap = new Map();
   messageMap.set('started', `Starting build...`);
   messageMap.set('success', `Success!`);
-  messageMap.set('failed', `Failed, see job details page: ${message.job_url}`);
+  messageMap.set('failed', `Failed, see task details page: ${message.task_url}`);
 
   const statusMap = new Map();
   statusMap.set('started', '📦');
@@ -44,8 +44,8 @@ function processMessage(buffer) {
     },
     {
       short: true,
-      title: 'Job ID',
-      value: `<${message.job_url}|${message.task_id}>`,
+      title: 'Task ID',
+      value: `<${message.task_url}|${message.task_id}>`,
     },
     {
       short: true,

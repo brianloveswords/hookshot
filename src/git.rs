@@ -4,11 +4,10 @@
 //! not intended to provide a 1-1 interface to the git cli but instead provide a
 //! minimal interface to create the smallest checkout for a specific sha.
 
-use std::process::{Command, Output};
-use std::path::Path;
-use ::verified_path::directory_exists;
-
 use ::error::CommandError;
+use ::verified_path::directory_exists;
+use std::path::Path;
+use std::process::{Command, Output};
 
 pub struct GitRepo {
     /// Owner of the repository
@@ -155,7 +154,7 @@ mod tests {
 
     #[test]
     fn test_git_clone() {
-        let local_path = TempDir::new("deployer-git-test").unwrap().path().join("test_repo");
+        let local_path = TempDir::new("hookshot-git-test").unwrap().path().join("test_repo");
         let git = GitRepo {
             owner: String::from("test"),
             name: String::from("test"),
@@ -170,7 +169,7 @@ mod tests {
 
     #[test]
     fn test_git_ensure_cloned() {
-        let local_path = TempDir::new("deployer-git-test").unwrap().path().join("test_repo");
+        let local_path = TempDir::new("hookshot-git-test").unwrap().path().join("test_repo");
         let git = GitRepo {
             owner: String::from("test"),
             name: String::from("test"),
@@ -195,7 +194,7 @@ mod tests {
 
     #[test]
     fn test_git_get_latest() {
-        let local_path = TempDir::new("deployer-git-test").unwrap().path().join("test_repo");
+        let local_path = TempDir::new("hookshot-git-test").unwrap().path().join("test_repo");
         let git = GitRepo {
             owner: String::from("test"),
             name: String::from("test"),

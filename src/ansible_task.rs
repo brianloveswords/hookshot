@@ -58,7 +58,7 @@ mod tests {
     fn tmpfile() -> Result<PathBuf, io::Error> {
         Ok(try!(env::current_dir())
            .join("tmp")
-           .join("deployer-test-file.txt"))
+           .join("hookshot-test-file.txt"))
     }
 
     #[test]

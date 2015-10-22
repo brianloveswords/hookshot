@@ -9,7 +9,7 @@ doc: doc-site test
 		git push                           )
 
 doc-site:
-	git clone --depth=1 --single-branch -b gh-pages git@github.com:brianloveswords/deployer.git doc-site
+	git clone --depth=1 --single-branch -b gh-pages git@github.com:brianloveswords/hookshot.git doc-site
 
 test: src/test/test_repo
 	cargo test

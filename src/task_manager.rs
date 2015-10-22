@@ -22,7 +22,7 @@
 //! ## Waiting for tasks to finish
 //!
 //! ```
-//! use deployer::task_manager::{TaskManager, Runnable};
+//! use hookshot::task_manager::{TaskManager, Runnable};
 //! use std::thread;
 //!
 //! struct Task { msg: &'static str, delay: u32 };
@@ -59,7 +59,7 @@
 //! ## Getting results of a task
 //!
 //! ```
-//! use deployer::task_manager::{TaskManager, Runnable};
+//! use hookshot::task_manager::{TaskManager, Runnable};
 //!
 //! # fn do_some_hard_work() { }
 //! struct LongRunningTask {
@@ -88,7 +88,7 @@
 //!
 //! ## Graceful shutdowns
 //! ```
-//! # use deployer::task_manager::{TaskManager, Runnable};
+//! # use hookshot::task_manager::{TaskManager, Runnable};
 //! # use std::thread;
 //! # use std::sync::{Arc, Mutex};
 //! # use std::sync::mpsc::channel;
@@ -248,9 +248,9 @@ impl<'a, T> TaskManager<T> where T: 'static + Runnable + Send {
     }
 
     #[allow(unused_must_use)]
-    /// Signal worker threads to shut down after any active jobs and once they
+    /// Signal worker threads to shut down after any active tasks and once they
     /// are all done send a signal down the shutdown lock channel. Trying to add
-    /// jobs after calling [`shutdown()`](#method.shutdown) but before calling
+    /// tasks after calling [`shutdown()`](#method.shutdown) but before calling
     /// [`restart()`](#method.restart) will result in an `Error::Shutdown`.
     ///
     /// # Examples
@@ -259,7 +259,7 @@ impl<'a, T> TaskManager<T> where T: 'static + Runnable + Send {
     /// # use std::thread;
     /// # use std::sync::mpsc::channel;
     /// # use std::sync::{Arc, Mutex};
-    /// # use deployer::task_manager::{TaskManager, Runnable, Error};
+    /// # use hookshot::task_manager::{TaskManager, Runnable, Error};
     /// # struct ImportantTask;
     /// # impl Runnable for ImportantTask {
     /// #     fn run(&mut self) { println!("task added") }

@@ -1,6 +1,6 @@
 [package]
-name = "deployer"
-version = "0.0.1"
+name = "hookshot"
+version = "1.0.0"
 authors = ["Brian J Brennan <brianloveswords@gmail.com>"]
 
 [dependencies]
@@ -17,5 +17,5 @@ getopts = "*"
 
 [[bin]]
 doc = false
-name = "deployer"
+name = "hookshot"
 path = "src/main.rs"
