@@ -51,7 +51,7 @@ function processMessage(buffer) {
 
   if (status === 'started') {
     let startTime = new Date();
-    TASK_MAP.set(message.task_id, {start: startTime});
+    TASK_MAP.set(message.task_id, {startTime});
     fields.push({
       short: true,
       title: 'Started',
