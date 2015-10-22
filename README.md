@@ -69,15 +69,15 @@ Use the `--config` command line parameter or the `HOOKSHOT_CONFIG` environment
 variable to tell hookshot where the configuration file is.
 
 **NOTE**: `hookshot` loads and caches the configuration on startup.  If the
-  configuration needs to change, that currently requires a restart of
-  `hookshot`. There will be a way to signal a configuration reload to hookshot
-  in a future version.
+  configuration needs to change, that currently requires a restart of the
+  server. There will be a way to signal a configuration reload in a future
+  version.
 
 ## Repository Configuration
 
 `hookshot` relies on a `.hookshot.conf` file in the root of a repository to know
 that it has tasks to run and to figure out what they are based on owner,
-repository and branch. Below you can find an example annotated `hookshot.conf`:
+repository and branch. Below you can find an example annotated `.hookshot.conf`:
 
 ```toml
 ## All paths below are relative to the project root. For example, if the project
