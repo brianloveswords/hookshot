@@ -16,11 +16,11 @@ function processMessage(buffer) {
 
   const fullyQualifiedBranch = `${message.owner}.${message.repo}.${message.branch}`;
   const shortJobId = message.task_id.slice(0, 6);
-  const prelude = `[\`${fullyQualifiedBranch}\`] <<${message.job_url}|${shortJobId}>>`;
+  const prelude = `[${fullyQualifiedBranch}] <${shortJobId}>`;
   const messageMap = new Map();
   messageMap.set('started', `Starting build...`);
   messageMap.set('success', `Success!`);
-  messageMap.set('failed', `Failed, see <${message.job_url}|job details page>`);
+  messageMap.set('failed', `Failed, see job details page: ${message.job_url}`);
 
   const titleMap = new Map();
   titleMap.set('started', '📦 Hookshot Received 📦');
