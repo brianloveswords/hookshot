@@ -226,6 +226,7 @@ fn start_server(config: ServerConfig) {
             repo: repo,
             id: task_id,
             env: environment,
+            host: format!("{}:{}", &config_clone.hostname, &config_clone.port),
             logdir: config_clone.log_root.to_string()
         };
 

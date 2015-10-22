@@ -41,7 +41,6 @@ impl ToJson for TaskState {
     }
 }
 
-#[allow(unused_must_use)]
 pub fn started(task: &DeployTask, config: &RepoConfig) {
     send_message(task, config, TaskState::Started);
 }
@@ -65,7 +64,7 @@ fn send_message(task: &DeployTask, config: &RepoConfig, status: TaskState) {
     };
 
     let repo = &task.repo;
-    let job_url = format!("/jobs/{}", &task.id);
+    let job_url = format!("http://{}/jobs/{}", &task.host, &task.id);
     let (branch, owner, repo_name) = (&repo.branch, &repo.owner, &repo.name);
 
     let failed = match status {

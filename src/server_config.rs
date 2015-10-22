@@ -10,6 +10,7 @@ use toml::{self, Value, Table};
 #[derive(Debug, Clone)]
 pub struct ServerConfig {
     pub secret: String,
+    pub hostname: String,
     pub checkout_root: VerifiedPath,
     pub log_root: VerifiedPath,
     pub port: u16,
@@ -30,6 +31,8 @@ pub enum Error {
     InvalidCheckoutRoot,
     MissingLogRoot,
     InvalidLogRoot,
+    MissingHostname,
+    InvalidHostname,
     InvalidEnvironmentTable,
     FileOpenError,
     FileReadError,
@@ -41,7 +44,9 @@ impl fmt::Display for Error {
             Error::ParseError => "could not parse configuration",
             Error::MissingConfigSection => "missing 'config' section",
             Error::MissingSecret => "missing 'config.secret'",
-            Error::InvalidSecret => "'config.secret' must be a secret",
+            Error::InvalidSecret => "'config.secret' must be a string",
+            Error::MissingHostname => "missing 'config.hostname'",
+            Error::InvalidHostname => "'config.hostname' must be a string",
             Error::MissingPort => "missing 'config.port'",
             Error::InvalidPort => "'config.port' must be 16 integer",
             Error::MissingCheckoutRoot => "missing 'config.checkout_root'",
@@ -106,6 +111,11 @@ impl ServerConfig {
                     Err(_) => return Err(Error::InvalidLogRoot),
                 },
         };
+        let hostname = match lookup_as_string(config, "hostname") {
+            LookupResult::Missing => return Err(Error::MissingHostname),
+            LookupResult::WrongType => return Err(Error::InvalidHostname),
+            LookupResult::Value(v) => String::from(v),
+        };
         let environments = match root.get("env") {
             None => Table::new(),
             Some(value) => match value.as_table() {
@@ -120,6 +130,7 @@ impl ServerConfig {
             log_root: log_root,
             secret: secret,
             environments: environments,
+            hostname: hostname,
         })
     }
 

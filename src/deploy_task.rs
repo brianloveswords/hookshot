@@ -13,6 +13,7 @@ pub struct DeployTask {
     pub id: Uuid,
     pub env: Environment,
     pub logdir: String,
+    pub host: String,
 }
 impl Runnable for DeployTask {
 
