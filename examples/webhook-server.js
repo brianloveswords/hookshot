@@ -41,7 +41,6 @@ function processMessage(buffer) {
       fallback: `${prelude} ${messageMap.get(status)}`,
       color: colorMap.get(status),
       title: titleMap.get(status),
-      title_link: message.job_url,
       text: `${messageMap.get(status)}`,
       fields: [
         {
