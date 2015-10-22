@@ -16,11 +16,11 @@ function processMessage(buffer) {
 
   const fullyQualifiedBranch = `${message.owner}.${message.repo}.${message.branch}`;
   const shortJobId = message.task_id.slice(0, 6);
-  const prelude = `[\`${fullyQualifiedBranch}\`] <<${message.job_url}|${shortJobId}>>)`;
+  const prelude = `[\`${fullyQualifiedBranch}\`] <<${message.job_url}|${shortJobId}>>`;
   const messageMap = new Map();
   messageMap.set('started', `${prelude} 📦 Starting build...`);
   messageMap.set('success', `${prelude} 🎊 Success!`);
-  messageMap.set('failed', `${prelude} 🚨 Build failed, see <${message.job_url}> for details`);
+  messageMap.set('failed', `${prelude} 🚨 Failed, see <${message.job_url}|job details page>`);
 
   const status = message.status.toLowerCase();
   const url = process.env.SLACK_URL;
