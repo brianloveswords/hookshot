@@ -37,12 +37,12 @@ function processMessage(buffer) {
   const payload = {
     channel: '#botplayground',
     username: 'hookshotbot',
+    unfurl_links: status === 'failed',
     attachments: [{
       fallback: `${prelude} ${messageMap.get(status)}`,
       color: colorMap.get(status),
       title: titleMap.get(status),
       text: `${messageMap.get(status)}`,
-      unfurl_links: status === 'failed',
       fields: [
         {
           short: true,
