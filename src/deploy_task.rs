@@ -109,8 +109,6 @@ impl Runnable for DeployTask {
             Some(code) => format!("{}", code),
         };
 
-        logfile.write_all(format!("done, exit code: {}.\n", exit_code).as_bytes());
-
         let exit_status = match output.status.success() {
             true => {
                 notifier::success(&self, &config);
@@ -123,7 +121,7 @@ impl Runnable for DeployTask {
         };
         println!("[{}]: run {}", self.id, exit_status);
 
-        logfile.write_all(format!("{}\n", output.status).as_bytes());
+        logfile.write_all(format!("done, exit code: {}.\n", exit_code).as_bytes());
         logfile.write_all(b"\n==stdout==\n");
         logfile.write_all(&output.stdout);
         logfile.write_all(b"\n==stderr==\n");
