@@ -14,11 +14,12 @@ function processMessage(buffer) {
     return console.log("could not parse message");
   }
 
-  const fullyQualifiedBranch = `${message.owner}.${message.repo}.${message.branch}:${message.task_id.slice(0, 6)}`;
+  const fullyQualifiedBranch = `${message.owner}.${message.repo}.${message.branch}`;
+  const shortJobId = message.task_id.slice(0, 6);
   const messageMap = new Map();
-  messageMap.set('started', `[\`${fullyQualifiedBranch}\`] 📦 Starting build...`);
-  messageMap.set('success', `[\`${fullyQualifiedBranch}\`] 🎊 Success!`);
-  messageMap.set('failed', `[\`${fullyQualifiedBranch}\`] 🚨 Build failed, see \`${message.job_url}\` for details`);
+  messageMap.set('started', `[\`${fullyQualifiedBranch}\`] (job:*${shortJobId}*) 📦 Starting build...`);
+  messageMap.set('success', `[\`${fullyQualifiedBranch}\`] (job:*${shortJobId}*) 🎊 Success!`);
+  messageMap.set('failed', `[\`${fullyQualifiedBranch}\`] (job:*${shortJobId}*) 🚨 Build failed, see \`${message.job_url}\` for details`);
 
   const status = message.status.toLowerCase();
   const url = process.env.SLACK_URL;
