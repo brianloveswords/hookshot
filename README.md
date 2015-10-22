@@ -160,7 +160,7 @@ message:
 
 See
 [examples/webhook-server.js](https://github.com/brianloveswords/hookshot/blob/master/examples/webhook-server.js)
-for an example notify_url receiver written in ES6. The server listens for
+for an example `notify_url` receiver written in ES6. The server listens for
 hookshot notifications and sends a status update to a Slack channel so people
 can keep easily track of what's going on with a hookshot task.
 
