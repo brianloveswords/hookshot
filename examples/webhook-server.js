@@ -14,7 +14,7 @@ function processMessage(buffer) {
     return console.log("could not parse message");
   }
 
-  const fullyQualifiedBranch = `${message.owner}.${message.repo}.${message.branch}`;
+  const fullyQualifiedBranch = `${message.owner}.${message.repo}.${message.branch}:${message.task_id.slice(0, 6)}`;
   const messageMap = new Map();
   messageMap.set('started', `[\`${fullyQualifiedBranch}\`] 📦 Starting build...`);
   messageMap.set('success', `[\`${fullyQualifiedBranch}\`] 🎊 Success!`);

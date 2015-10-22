@@ -14,6 +14,7 @@ struct Message<'a> {
     owner: &'a String,
     branch: &'a String,
     repo: &'a String,
+    task_id: &'a String,
 }
 
 
@@ -79,6 +80,7 @@ fn send_message(task: &DeployTask, config: &RepoConfig, status: TaskState) {
         owner: owner,
         branch: branch,
         repo: repo_name,
+        task_id: &format!("{}", task.id),
     };
 
     let request_body = match json::encode(&message) {
