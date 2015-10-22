@@ -192,7 +192,7 @@ the task status URL:
 In forthcoming versions we might expose an index of tasks per queue to make this
 discovery easier.
 
-# Simple Message format for non-GitHub use
+# Simple Message format (non-GitHub usage)
 
 `hookshot` also supports a simple message format which can be useful if you
 don't want to be tied to the GitHub ecosystem or you are building something like
