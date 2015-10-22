@@ -120,7 +120,7 @@ task = "self-deploy"
 Now, assuming the `hookshot` service is running at `http://bjb:4200`, set up a
 webhook for the GitHub repository:
 
-![screenshot of webhook setup](https://cldup.com/XsgQM-bHpr.png)
+![screenshot of webhook setup](https://cldup.com/NKrwR-X_cp.png)
 
 Now whenever the `production`, `staging` and `prototype` branches are pushed the
 associated make task or ansible playbook/inventory combo will be executed.
@@ -186,6 +186,8 @@ rejected for any reason, github will show a red warning symbol next to the
 delivery. If there is a green check, that means the task was scheduled
 successfully (202 Accepted). Click to see more, and use the response tab to find
 the task status URL:
+
+![status of a task](https://cldup.com/EOr3fpRDQn.png)
 
 In forthcoming versions we might expose an index of tasks per queue to make this
 discovery easier.
