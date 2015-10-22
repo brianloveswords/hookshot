@@ -131,7 +131,7 @@ The `notify_url` will receive a message when a task begins and another when the
 task completes successfully or fails. Below is an annotated example of a
 message:
 
-```json
+```js
 {
   // 'Started', 'Failed' or 'Success'
   "status": "Started",
