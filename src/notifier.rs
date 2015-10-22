@@ -1,6 +1,7 @@
 use hyper::header::ContentType;
 use hyper::client::Client;
 use rustc_serialize::json;
+use std::thread;
 use ::deploy_task::DeployTask;
 use ::repo_config::RepoConfig;
 
@@ -25,6 +26,7 @@ enum TaskState {
 #[allow(unused_must_use)]
 pub fn started(task: &DeployTask, config: &RepoConfig) {
     println!("[{}] notifier: looking up notify url", &task.id);
+
     let notify_url = match get_notify_url(task, config) {
         Some(url) => url,
         None => {
@@ -47,20 +49,25 @@ pub fn started(task: &DeployTask, config: &RepoConfig) {
     };
 
     let request_body = match json::encode(&message) {
-        Ok(body) => body,
+        Ok(body) => body.to_owned(),
         Err(_) => return,
     };
 
     let client = Client::new();
     println!("[{}] notifier: sending message to {}", &task.id, &notify_url);
 
-    match client.post(notify_url)
-        .header(ContentType::json())
-        .body(&request_body)
-        .send() {
-            Ok(_) => {},
-            Err(e) => println!("[{}] notifier: could not send message {}", &task.id, e),
-        }
+
+    let task_id = task.id.clone();
+    let notify_url = notify_url.clone();
+    thread::spawn(move || {
+        match client.post(&notify_url)
+            .header(ContentType::json())
+            .body(&request_body)
+            .send() {
+                Ok(_) => {},
+                Err(e) => println!("[{}] notifier: could not send message {}", &task_id, &e),
+            }
+    });
 
 }
 
