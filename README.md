@@ -143,7 +143,7 @@ message:
   "task_id": "abc123"
 
   // URL to find more information about the task
-  "task_url": "http://hookshot.website:5192/tasks/abc123",
+  "task_url": "http://hookshot.website:1469/tasks/abc123",
 
   // Owner of the repository
   "owner": "brianloveswords",
