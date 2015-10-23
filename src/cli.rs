@@ -36,7 +36,7 @@ pub fn main() {
     opts.optflag("h", "help", "print this help menu");
 
     let matches = match opts.parse(&args[1..]) {
-        Ok(m) => { m }
+        Ok(m) => m,
         Err(f) => {
             println!("[error]: {}", f.to_string());
             print_usage(&program, opts);

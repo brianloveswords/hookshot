@@ -45,21 +45,24 @@ impl GitRepo {
     }
 
     fn clone(&self) -> Result<Output, CommandError> {
-        let result = match Command::new("git")
-            .arg("clone")
-            .arg("--depth=1")
-            .arg("--single-branch")
-            .arg("-b").arg(&self.branch)
-            .arg(&self.remote_path)
-            .arg(&self.local_path)
-            .output() {
-                Ok(r) => r,
-                Err(e) => return Err(CommandError {
-                    desc: "failed to execute process, see detail",
-                    output: None,
-                    detail: Some(format!("{}", e)),
-                })
-            };
+        let output = Command::new("git")
+                         .arg("clone")
+                         .arg("--depth=1")
+                         .arg("--single-branch")
+                         .arg("-b")
+                         .arg(&self.branch)
+                         .arg(&self.remote_path)
+                         .arg(&self.local_path)
+                         .output();
+
+        let result = match output {
+            Ok(r) => r,
+            Err(e) => return Err(CommandError {
+                desc: "failed to execute process, see detail",
+                output: None,
+                detail: Some(format!("{}", e)),
+            }),
+        };
 
         match result.status.success() {
             true => Ok(result),
@@ -85,17 +88,19 @@ impl GitRepo {
             return Err(e);
         }
 
-        let result = match Command::new("git")
-            .current_dir(&self.local_path)
-            .arg("fetch")
-            .output() {
-                Ok(r) => r,
-                Err(e) => return Err(CommandError {
-                    desc: "failed to execute process, see detail",
-                    output: None,
-                    detail: Some(format!("{}", e)),
-                })
-            };
+        let output = Command::new("git")
+                         .current_dir(&self.local_path)
+                         .arg("fetch")
+                         .output();
+
+        let result = match output {
+            Ok(r) => r,
+            Err(e) => return Err(CommandError {
+                desc: "failed to execute process, see detail",
+                output: None,
+                detail: Some(format!("{}", e)),
+            }),
+        };
 
         match result.status.success() {
             true => Ok(result),
@@ -116,7 +121,10 @@ impl GitRepo {
     /// This is the equivalent of doing:
     ///
     /// ```text
-    /// (test -d <local_path> && cd <local_path> && git fetch && git reset --hard origin/<branch>) || \
+    /// (test -d <local_path> && \
+    ///   cd <local_path> && \
+    ///   git fetch && \
+    ///   git reset --hard origin/<branch>) || \
     /// git clone --depth=1 --single-branch -b <branch> <remote_path> <local_path>
     /// ```
     pub fn get_latest(&self) -> Result<Output, CommandError> {
@@ -124,19 +132,21 @@ impl GitRepo {
             return Err(e);
         }
 
-        let result = match Command::new("git")
-            .current_dir(&self.local_path)
-            .arg("reset")
-            .arg("--hard")
-            .arg(format!("origin/{}", &self.branch))
-            .output() {
-                Ok(r) => r,
-                Err(e) => return Err(CommandError {
-                    desc: "failed to execute process, see detail",
-                    output: None,
-                    detail: Some(format!("{}", e)),
-                })
-            };
+        let output = Command::new("git")
+                         .current_dir(&self.local_path)
+                         .arg("reset")
+                         .arg("--hard")
+                         .arg(format!("origin/{}", &self.branch))
+                         .output();
+
+        let result = match output {
+            Ok(r) => r,
+            Err(e) => return Err(CommandError {
+                desc: "failed to execute process, see detail",
+                output: None,
+                detail: Some(format!("{}", e)),
+            }),
+        };
 
         match result.status.success() {
             true => Ok(result),
@@ -162,6 +172,7 @@ mod tests {
             owner: String::from("test"),
             name: String::from("test"),
             branch: String::from("master"),
+            sha: String::from("abc"),
             remote_path: String::from("src/test/test_repo"),
             local_path: String::from(local_path.to_str().unwrap()),
         };
@@ -177,6 +188,7 @@ mod tests {
             owner: String::from("test"),
             name: String::from("test"),
             branch: String::from("master"),
+            sha: String::from("abc"),
             remote_path: String::from("src/test/test_repo"),
             local_path: String::from(local_path.to_str().unwrap()),
         };
@@ -202,6 +214,7 @@ mod tests {
             owner: String::from("test"),
             name: String::from("test"),
             branch: String::from("master"),
+            sha: String::from("abc"),
             remote_path: String::from("src/test/test_repo"),
             local_path: String::from(local_path.to_str().unwrap()),
         };
@@ -214,6 +227,7 @@ mod tests {
             owner: String::from("owner"),
             name: String::from("name"),
             branch: String::from("branch"),
+            sha: String::from("abc"),
             remote_path: String::from("doesn't matter"),
             local_path: String::from("irrelevant"),
         };
