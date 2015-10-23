@@ -31,7 +31,7 @@ impl<'a> MakeTask<'a> {
         let mut task_header = task.to_string();
         task_header.push(':');
 
-        let has_task = makefile_contents.lines_any()
+        let has_task = makefile_contents.lines()
             .any(|line| line.starts_with(&task_header));
 
 
