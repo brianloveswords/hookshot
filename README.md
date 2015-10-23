@@ -118,7 +118,7 @@ task = "self-deploy"
 ```
 
 Now, assuming the `hookshot` service is running at
-`http://hookshot.website:1429`, set up a webhook for the GitHub repository:
+`http://hookshot.website:1469`, set up a webhook for the GitHub repository:
 
 ![screenshot of webhook setup](https://cldup.com/NKrwR-X_cp.png)
 
