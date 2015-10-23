@@ -105,7 +105,8 @@
 //! # }
 //! # impl ImportantTask { fn new() -> ImportantTask { ImportantTask } }
 //! let (shutdown_tx, shutdown_rx) = channel();
-//! let task_manager = Arc::new(Mutex::new(TaskManager::new_with_lock(shutdown_tx)));
+// ! let task_manager =
+// Arc::new(Mutex::new(TaskManager::new_with_lock(shutdown_tx)));
 //!
 //! let shared_manager = task_manager.clone();
 //! event_handler("add_task", move || {
@@ -141,11 +142,15 @@ pub trait Runnable {
     fn run(&mut self);
 }
 
-struct Queue<T> where T: Runnable + Send {
+struct Queue<T>
+    where T: Runnable + Send
+{
     queue: VecDeque<(T, Sender<T>)>,
 }
 impl<T> Queue<T> where T: Runnable + Send {
-    fn new() -> Queue<T> { Queue { queue: VecDeque::new() } }
+    fn new() -> Queue<T> {
+        Queue { queue: VecDeque::new() }
+    }
     fn push_task(&mut self, task: (T, Sender<T>)) {
         self.queue.push_back(task);
     }
@@ -161,20 +166,26 @@ pub enum Error {
 }
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", match *self {
-            Error::QueueMissing => "could not find queue in queue map",
-            Error::Shutdown => "manager is shut down",
-        })
+        write!(f,
+               "{}",
+               match *self {
+                   Error::QueueMissing => "could not find queue in queue map",
+                   Error::Shutdown => "manager is shut down",
+               })
     }
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
-pub struct QueueKey { k: String }
+pub struct QueueKey {
+    k: String,
+}
 
 type QueueMap<T> = BTreeMap<QueueKey, Arc<Mutex<Queue<T>>>>;
 type ThreadMap = BTreeMap<QueueKey, (JoinHandle<()>, Sender<()>)>;
 
-pub struct TaskManager<T> where T: 'static + Runnable + Send {
+pub struct TaskManager<T>
+    where T: 'static + Runnable + Send
+{
     queues: QueueMap<T>,
     threads: ThreadMap,
     shutdown_lock: Option<Sender<()>>,
@@ -217,7 +228,9 @@ impl<'a, T> TaskManager<T> where T: 'static + Runnable + Send {
     /// [`shutdown()`](#method.shutdown) but before a
     /// [`restart()`](#method.restart).
     pub fn add_task(&mut self, queue_key: &QueueKey, task: T) -> Result<Receiver<T>, Error> {
-        if self.stopped { return Err(Error::Shutdown) }
+        if self.stopped {
+            return Err(Error::Shutdown);
+        }
         let (task_tx, task_rx) = channel();
         {
             let mut locked_queue = match self.queues.get_mut(queue_key) {
@@ -334,7 +347,7 @@ impl<'a, T> TaskManager<T> where T: 'static + Runnable + Send {
     /// Create a queue only if one doesn't already exist with that key. Returns
     /// the QueueKey for that queue.
     pub fn ensure_queue(&mut self, queue_key: String) -> QueueKey {
-        let key = QueueKey{ k: queue_key };
+        let key = QueueKey { k: queue_key };
         if self.queues.contains_key(&key) {
             return key;
         }
@@ -358,8 +371,12 @@ impl<'a, T> TaskManager<T> where T: 'static + Runnable + Send {
 
     #[allow(unused_must_use)]
     fn start_worker(&mut self, key: QueueKey) {
-        if self.stopped { return }
-        if self.threads.contains_key(&key) { return }
+        if self.stopped {
+            return;
+        }
+        if self.threads.contains_key(&key) {
+            return;
+        }
 
         let queue = self.find(&key).unwrap().clone();
         let (worker_tx, worker_rx) = channel();
@@ -382,9 +399,10 @@ impl<'a, T> TaskManager<T> where T: 'static + Runnable + Send {
                     thread::spawn(move || {
                         task.run();
                         task_tx.send(task);
-                    }).join();
+                    })
+                        .join();
                 }
-            };
+            }
         });
         self.threads.insert(key, (worker, worker_tx));
     }
@@ -424,12 +442,33 @@ mod tests {
                 let key = Uuid::new_v4().to_string();
 
                 let queue_key = manager.ensure_queue(key);
-                manager.add_task(&queue_key, Task {s: s.clone(), m: "b"});
-                manager.add_task(&queue_key, Task {s: s.clone(), m: "r"});
-                manager.add_task(&queue_key, Task {s: s.clone(), m: "i"});
-                manager.add_task(&queue_key, Task {s: s.clone(), m: "a"});
-                manager.add_task(&queue_key, Task {s: s.clone(), m: "n"})
-                    .unwrap().recv();
+                manager.add_task(&queue_key,
+                                 Task {
+                                     s: s.clone(),
+                                     m: "b",
+                                 });
+                manager.add_task(&queue_key,
+                                 Task {
+                                     s: s.clone(),
+                                     m: "r",
+                                 });
+                manager.add_task(&queue_key,
+                                 Task {
+                                     s: s.clone(),
+                                     m: "i",
+                                 });
+                manager.add_task(&queue_key,
+                                 Task {
+                                     s: s.clone(),
+                                     m: "a",
+                                 });
+                manager.add_task(&queue_key,
+                                 Task {
+                                     s: s.clone(),
+                                     m: "n",
+                                 })
+                       .unwrap()
+                       .recv();
 
             })
         };
@@ -441,17 +480,43 @@ mod tests {
                 let key = Uuid::new_v4().to_string();
 
                 let queue_key = manager.ensure_queue(key);
-                manager.add_task(&queue_key, Task {s: s.clone(), m: "s"});
-                manager.add_task(&queue_key, Task {s: s.clone(), m: "l"});
-                manager.add_task(&queue_key, Task {s: s.clone(), m: "o"});
-                manager.add_task(&queue_key, Task {s: s.clone(), m: "t"});
-                manager.add_task(&queue_key, Task {s: s.clone(), m: "h"});
-                manager.add_task(&queue_key, Task {s: s.clone(), m: "s"})
-                    .unwrap().recv();
+                manager.add_task(&queue_key,
+                                 Task {
+                                     s: s.clone(),
+                                     m: "s",
+                                 });
+                manager.add_task(&queue_key,
+                                 Task {
+                                     s: s.clone(),
+                                     m: "l",
+                                 });
+                manager.add_task(&queue_key,
+                                 Task {
+                                     s: s.clone(),
+                                     m: "o",
+                                 });
+                manager.add_task(&queue_key,
+                                 Task {
+                                     s: s.clone(),
+                                     m: "t",
+                                 });
+                manager.add_task(&queue_key,
+                                 Task {
+                                     s: s.clone(),
+                                     m: "h",
+                                 });
+                manager.add_task(&queue_key,
+                                 Task {
+                                     s: s.clone(),
+                                     m: "s",
+                                 })
+                       .unwrap()
+                       .recv();
             })
         };
 
-        thread1.join(); thread2.join();
+        thread1.join();
+        thread2.join();
 
         assert_eq!(*s1.lock().unwrap(), "brian");
         assert_eq!(*s2.lock().unwrap(), "sloths");

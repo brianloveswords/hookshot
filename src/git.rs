@@ -1,11 +1,12 @@
 //! A library for interacting with the git cli.
 //!
 //! This library provides an interface for operating on git repository. It is
-//! not intended to provide a 1-1 interface to the git cli but instead provide a
+// ! not intended to provide a 1-1 interface to the git cli but instead provide
+// a
 //! minimal interface to create the smallest checkout for a specific sha.
 
-use ::error::CommandError;
-use ::verified_path::directory_exists;
+use error::CommandError;
+use verified_path::directory_exists;
 use std::path::Path;
 use std::process::{Command, Output};
 
@@ -46,28 +47,29 @@ impl GitRepo {
 
     fn clone(&self) -> Result<Output, CommandError> {
         let result = match Command::new("git")
-            .arg("clone")
-            .arg("--depth=1")
-            .arg("--single-branch")
-            .arg("-b").arg(&self.branch)
-            .arg(&self.remote_path)
-            .arg(&self.local_path)
-            .output() {
-                Ok(r) => r,
-                Err(e) => return Err(CommandError {
-                    desc: "failed to execute process, see detail",
-                    output: None,
-                    detail: Some(format!("{}", e)),
-                })
-            };
+                               .arg("clone")
+                               .arg("--depth=1")
+                               .arg("--single-branch")
+                               .arg("-b")
+                               .arg(&self.branch)
+                               .arg(&self.remote_path)
+                               .arg(&self.local_path)
+                               .output() {
+            Ok(r) => r,
+            Err(e) => return Err(CommandError {
+                desc: "failed to execute process, see detail",
+                output: None,
+                detail: Some(format!("{}", e)),
+            }),
+        };
 
         match result.status.success() {
             true => Ok(result),
-            false =>  Err(CommandError {
+            false => Err(CommandError {
                 desc: "git clone failed",
                 output: Some(result),
                 detail: None,
-            })
+            }),
         }
     }
     fn ensure_cloned(&self) -> Result<bool, CommandError> {
@@ -75,7 +77,7 @@ impl GitRepo {
             return match self.clone() {
                 Ok(_) => Ok(true),
                 Err(e) => Err(e),
-            }
+            };
         }
         Ok(false)
     }
@@ -86,24 +88,24 @@ impl GitRepo {
         }
 
         let result = match Command::new("git")
-            .current_dir(&self.local_path)
-            .arg("fetch")
-            .output() {
-                Ok(r) => r,
-                Err(e) => return Err(CommandError {
-                    desc: "failed to execute process, see detail",
-                    output: None,
-                    detail: Some(format!("{}", e)),
-                })
-            };
+                               .current_dir(&self.local_path)
+                               .arg("fetch")
+                               .output() {
+            Ok(r) => r,
+            Err(e) => return Err(CommandError {
+                desc: "failed to execute process, see detail",
+                output: None,
+                detail: Some(format!("{}", e)),
+            }),
+        };
 
         match result.status.success() {
             true => Ok(result),
-            false =>  Err(CommandError {
+            false => Err(CommandError {
                 desc: "git fetch failed",
                 output: Some(result),
                 detail: None,
-            })
+            }),
         }
     }
 
@@ -125,26 +127,26 @@ impl GitRepo {
         }
 
         let result = match Command::new("git")
-            .current_dir(&self.local_path)
-            .arg("reset")
-            .arg("--hard")
-            .arg(format!("origin/{}", &self.branch))
-            .output() {
-                Ok(r) => r,
-                Err(e) => return Err(CommandError {
-                    desc: "failed to execute process, see detail",
-                    output: None,
-                    detail: Some(format!("{}", e)),
-                })
-            };
+                               .current_dir(&self.local_path)
+                               .arg("reset")
+                               .arg("--hard")
+                               .arg(format!("origin/{}", &self.branch))
+                               .output() {
+            Ok(r) => r,
+            Err(e) => return Err(CommandError {
+                desc: "failed to execute process, see detail",
+                output: None,
+                detail: Some(format!("{}", e)),
+            }),
+        };
 
         match result.status.success() {
             true => Ok(result),
-            false =>  Err(CommandError {
+            false => Err(CommandError {
                 desc: "git reset failed",
                 output: Some(result),
                 detail: None,
-            })
+            }),
         }
     }
 }
@@ -153,7 +155,7 @@ impl GitRepo {
 mod tests {
     use super::GitRepo;
     use tempdir::TempDir;
-    use ::verified_path::directory_exists;
+    use verified_path::directory_exists;
 
     #[test]
     fn test_git_clone() {
@@ -187,11 +189,11 @@ mod tests {
         assert!(second_run.is_ok());
         match first_run {
             Ok(true) => (),
-            _ => panic!("expected first run to have cloned")
+            _ => panic!("expected first run to have cloned"),
         }
         match second_run {
             Ok(false) => (),
-            _ => panic!("expected second run to not clone")
+            _ => panic!("expected second run to not clone"),
         }
     }
 

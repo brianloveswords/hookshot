@@ -1,6 +1,6 @@
 use rustc_serialize::json;
 use rustc_serialize::json::Json;
-use ::git::{GitRepo, ToGitRepo};
+use git::{GitRepo, ToGitRepo};
 
 #[derive(Clone, Debug)]
 pub struct GitHubMessage {
@@ -54,19 +54,21 @@ impl GitHubMessage {
                 Some(v) => match v.as_string() {
                     None => return Err("could not read `ref` as string"),
                     Some(v) => v.split("/").collect(),
-                }
+                },
             };
             match (parts.get(0), parts.get(1), parts.get(2)) {
-                (Some(b), Some(reftype), Some(branch))
-                    if *b == "refs"  && (*reftype == "heads" || *reftype == "tags") => branch,
-                _ => return Err("could not unpack `ref`")
-            }.to_string()
+                (Some(b), Some(reftype), Some(branch)) if *b == "refs" &&
+                                                          (*reftype == "heads" ||
+                                                           *reftype == "tags") => branch,
+                _ => return Err("could not unpack `ref`"),
+            }
+                .to_string()
         };
 
         let repo_name = match root_obj.find_path(&["repository", "name"]) {
             Some(v) => match v.as_string() {
                 Some(v) => v.to_string(),
-                None => return Err("couldn't read `repository.name` as a string")
+                None => return Err("couldn't read `repository.name` as a string"),
             },
             None => return Err("missing `repository.name`"),
         };
@@ -74,7 +76,7 @@ impl GitHubMessage {
         let sha = match root_obj.find_path(&["after"]) {
             Some(v) => match v.as_string() {
                 Some(v) => v.to_string(),
-                None => return Err("couldn't read `after` as a string")
+                None => return Err("couldn't read `after` as a string"),
             },
             None => return Err("missing `after`"),
         };
@@ -82,7 +84,7 @@ impl GitHubMessage {
         let owner = match root_obj.find_path(&["repository", "owner", "name"]) {
             Some(v) => match v.as_string() {
                 Some(v) => v.to_string(),
-                None => return Err("couldn't read `repository.owner.name` as a string")
+                None => return Err("couldn't read `repository.owner.name` as a string"),
             },
             None => return Err("missing `repository.owner.name`"),
         };
@@ -90,7 +92,7 @@ impl GitHubMessage {
         let git_url = match root_obj.find_path(&["repository", "ssh_url"]) {
             Some(v) => match v.as_string() {
                 Some(v) => v.to_string(),
-                None => return Err("couldn't read `repository.ssh_url` as a string")
+                None => return Err("couldn't read `repository.ssh_url` as a string"),
             },
             None => return Err("missing `repository.ssh_url`"),
         };

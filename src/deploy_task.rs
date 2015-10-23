@@ -1,8 +1,8 @@
-use ::git::GitRepo;
-use ::notifier::{self};
-use ::repo_config::{RepoConfig, DeployMethod};
-use ::server_config::Environment;
-use ::task_manager::Runnable;
+use git::GitRepo;
+use notifier;
+use repo_config::{RepoConfig, DeployMethod};
+use server_config::Environment;
+use task_manager::Runnable;
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
@@ -25,14 +25,14 @@ impl Runnable for DeployTask {
         let task_id = self.id.to_string();
 
         // Insert the checkout path for the current checkout to the environment
-        self.env.insert(String::from("hookshot_checkout_path"), self.repo.local_path.clone());
+        self.env.insert(String::from("hookshot_checkout_path"),
+                        self.repo.local_path.clone());
 
         // Truncate the logfile and write "task running..."
         let logfile_path = Path::new(&self.logdir).join(format!("{}.log", task_id));
         let mut logfile = match File::create(&logfile_path) {
             Ok(logfile) => logfile,
-            Err(_) =>
-                return println!("[{}]: could not open logfile for writing", &task_id)
+            Err(_) => return println!("[{}]: could not open logfile for writing", &task_id),
         };
         logfile.write_all(b"\ntask running...\n");
 
@@ -41,13 +41,15 @@ impl Runnable for DeployTask {
             let err = format!("{}: {}", git_error.desc, stderr);
             logfile.write_all(format!("{}", err).as_bytes());
             return println!("[{}]: {}", task_id, err);
-        };
+        }
 
         let project_root = Path::new(&self.repo.local_path);
         let config = match RepoConfig::load(&project_root) {
             Err(e) => {
                 let err = format!("could not load config for repo {}: {} ({})",
-                                  self.repo.remote_path, e.desc, e.subject.unwrap_or(String::from("")));
+                                  self.repo.remote_path,
+                                  e.desc,
+                                  e.subject.unwrap_or(String::from("")));
                 logfile.write_all(format!("{}", err).as_bytes());
                 return println!("[{}]: {}", &task_id, err);
             }
@@ -91,7 +93,7 @@ impl Runnable for DeployTask {
                         println!("[{}]: with environment {:?}", self.id, &self.env);
                         task.run(&self.env)
                     }
-                }
+                },
             }
         };
 
@@ -99,7 +101,8 @@ impl Runnable for DeployTask {
             Ok(output) => output,
             Err(e) => {
                 let err = format!("task failed: {} ({})",
-                                  e.desc, e.detail.unwrap_or(String::from("")));
+                                  e.desc,
+                                  e.detail.unwrap_or(String::from("")));
                 logfile.write_all(format!("{}", err).as_bytes());
                 return println!("[{}]: {}", &task_id, err);
             }

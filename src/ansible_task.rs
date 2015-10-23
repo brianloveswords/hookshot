@@ -1,8 +1,8 @@
 use std::path::Path;
 use std::process::{Command, Output};
 use rustc_serialize::json;
-use ::server_config::Environment;
-use ::error::CommandError;
+use server_config::Environment;
+use error::CommandError;
 
 #[derive(Debug, Clone)]
 pub struct AnsibleTask<'a> {
@@ -16,7 +16,7 @@ impl<'a> AnsibleTask<'a> {
         AnsibleTask {
             playbook: playbook,
             inventory: inventory,
-            project_root: project_root
+            project_root: project_root,
         }
     }
 
@@ -39,7 +39,7 @@ impl<'a> AnsibleTask<'a> {
                 desc: "failed to execute `ansible-playbook`, see detail",
                 output: None,
                 detail: Some(format!("{}", e)),
-            })
+            }),
         }
     }
 }
@@ -48,7 +48,7 @@ impl<'a> AnsibleTask<'a> {
 mod tests {
     use super::*;
 
-    use ::server_config::Environment;
+    use server_config::Environment;
     use std::io::{self, Read};
     use std::env;
     use std::fs::File;
@@ -57,8 +57,8 @@ mod tests {
 
     fn tmpfile() -> Result<PathBuf, io::Error> {
         Ok(try!(env::current_dir())
-           .join("tmp")
-           .join("hookshot-test-file.txt"))
+               .join("tmp")
+               .join("hookshot-test-file.txt"))
     }
 
     #[test]
@@ -78,7 +78,7 @@ mod tests {
         match ansible.run(&env) {
             Ok(_) => (),
             Err(_) => panic!("ansible task failed"),
-        };
+        }
 
         let mut file = match File::open(tmpfile) {
             Ok(f) => f,
