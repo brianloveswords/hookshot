@@ -1,6 +1,6 @@
-use ::deploy_task::DeployTask;
-use ::repo_config::RepoConfig;
-use ::signature::{Signature, HashType};
+use deploy_task::DeployTask;
+use repo_config::RepoConfig;
+use signature::{Signature, HashType};
 use hyper::client::Client;
 use hyper::header::ContentType;
 use rustc_serialize::json::{self, ToJson, Json};
@@ -30,11 +30,13 @@ enum TaskState {
 
 impl Display for TaskState {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        write!(f, "{}", match *self {
-            TaskState::Started => "started",
-            TaskState::Success => "success",
-            TaskState::Failed => "failed",
-        })
+        write!(f,
+               "{}",
+               match *self {
+                   TaskState::Started => "started",
+                   TaskState::Success => "success",
+                   TaskState::Failed => "failed",
+               })
     }
 }
 
@@ -91,7 +93,10 @@ fn send_message(task: &DeployTask, config: &RepoConfig, status: TaskState) {
     };
 
     let client = Client::new();
-    println!("[{}]: notifier: sending {} message to {}", &task.id, &status, &notify_url);
+    println!("[{}]: notifier: sending {} message to {}",
+             &task.id,
+             &status,
+             &notify_url);
 
     // Spawn a new thread to send the message so we don't block the task
     let task_id = task.id.clone();
@@ -101,13 +106,15 @@ fn send_message(task: &DeployTask, config: &RepoConfig, status: TaskState) {
         let sig = Signature::create(HashType::SHA256, &request_body, &secret);
 
         let request = client.post(&notify_url)
-            .header(XHookshotSignature(sig.to_string()))
-            .header(ContentType::json())
-            .body(&request_body)
-            .send();
+                            .header(XHookshotSignature(sig.to_string()))
+                            .header(ContentType::json())
+                            .body(&request_body)
+                            .send();
 
         if request.is_err() {
-            println!("[{}]: notifier: could not send message {}", &task_id, &request.unwrap_err());
+            println!("[{}]: notifier: could not send message {}",
+                     &task_id,
+                     &request.unwrap_err());
         }
     });
 }

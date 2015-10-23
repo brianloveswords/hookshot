@@ -35,7 +35,7 @@ impl HashType {
             HashType::SHA256 => OpenSSLType::SHA256,
             HashType::SHA384 => OpenSSLType::SHA384,
             HashType::SHA512 => OpenSSLType::SHA512,
-            HashType::RIPEMD160 => OpenSSLType::RIPEMD160
+            HashType::RIPEMD160 => OpenSSLType::RIPEMD160,
         }
 
     }
@@ -74,12 +74,15 @@ impl Signature {
             None => return None,
             Some(caps) => match (caps.at(1), caps.at(2)) {
                 (Some(hash), Some(hex)) => (hash, hex),
-                _ => return None
+                _ => return None,
             },
         };
 
         if let Some(alg) = HashType::from_str(hash) {
-            return Some(Signature { alg: alg, hex: String::from(hex) })
+            return Some(Signature {
+                alg: alg,
+                hex: String::from(hex),
+            });
         }
 
         None
@@ -88,7 +91,10 @@ impl Signature {
     pub fn create(alg: HashType, data: &str, key: &str) -> Signature {
         let mac = hmac(alg.to_openssl(), key.as_bytes(), data.as_bytes());
         let hex = bytes_to_hex(&mac);
-        Signature { alg: alg, hex: hex }
+        Signature {
+            alg: alg,
+            hex: hex,
+        }
     }
 
     pub fn verify(&self, data: &str, key: &str) -> bool {

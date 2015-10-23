@@ -2,8 +2,8 @@ use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 use std::process::{Command, Output};
-use ::server_config::Environment;
-use ::error::{Error, CommandError};
+use server_config::Environment;
+use error::{Error, CommandError};
 
 #[derive(Debug)]
 pub struct MakeTask<'a> {
@@ -31,8 +31,7 @@ impl<'a> MakeTask<'a> {
         let mut task_header = task.to_string();
         task_header.push(':');
 
-        let has_task = makefile_contents.lines()
-            .any(|line| line.starts_with(&task_header));
+        let has_task = makefile_contents.lines().any(|line| line.starts_with(&task_header));
 
 
         match has_task {
@@ -63,19 +62,21 @@ impl<'a> MakeTask<'a> {
                 desc: "failed to execute `make`, see detail",
                 output: None,
                 detail: Some(format!("{}", e)),
-            })
+            }),
         }
     }
 }
 impl<'a> ToString for MakeTask<'a> {
-    fn to_string(&self) -> String { self.task.clone() }
+    fn to_string(&self) -> String {
+        self.task.clone()
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::MakeTask;
     use std::path::Path;
-    use ::server_config::Environment;
+    use server_config::Environment;
 
     #[test]
     fn test_run_task() {
@@ -95,7 +96,8 @@ mod tests {
     #[test]
     fn test_run_task_with_env() {
         let mut env = Environment::new();
-        env.insert(String::from("env"), String::from("this is from the environment"));
+        env.insert(String::from("env"),
+                   String::from("this is from the environment"));
         let test_dir = Path::new("./src/test/make_task");
         let maketask = match MakeTask::new(test_dir, "env") {
             Ok(maketask) => maketask,

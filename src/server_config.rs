@@ -1,4 +1,4 @@
-use ::verified_path::VerifiedPath;
+use verified_path::VerifiedPath;
 use std::collections::BTreeMap;
 use std::fmt;
 use std::fs::File;
@@ -40,23 +40,26 @@ pub enum Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", match *self {
-            Error::ParseError => "could not parse configuration",
-            Error::MissingConfigSection => "missing 'config' section",
-            Error::MissingSecret => "missing 'config.secret'",
-            Error::InvalidSecret => "'config.secret' must be a string",
-            Error::MissingHostname => "missing 'config.hostname'",
-            Error::InvalidHostname => "'config.hostname' must be a string",
-            Error::MissingPort => "missing 'config.port'",
-            Error::InvalidPort => "'config.port' must be 16 integer",
-            Error::MissingCheckoutRoot => "missing 'config.checkout_root'",
-            Error::InvalidCheckoutRoot => "'config.checkout_root' must be a valid existing directory",
-            Error::MissingLogRoot => "missing 'config.log_root'",
-            Error::InvalidLogRoot => "'config.log_root' must be a valid existing directory",
-            Error::InvalidEnvironmentTable => "'env' table is invalid, check configuration",
-            Error::FileOpenError => "could not open config file",
-            Error::FileReadError => "could not read config file into string"
-        })
+        write!(f,
+               "{}",
+               match *self {
+                   Error::ParseError => "could not parse configuration",
+                   Error::MissingConfigSection => "missing 'config' section",
+                   Error::MissingSecret => "missing 'config.secret'",
+                   Error::InvalidSecret => "'config.secret' must be a string",
+                   Error::MissingHostname => "missing 'config.hostname'",
+                   Error::InvalidHostname => "'config.hostname' must be a string",
+                   Error::MissingPort => "missing 'config.port'",
+                   Error::InvalidPort => "'config.port' must be 16 integer",
+                   Error::MissingCheckoutRoot => "missing 'config.checkout_root'",
+                   Error::InvalidCheckoutRoot =>
+                       "'config.checkout_root' must be a valid existing directory",
+                   Error::MissingLogRoot => "missing 'config.log_root'",
+                   Error::InvalidLogRoot => "'config.log_root' must be a valid existing directory",
+                   Error::InvalidEnvironmentTable => "'env' table is invalid, check configuration",
+                   Error::FileOpenError => "could not open config file",
+                   Error::FileReadError => "could not read config file into string",
+               })
     }
 }
 
@@ -68,8 +71,8 @@ impl ServerConfig {
         };
         let mut contents = String::new();
         if file.read_to_string(&mut contents).is_err() {
-            return Err(Error::FileReadError)
-        };
+            return Err(Error::FileReadError);
+        }
         Self::from(&contents)
     }
 
@@ -96,20 +99,18 @@ impl ServerConfig {
         let checkout_root = match lookup_as_string(config, "checkout_root") {
             LookupResult::Missing => return Err(Error::MissingCheckoutRoot),
             LookupResult::WrongType => return Err(Error::InvalidCheckoutRoot),
-            LookupResult::Value(v) =>
-                match VerifiedPath::directory(None, Path::new(v)) {
-                    Ok(v) => v,
-                    Err(_) => return Err(Error::InvalidCheckoutRoot),
-                },
+            LookupResult::Value(v) => match VerifiedPath::directory(None, Path::new(v)) {
+                Ok(v) => v,
+                Err(_) => return Err(Error::InvalidCheckoutRoot),
+            },
         };
         let log_root = match lookup_as_string(config, "log_root") {
             LookupResult::Missing => return Err(Error::MissingLogRoot),
             LookupResult::WrongType => return Err(Error::InvalidLogRoot),
-            LookupResult::Value(v) =>
-                match VerifiedPath::directory(None, Path::new(v)) {
-                    Ok(v) => v,
-                    Err(_) => return Err(Error::InvalidLogRoot),
-                },
+            LookupResult::Value(v) => match VerifiedPath::directory(None, Path::new(v)) {
+                Ok(v) => v,
+                Err(_) => return Err(Error::InvalidLogRoot),
+            },
         };
         let hostname = match lookup_as_string(config, "hostname") {
             LookupResult::Missing => return Err(Error::MissingHostname),
@@ -134,7 +135,11 @@ impl ServerConfig {
         })
     }
 
-    pub fn environment_for<'a>(&self, owner: &'a str, repo: &'a str, branch: &'a str) -> Result<Environment, Error> {
+    pub fn environment_for<'a>(&self,
+                               owner: &'a str,
+                               repo: &'a str,
+                               branch: &'a str)
+                               -> Result<Environment, Error> {
         let mut result = BTreeMap::new();
 
         let owner_table = match self.environments.get(owner) {
@@ -165,7 +170,7 @@ impl ServerConfig {
             match v.as_str() {
                 Some(v) => result.insert(k.clone(), String::from(v)),
                 None => return Err(Error::InvalidEnvironmentTable),
-            };
+            }
         }
 
         Ok(result)

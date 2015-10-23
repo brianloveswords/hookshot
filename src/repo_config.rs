@@ -1,7 +1,7 @@
-use ::ansible_task::AnsibleTask;
-use ::error::Error;
-use ::make_task::MakeTask;
-use ::verified_path::VerifiedPath;
+use ansible_task::AnsibleTask;
+use error::Error;
+use make_task::MakeTask;
+use verified_path::VerifiedPath;
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::Read;
@@ -80,8 +80,8 @@ impl<'a> RepoConfig<'a> {
             return Err(Error {
                 desc: "could not read file contents",
                 subject: Some(String::from(config_path.to_str().unwrap())),
-            })
-        };
+            });
+        }
         Self::from_str(&contents, project_root)
     }
 
@@ -115,7 +115,7 @@ impl<'a> RepoConfig<'a> {
                     desc: "invalid type, valid values are 'ansible' and 'makefile'",
                     subject: Some(String::from("default.method")),
                 }),
-            }
+            },
         };
 
         let default_task = match lookup_as_string(default, "task") {
@@ -127,7 +127,7 @@ impl<'a> RepoConfig<'a> {
             LookupResult::Value(v) => match MakeTask::new(project_root, v) {
                 Ok(v) => Some(v),
                 Err(err) => return Err(err),
-            }
+            },
         };
 
         let default_playbook = match lookup_as_string(default, "playbook") {
@@ -136,11 +136,10 @@ impl<'a> RepoConfig<'a> {
                 desc: "could not read 'default.playbook' as string",
                 subject: Some(String::from("default.playbook")),
             }),
-            LookupResult::Value(v) =>
-                match VerifiedPath::file(Some(project_root), Path::new(v)) {
-                    Ok(v) => Some(v),
-                    Err(err) => return Err(err),
-                },
+            LookupResult::Value(v) => match VerifiedPath::file(Some(project_root), Path::new(v)) {
+                Ok(v) => Some(v),
+                Err(err) => return Err(err),
+            },
         };
 
         let default_inventory = match lookup_as_string(default, "inventory") {
@@ -149,11 +148,10 @@ impl<'a> RepoConfig<'a> {
                 desc: "could not read 'default.inventory' as string",
                 subject: Some(String::from("default.inventory")),
             }),
-            LookupResult::Value(v) =>
-                match VerifiedPath::file(Some(project_root), Path::new(v)) {
-                    Ok(v) => Some(v),
-                    Err(err) => return Err(err),
-                },
+            LookupResult::Value(v) => match VerifiedPath::file(Some(project_root), Path::new(v)) {
+                Ok(v) => Some(v),
+                Err(err) => return Err(err),
+            },
         };
 
         let default_notify_url = match lookup_as_string(default, "notify_url") {
@@ -166,7 +164,7 @@ impl<'a> RepoConfig<'a> {
         };
 
         let raw_branch = match root.get("branch") {
-            None => return Err(Error{
+            None => return Err(Error {
                 desc: "must configure at least one branch (missing [branch.*])",
                 subject: Some(String::from("branch.*")),
             }),
@@ -175,8 +173,8 @@ impl<'a> RepoConfig<'a> {
                     desc: "'branch' must be a table",
                     subject: Some(String::from("branch")),
                 }),
-                Some(v) => v
-            }
+                Some(v) => v,
+            },
         };
 
         let mut branch = BranchConfigMap::new();
@@ -202,7 +200,7 @@ impl<'a> RepoConfig<'a> {
                         desc: "invalid type, valid values are 'ansible' and 'makefile'",
                         subject: Some(String::from("default.method")),
                     }),
-                }
+                },
             };
 
             let playbook = match lookup_as_string(table, "playbook") {
@@ -213,9 +211,9 @@ impl<'a> RepoConfig<'a> {
                 }),
                 LookupResult::Value(v) =>
                     match VerifiedPath::file(Some(project_root), Path::new(v)) {
-                        Ok(v) => Some(v),
-                        Err(err) => return Err(err),
-                    },
+                    Ok(v) => Some(v),
+                    Err(err) => return Err(err),
+                },
             };
             let inventory = match lookup_as_string(table, "inventory") {
                 LookupResult::Missing => None,
@@ -225,9 +223,9 @@ impl<'a> RepoConfig<'a> {
                 }),
                 LookupResult::Value(v) =>
                     match VerifiedPath::file(Some(project_root), Path::new(v)) {
-                        Ok(v) => Some(v),
-                        Err(err) => return Err(err),
-                    },
+                    Ok(v) => Some(v),
+                    Err(err) => return Err(err),
+                },
             };
 
             let ansible_task = if method == DeployMethod::Ansible {
@@ -235,17 +233,24 @@ impl<'a> RepoConfig<'a> {
                 // playbook/inventory combination by first preferring
                 // configuration for the specific branch and falling back to
                 // default where necessary.
-                match (playbook, inventory, default_playbook.clone(), default_inventory.clone()) {
+                match (playbook,
+                       inventory,
+                       default_playbook.clone(),
+                       default_inventory.clone()) {
                     (Some(p), Some(i), _, _) |
                     (None, Some(i), Some(p), _) |
                     (Some(p), None, None, Some(i)) |
-                    (None, None, Some(p), Some(i))  => Some(AnsibleTask::new(p.to_string(), i.to_string(), &project_root)),
+                    (None, None, Some(p), Some(i)) =>
+                        Some(AnsibleTask::new(p.to_string(), i.to_string(), &project_root)),
                     (_, _, _, _) => return Err(Error {
-                        desc: "could not combine default and branch config to find playbook + inventory combination",
+                        desc: "could not combine default and branch config to find playbook + \
+                               inventory combination",
                         subject: Some(format!("branch.{}", key)),
-                    })
+                    }),
                 }
-            } else { None };
+            } else {
+                None
+            };
 
             let make_task = if method == DeployMethod::Makefile {
                 match lookup_as_string(table, "task") {
@@ -257,30 +262,33 @@ impl<'a> RepoConfig<'a> {
                     LookupResult::Value(v) => match MakeTask::new(project_root, v) {
                         Ok(v) => Some(v),
                         Err(err) => return Err(err),
-                    }
+                    },
                 }
-            } else { None };
+            } else {
+                None
+            };
 
             if make_task.is_none() && ansible_task.is_none() {
                 return Err(Error {
                     desc: "cannot construct a task for branch between local config and default",
                     subject: Some(format!("branch.{}", key)),
-                })
+                });
             }
 
-            branch.insert(key.clone(), BranchConfig {
-                ansible_task: ansible_task,
-                make_task: make_task,
-                method: method,
-                notify_url: match lookup_as_string(table, "notify_url") {
-                    LookupResult::Missing => None,
-                    LookupResult::WrongType => return Err(Error {
-                        desc: "branch 'notify_url' not a string",
-                        subject: Some(format!("branch.{}.notify_url", key)),
-                    }),
-                    LookupResult::Value(v) => Some(v.to_string()),
-                },
-            });
+            branch.insert(key.clone(),
+                          BranchConfig {
+                              ansible_task: ansible_task,
+                              make_task: make_task,
+                              method: method,
+                              notify_url: match lookup_as_string(table, "notify_url") {
+                                  LookupResult::Missing => None,
+                                  LookupResult::WrongType => return Err(Error {
+                                      desc: "branch 'notify_url' not a string",
+                                      subject: Some(format!("branch.{}.notify_url", key)),
+                                  }),
+                                  LookupResult::Value(v) => Some(v.to_string()),
+                              },
+                          });
         }
 
         Ok(RepoConfig {
@@ -347,7 +355,8 @@ mod tests {
         assert!(config.default_task.is_some());
         assert_eq!(config.default_task.unwrap().to_string(), "deploy");
         assert!(config.default_playbook.is_some());
-        assert_eq!(config.default_playbook.unwrap().path(), Path::new("ansible/deploy.yml"));
+        assert_eq!(config.default_playbook.unwrap().path(),
+                   Path::new("ansible/deploy.yml"));
         assert!(config.default_notify_url.is_none());
 
         // production config

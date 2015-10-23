@@ -42,7 +42,7 @@ impl Config {
                 field: None,
                 detail: Some(format!("path: {}, error: {}", path, e)),
             }),
-        };
+        }
         Config::from_string(contents)
     }
 
@@ -50,9 +50,7 @@ impl Config {
         let mut parser = toml::Parser::new(&s);
 
         match parser.parse() {
-            Some(config) => Ok(Config{
-                config: config,
-            }),
+            Some(config) => Ok(Config { config: config }),
             None => Err(ConfigError {
                 desc: "config is not valid TOML",
                 field: None,
@@ -64,7 +62,7 @@ impl Config {
     pub fn app(&self, name: &str) -> Option<ConfigApp> {
         match self.config.get(name) {
             Some(app) => match app.as_table() {
-                Some(app) => Some(ConfigApp{
+                Some(app) => Some(ConfigApp {
                     app: app,
                     default_secret: self.default_secret(),
                 }),
@@ -97,11 +95,7 @@ impl Config {
 
     /// Validate a configuration
     pub fn validate(&self) -> Result<(), ConfigError> {
-        let globals = [
-            "port",
-            "default_secret",
-            "default_target",
-            ];
+        let globals = ["port", "default_secret", "default_target"];
 
 
         match self.config.get("port") {
@@ -110,10 +104,10 @@ impl Config {
                     desc: "`port` must be an integer",
                     field: Some("port".to_string()),
                     detail: None,
-                })
-            },
-            _ => { },
-        };
+                });
+            }
+            _ => {}
+        }
 
         let default_secret = match self.config.get("default_secret") {
             Some(secret) => match secret.as_str() {
@@ -152,8 +146,8 @@ impl Config {
                 desc: "config must have at least 1 application",
                 field: None,
                 detail: None,
-            })
-        };
+            });
+        }
 
         let mut found_target = false;
         for (name, app) in apps.iter() {
@@ -177,30 +171,31 @@ impl Config {
                         desc: "`default_host` must be a string",
                         detail: Some(format!("'{}.default_string' is invalid", name)),
                         field: Some(format!("{}.default_string", name)),
-                    })
-                },
+                    });
+                }
                 _ => {}
-            };
+            }
 
             match definition.get("secret") {
                 None => {
                     if default_secret.is_none() {
                         return Err(ConfigError {
-                            desc: "`secret` must be set for every app if there is no `default_secret`",
+                            desc: "`secret` must be set for every app if there is no \
+                                   `default_secret`",
                             detail: Some(format!("'{}.secret' is missing", name)),
                             field: Some(format!("{}.secret", name)),
-                        })
+                        });
                     }
-                },
+                }
                 Some(secret) => match secret.as_str() {
                     None => return Err(ConfigError {
                         desc: "`secret` must be a string",
                         detail: Some(format!("'{}.secret' is invalid", name)),
                         field: Some(format!("{}.secret", name)),
                     }),
-                    Some(_) => {},
+                    Some(_) => {}
                 },
-            };
+            }
 
             let default_playbook = match definition.get("default_playbook") {
                 Some(playbook) => match playbook.as_str() {
@@ -235,7 +230,7 @@ impl Config {
                     desc: "`playbooks` must have one entry",
                     detail: Some(format!("'{}.playbooks' must have at least one entry", name)),
                     field: Some(format!("{}.playbooks", name)),
-                })
+                });
             }
 
             let mut found_playbook = false;
@@ -252,9 +247,11 @@ impl Config {
                 if !Path::new(path).is_absolute() {
                     return Err(ConfigError {
                         desc: "entries in `playbooks` must be absolute paths",
-                        detail: Some(format!("'{}.playbooks.{}' is not an absolute path", name, key)),
+                        detail: Some(format!("'{}.playbooks.{}' is not an absolute path",
+                                             name,
+                                             key)),
                         field: Some(format!("{}.playbooks.{}", name, key)),
-                    })
+                    });
                 }
 
                 found_playbook = match default_playbook {
@@ -266,9 +263,13 @@ impl Config {
             if default_playbook.is_some() && !found_playbook {
                 return Err(ConfigError {
                     desc: "`default_playbook` must be defined in `playbooks`",
-                    detail: Some(format!("'{}.default_playbook' = '{}', which does not match a listed playbook ({:?})", name, default_playbook.unwrap(), playbooks)),
+                    detail: Some(format!("'{}.default_playbook' = '{}', which does not match a \
+                                          listed playbook ({:?})",
+                                         name,
+                                         default_playbook.unwrap(),
+                                         playbooks)),
                     field: Some(format!("{}.default_playbook", name)),
-                })
+                });
             }
         }
 
@@ -277,7 +278,7 @@ impl Config {
                 desc: "`default_target` is set, but doesn't match any defined applications",
                 detail: Some(format!("'{}' is not a defined application", default_target.unwrap())),
                 field: Some("default_target".to_string()),
-            })
+            });
         }
 
         Ok(())
@@ -309,7 +310,7 @@ impl<'a> ConfigApp<'a> {
             Some(playbooks) => match playbooks.lookup(&name) {
                 None => None,
                 Some(playbook) => playbook.as_str(),
-            }
+            },
         }
     }
 
@@ -414,7 +415,9 @@ mod tests {
               secret = "shhh"
             [app.playbooks]
               a = "/path/to/playbook.yml"
-        "#.to_string()).unwrap();
+        "#
+                                        .to_string())
+                    .unwrap();
 
         assert!(c.validate().is_ok());
     }
@@ -425,7 +428,9 @@ mod tests {
             [app]
             [app.playbooks]
               a = "/path/to/playbook.yml"
-        "#.to_string()).unwrap();
+        "#
+                                        .to_string())
+                    .unwrap();
 
         let err = c.validate().err().unwrap();
         assert_eq!("app.secret", err.field().unwrap());
@@ -438,7 +443,9 @@ mod tests {
             [app]
             [app.playbooks]
               a = "/path/to/playbook.yml"
-        "#.to_string()).unwrap();
+        "#
+                                        .to_string())
+                    .unwrap();
         assert!(c.validate().is_ok());
     }
 
@@ -450,7 +457,9 @@ mod tests {
             [app]
             [app.playbooks]
               a = "/path/to/playbook.yml"
-        "#.to_string()).unwrap();
+        "#
+                                        .to_string())
+                    .unwrap();
 
         let err = c.validate().err().unwrap();
         assert_eq!("default_target", err.field().unwrap());
@@ -464,7 +473,9 @@ mod tests {
             [app]
             [app.playbooks]
               a = "/path/to/playbook.yml"
-        "#.to_string()).unwrap();
+        "#
+                                        .to_string())
+                    .unwrap();
         assert!(c.validate().is_ok());
     }
 
@@ -484,7 +495,9 @@ mod tests {
         let c = Config::from_string(r#"
             [app]
               secret = "hi five"
-        "#.to_string()).unwrap();
+        "#
+                                        .to_string())
+                    .unwrap();
 
         let err = c.validate().err().unwrap();
         assert_eq!("app.playbooks", err.field().unwrap());
@@ -498,7 +511,9 @@ mod tests {
               default_playbook = "does not exist"
             [app.playbooks]
               a = "/path/to/playbook.yml"
-        "#.to_string()).unwrap();
+        "#
+                                        .to_string())
+                    .unwrap();
 
         let err = c.validate().err().unwrap();
         assert_eq!("app.default_playbook", err.field().unwrap());
@@ -512,7 +527,9 @@ mod tests {
               default_playbook = "a"
             [app.playbooks]
               a = "/path/to/playbook.yml"
-        "#.to_string()).unwrap();
+        "#
+                                        .to_string())
+                    .unwrap();
 
         assert!(c.validate().is_ok());
     }
@@ -524,7 +541,9 @@ mod tests {
               secret = "hi five"
             [app.playbooks]
               bad_path = "not-absolute"
-        "#.to_string()).unwrap();
+        "#
+                                        .to_string())
+                    .unwrap();
 
         let err = c.validate().err().unwrap();
         assert_eq!("app.playbooks.bad_path", err.field().unwrap());

@@ -6,7 +6,9 @@ pub struct Error {
     pub subject: Option<String>,
 }
 impl Error {
-    pub fn subject(&self) -> Option<String> { self.subject.clone() }
+    pub fn subject(&self) -> Option<String> {
+        self.subject.clone()
+    }
 }
 pub struct CommandError {
     pub desc: &'static str,
