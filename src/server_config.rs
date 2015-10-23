@@ -1,4 +1,3 @@
-use ::verified_path::VerifiedPath;
 use std::collections::BTreeMap;
 use std::fmt;
 use std::fs::File;
@@ -6,6 +5,7 @@ use std::io::Read;
 use std::path::Path;
 use std::u16;
 use toml::{self, Value, Table};
+use verified_path::VerifiedPath;
 
 #[derive(Debug, Clone)]
 pub struct ServerConfig {
@@ -68,8 +68,8 @@ impl ServerConfig {
         };
         let mut contents = String::new();
         if file.read_to_string(&mut contents).is_err() {
-            return Err(Error::FileReadError)
-        };
+            return Err(Error::FileReadError);
+        }
         Self::from(&contents)
     }
 
@@ -96,20 +96,18 @@ impl ServerConfig {
         let checkout_root = match lookup_as_string(config, "checkout_root") {
             LookupResult::Missing => return Err(Error::MissingCheckoutRoot),
             LookupResult::WrongType => return Err(Error::InvalidCheckoutRoot),
-            LookupResult::Value(v) =>
-                match VerifiedPath::directory(None, Path::new(v)) {
-                    Ok(v) => v,
-                    Err(_) => return Err(Error::InvalidCheckoutRoot),
-                },
+            LookupResult::Value(v) => match VerifiedPath::directory(None, Path::new(v)) {
+                Ok(v) => v,
+                Err(_) => return Err(Error::InvalidCheckoutRoot),
+            },
         };
         let log_root = match lookup_as_string(config, "log_root") {
             LookupResult::Missing => return Err(Error::MissingLogRoot),
             LookupResult::WrongType => return Err(Error::InvalidLogRoot),
-            LookupResult::Value(v) =>
-                match VerifiedPath::directory(None, Path::new(v)) {
-                    Ok(v) => v,
-                    Err(_) => return Err(Error::InvalidLogRoot),
-                },
+            LookupResult::Value(v) => match VerifiedPath::directory(None, Path::new(v)) {
+                Ok(v) => v,
+                Err(_) => return Err(Error::InvalidLogRoot),
+            },
         };
         let hostname = match lookup_as_string(config, "hostname") {
             LookupResult::Missing => return Err(Error::MissingHostname),
@@ -134,7 +132,11 @@ impl ServerConfig {
         })
     }
 
-    pub fn environment_for<'a>(&self, owner: &'a str, repo: &'a str, branch: &'a str) -> Result<Environment, Error> {
+    pub fn environment_for<'a>(&self,
+                               owner: &'a str,
+                               repo: &'a str,
+                               branch: &'a str)
+                               -> Result<Environment, Error> {
         let mut result = BTreeMap::new();
 
         let owner_table = match self.environments.get(owner) {

@@ -1,7 +1,7 @@
+use error::Error;
+use std::fs;
 use std::path::Path;
 use std::string::ToString;
-use std::fs;
-use ::error::Error;
 
 #[derive(Debug, Clone)]
 pub struct VerifiedPath {
@@ -14,10 +14,10 @@ impl VerifiedPath {
         let path_as_string = String::from(path.to_str().unwrap());
         let full_path = match root {
             Some(root) => root.join(path),
-            None => path.to_path_buf()
+            None => path.to_path_buf(),
         };
         match file_exists(&full_path) {
-            true => Ok(VerifiedPath { path: path_as_string, }),
+            true => Ok(VerifiedPath { path: path_as_string }),
             false => Err(Error {
                 desc: "file doesn't exist",
                 subject: Some(path_as_string),
@@ -28,32 +28,36 @@ impl VerifiedPath {
         let path_as_string = String::from(path.to_str().unwrap());
         let full_path = match root {
             Some(root) => root.join(path),
-            None => path.to_path_buf()
+            None => path.to_path_buf(),
         };
         match directory_exists(&full_path) {
-            true => Ok(VerifiedPath { path: path_as_string, }),
+            true => Ok(VerifiedPath { path: path_as_string }),
             false => Err(Error {
                 desc: "file doesn't exist",
                 subject: Some(path_as_string),
             }),
         }
     }
-    pub fn path(&self) -> &Path { Path::new(&self.path) }
+    pub fn path(&self) -> &Path {
+        Path::new(&self.path)
+    }
 }
 
 impl ToString for VerifiedPath {
-    fn to_string(&self) -> String { self.path.clone() }
+    fn to_string(&self) -> String {
+        self.path.clone()
+    }
 }
 
 pub fn file_exists(full_path: &Path) -> bool {
     match fs::metadata(full_path) {
         Err(_) => false,
-        Ok(f) => f.is_file()
+        Ok(f) => f.is_file(),
     }
 }
 pub fn directory_exists(full_path: &Path) -> bool {
     match fs::metadata(full_path) {
         Err(_) => false,
-        Ok(f) => f.is_dir()
+        Ok(f) => f.is_dir(),
     }
 }

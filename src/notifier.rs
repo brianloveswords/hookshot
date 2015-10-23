@@ -1,9 +1,9 @@
-use ::deploy_task::DeployTask;
-use ::repo_config::RepoConfig;
-use ::signature::{Signature, HashType};
+use deploy_task::DeployTask;
 use hyper::client::Client;
 use hyper::header::ContentType;
+use repo_config::RepoConfig;
 use rustc_serialize::json::{self, ToJson, Json};
+use signature::{Signature, HashType};
 use std::fmt::{self, Display, Formatter};
 use std::thread;
 
@@ -91,7 +91,10 @@ fn send_message(task: &DeployTask, config: &RepoConfig, status: TaskState) {
     };
 
     let client = Client::new();
-    println!("[{}]: notifier: sending {} message to {}", &task.id, &status, &notify_url);
+    println!("[{}]: notifier: sending {} message to {}",
+             &task.id,
+             &status,
+             &notify_url);
 
     // Spawn a new thread to send the message so we don't block the task
     let task_id = task.id.clone();
@@ -107,7 +110,9 @@ fn send_message(task: &DeployTask, config: &RepoConfig, status: TaskState) {
             .send();
 
         if request.is_err() {
-            println!("[{}]: notifier: could not send message {}", &task_id, &request.unwrap_err());
+            println!("[{}]: notifier: could not send message {}",
+                     &task_id,
+                     &request.unwrap_err());
         }
     });
 }

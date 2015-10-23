@@ -4,10 +4,10 @@
 //! not intended to provide a 1-1 interface to the git cli but instead provide a
 //! minimal interface to create the smallest checkout for a specific sha.
 
-use ::error::CommandError;
-use ::verified_path::directory_exists;
+use error::CommandError;
 use std::path::Path;
 use std::process::{Command, Output};
+use verified_path::directory_exists;
 
 pub struct GitRepo {
     /// Owner of the repository
@@ -63,11 +63,11 @@ impl GitRepo {
 
         match result.status.success() {
             true => Ok(result),
-            false =>  Err(CommandError {
+            false => Err(CommandError {
                 desc: "git clone failed",
                 output: Some(result),
                 detail: None,
-            })
+            }),
         }
     }
     fn ensure_cloned(&self) -> Result<bool, CommandError> {
@@ -75,7 +75,7 @@ impl GitRepo {
             return match self.clone() {
                 Ok(_) => Ok(true),
                 Err(e) => Err(e),
-            }
+            };
         }
         Ok(false)
     }
@@ -99,11 +99,11 @@ impl GitRepo {
 
         match result.status.success() {
             true => Ok(result),
-            false =>  Err(CommandError {
+            false => Err(CommandError {
                 desc: "git fetch failed",
                 output: Some(result),
                 detail: None,
-            })
+            }),
         }
     }
 
@@ -140,11 +140,11 @@ impl GitRepo {
 
         match result.status.success() {
             true => Ok(result),
-            false =>  Err(CommandError {
+            false => Err(CommandError {
                 desc: "git reset failed",
                 output: Some(result),
                 detail: None,
-            })
+            }),
         }
     }
 }
@@ -153,7 +153,7 @@ impl GitRepo {
 mod tests {
     use super::GitRepo;
     use tempdir::TempDir;
-    use ::verified_path::directory_exists;
+    use verified_path::directory_exists;
 
     #[test]
     fn test_git_clone() {
@@ -187,11 +187,11 @@ mod tests {
         assert!(second_run.is_ok());
         match first_run {
             Ok(true) => (),
-            _ => panic!("expected first run to have cloned")
+            _ => panic!("expected first run to have cloned"),
         }
         match second_run {
             Ok(false) => (),
-            _ => panic!("expected second run to not clone")
+            _ => panic!("expected second run to not clone"),
         }
     }
 
