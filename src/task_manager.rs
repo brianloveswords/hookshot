@@ -165,12 +165,10 @@ pub enum Error {
 }
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f,
-               "{}",
-               match *self {
-                   Error::QueueMissing => "could not find queue in queue map",
-                   Error::Shutdown => "manager is shut down",
-               })
+        write!(f, "{}", match *self {
+            Error::QueueMissing => "could not find queue in queue map",
+            Error::Shutdown => "manager is shut down",
+        })
     }
 }
 
@@ -457,38 +455,13 @@ mod tests {
                 let key = Uuid::new_v4().to_string();
 
                 let queue_key = manager.ensure_queue(key);
-                manager.add_task(&queue_key,
-                                 Task {
-                                     s: s.clone(),
-                                     m: "s",
-                                 });
-                manager.add_task(&queue_key,
-                                 Task {
-                                     s: s.clone(),
-                                     m: "l",
-                                 });
-                manager.add_task(&queue_key,
-                                 Task {
-                                     s: s.clone(),
-                                     m: "o",
-                                 });
-                manager.add_task(&queue_key,
-                                 Task {
-                                     s: s.clone(),
-                                     m: "t",
-                                 });
-                manager.add_task(&queue_key,
-                                 Task {
-                                     s: s.clone(),
-                                     m: "h",
-                                 });
-                manager.add_task(&queue_key,
-                                 Task {
-                                     s: s.clone(),
-                                     m: "s",
-                                 })
-                       .unwrap()
-                       .recv();
+                manager.add_task(&queue_key, Task { s: s.clone(), m: "s", });
+                manager.add_task(&queue_key, Task { s: s.clone(), m: "l", });
+                manager.add_task(&queue_key, Task { s: s.clone(), m: "o", });
+                manager.add_task(&queue_key, Task { s: s.clone(), m: "t", });
+                manager.add_task(&queue_key, Task { s: s.clone(), m: "h", });
+                manager.add_task(&queue_key, Task { s: s.clone(), m: "s", })
+                    .unwrap().recv();
             })
         };
 
