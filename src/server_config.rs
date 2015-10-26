@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use std::error::Error as StdError;
 use std::fmt;
 use std::fs::File;
 use std::io::Read;
@@ -40,7 +41,13 @@ pub enum Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", match *self {
+        write!(f, "{}", self.description())
+    }
+}
+
+impl StdError for Error {
+    fn description(&self) -> &str {
+        match *self {
             Error::ParseError => "could not parse configuration",
             Error::MissingConfigSection => "missing 'config' section",
             Error::MissingSecret => "missing 'config.secret'",
@@ -50,13 +57,13 @@ impl fmt::Display for Error {
             Error::MissingPort => "missing 'config.port'",
             Error::InvalidPort => "'config.port' must be 16 integer",
             Error::MissingCheckoutRoot => "missing 'config.checkout_root'",
-            Error::InvalidCheckoutRoot => "'config.checkout_root' must be a valid existing directory",
+            Error::InvalidCheckoutRoot => "'config.checkout_root' must be a directory",
             Error::MissingLogRoot => "missing 'config.log_root'",
-            Error::InvalidLogRoot => "'config.log_root' must be a valid existing directory",
+            Error::InvalidLogRoot => "'config.log_root' must be a directory",
             Error::InvalidEnvironmentTable => "'env' table is invalid, check configuration",
             Error::FileOpenError => "could not open config file",
-            Error::FileReadError => "could not read config file into string"
-        })
+            Error::FileReadError => "could not read config file into string",
+        }
     }
 }
 
