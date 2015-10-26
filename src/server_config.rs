@@ -219,6 +219,7 @@ mod tests {
             [config]
             secret = "it's a secret to everyone"
             port = 5712
+            hostname = "127.0.0.1"
             checkout_root = "/tmp"
             log_root = "/tmp"
         "#;
@@ -229,11 +230,37 @@ mod tests {
     }
 
     #[test]
+    fn test_invalid_config_missing_hostname() {
+        let toml = r#"
+            [config]
+            secret = "it's a secret to everyone"
+            port = 5712
+            checkout_root = "/tmp"
+            log_root = "/tmp"
+        "#;
+        expect_error!(toml, Error::MissingHostname);
+    }
+
+    #[test]
+    fn test_invalid_config_invalid_hostname() {
+        let toml = r#"
+            [config]
+            secret = "it's a secret to everyone"
+            port = 5712
+            hostname = []
+            checkout_root = "/tmp"
+            log_root = "/tmp"
+        "#;
+        expect_error!(toml, Error::InvalidHostname);
+    }
+
+    #[test]
     fn test_invalid_config_bad_checkout_root() {
         let toml = r#"
             [config]
             secret = "it's a secret to everyone"
             port = 5712
+            hostname = "127.0.0.1"
             log_root = "/tmp"
             checkout_root = "/this/does/not/exist/"
         "#;
@@ -246,6 +273,7 @@ mod tests {
             [config]
             secret = "it's a secret to everyone"
             port = 5712
+            hostname = "127.0.0.1"
             log_root = "/tmp"
         "#;
         expect_error!(toml, Error::MissingCheckoutRoot);
@@ -257,6 +285,7 @@ mod tests {
             [config]
             secret = {}
             port = 5712
+            hostname = "127.0.0.1"
             checkout_root = "/tmp"
             log_root = "/tmp"
         "#;
@@ -268,6 +297,7 @@ mod tests {
         let toml = r#"
             [config]
             port = 5712
+            hostname = "127.0.0.1"
             checkout_root = "/tmp"
             log_root = "/tmp"
         "#;
@@ -279,17 +309,20 @@ mod tests {
         let toml = r#"
             [config]
             port = 5712
+            hostname = "127.0.0.1"
             secret = "shh"
             checkout_root = "/tmp"
         "#;
         expect_error!(toml, Error::MissingLogRoot);
     }
 
+
     #[test]
     fn test_invalid_config_invalid_log_root() {
         let toml = r#"
             [config]
             port = 5712
+            hostname = "127.0.0.1"
             secret = "shh"
             checkout_root = "/tmp"
             log_root = "/path/does/not/exist"
@@ -303,6 +336,7 @@ mod tests {
             [config]
             secret = "it's a secret to everyone"
             port = "ham sandwiches"
+            hostname = "127.0.0.1"
             checkout_root = "/tmp"
             log_root = "/tmp"
         "#;
@@ -317,6 +351,7 @@ mod tests {
             secret = "it's a secret to everyone"
             checkout_root = "/tmp"
             log_root = "/tmp"
+            hostname = "127.0.0.1"
 
             [env.brianloveswords.hookshot.master]
             username = "brianloveswords"
