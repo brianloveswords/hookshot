@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 use std::error::Error as StdError;
 use std::env;
 use std::fmt;
-use std::fs::{self, File};
+use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 use std::u16;
@@ -147,9 +147,6 @@ impl ServerConfig {
                     Some(dir) => dir,
                 };
                 let checkout_root = Path::new(&checkout_root_string);
-                if let Err(_) = fs::create_dir_all(&checkout_root) {
-                    return Err(Error::DirectoryCreateError);
-                }
                 match VerifiedPath::directory(None, checkout_root) {
                     Ok(v) => v,
                     Err(_) => return Err(Error::InvalidCheckoutRoot),
@@ -169,9 +166,6 @@ impl ServerConfig {
                     Some(dir) => dir,
                 };
                 let log_root = Path::new(&log_root_string);
-                if let Err(_) = fs::create_dir_all(&log_root) {
-                    return Err(Error::DirectoryCreateError);
-                }
                 match VerifiedPath::directory(None, log_root) {
                     Ok(v) => v,
                     Err(_) => return Err(Error::InvalidLogRoot),
@@ -272,6 +266,7 @@ mod tests {
     use super::*;
     use std::path::Path;
     use std::env;
+    use std::fs;
 
     macro_rules! expect_error {
         ( $i:ident, $error:path ) => {{
@@ -336,20 +331,6 @@ mod tests {
     }
 
     #[test]
-    fn test_invalid_config_missing_checkout_root() {
-        env::set_var("XDG_DATA_HOME", "/tmp");
-        let toml = r#"
-            [config]
-            secret = "it's a secret to everyone"
-            port = 5712
-            hostname = "127.0.0.1"
-            log_root = "/tmp"
-        "#;
-        let config = ServerConfig::from(&toml).unwrap();
-        assert_eq!(config.checkout_root.path(), Path::new("/tmp/hookshot/checkouts"));
-    }
-
-    #[test]
     fn test_invalid_config_bad_secret() {
         let toml = r#"
             [config]
@@ -375,8 +356,24 @@ mod tests {
     }
 
     #[test]
+    fn test_config_default_checkout_root() {
+        env::set_var("XDG_DATA_HOME", "tmp");
+        let toml = r#"
+            [config]
+            secret = "it's a secret to everyone"
+            port = 5712
+            hostname = "127.0.0.1"
+            log_root = "/tmp"
+        "#;
+        let checkout_path = Path::new("tmp/hookshot/checkouts");
+        fs::create_dir_all(&checkout_path).unwrap();
+        let config = ServerConfig::from(&toml).unwrap();
+        assert_eq!(config.checkout_root.path(), checkout_path);
+    }
+
+    #[test]
     fn test_config_default_log_root() {
-        env::set_var("XDG_DATA_HOME", "/tmp");
+        env::set_var("XDG_DATA_HOME", "tmp");
         let toml = r#"
             [config]
             port = 5712
@@ -384,10 +381,11 @@ mod tests {
             secret = "shh"
             checkout_root = "/tmp"
         "#;
+        let log_path = Path::new("tmp/hookshot/logs");
+        fs::create_dir_all(&log_path).unwrap();
         let config = ServerConfig::from(&toml).unwrap();
-        assert_eq!(config.log_root.path(), Path::new("/tmp/hookshot/logs"));
+        assert_eq!(config.log_root.path(), log_path);
     }
-
 
     #[test]
     fn test_invalid_config_invalid_log_root() {
