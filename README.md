@@ -39,11 +39,23 @@ annotated configuration example below:
 ## Every configuration requires a `config` section
 
 [config]
-port = 5712                      # Port to run hookshot server
-secret = "your v secure pass"    # Key for message verification
-checkout_root = "/tmp/checkouts" # Directory to store checkouts. Must be writeable.
-log_root = "/var/logs/hookshot"  # Directory to store logs. Must be writeable
-hostname = "10.20.30.40"         # Externally accessible hostname or IP.
+## Port to run hookshot server. Defaults to 1469.
+port = 5712
+
+## Key for message verification
+secret = "your v secure pass"
+
+## Directory to store checkouts. Must be writeable. Defaults to
+## $XDG_DATA_HOME/hookshot/checkouts (~/.local/share/hookshots/checkouts)
+checkout_root = "/tmp/checkouts"
+
+## Directory to store logs. Must be writeable. Defaults to
+## $XDG_DATA_HOME/hookshot/logs (~/.local/share/hookshots/logs)
+log_root = "/var/log/hookshot"
+
+## Externally accessible hostname or IP. This will be sent as part of any
+## outgoing webhook requests so a consumer can create complete URLs.
+hostname = "10.20.30.40"
 
 ## `env.*` sections are optional. They represent extra data that will be sent to
 ## repositories that might need extra that shouldn't be stored in the repository

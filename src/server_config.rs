@@ -1,7 +1,8 @@
 use std::collections::BTreeMap;
 use std::error::Error as StdError;
+use std::env;
 use std::fmt;
-use std::fs::File;
+use std::fs::{self, File};
 use std::io::Read;
 use std::path::Path;
 use std::u16;
@@ -37,6 +38,7 @@ pub enum Error {
     InvalidEnvironmentTable,
     FileOpenError,
     FileReadError,
+    DirectoryCreateError,
 }
 
 impl fmt::Display for Error {
@@ -63,8 +65,41 @@ impl StdError for Error {
             Error::InvalidEnvironmentTable => "'env' table is invalid, check configuration",
             Error::FileOpenError => "could not open config file",
             Error::FileReadError => "could not read config file into string",
+            Error::DirectoryCreateError => "could not create default directory",
         }
     }
+}
+
+// See http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html
+fn get_xdg_data_home() -> Option<String> {
+    let empty_string = String::from("");
+
+    let home_dir = match env::var("HOME") {
+        Ok(dir) => dir,
+        Err(_) => return None,
+    };
+
+    Some(match env::var("XDG_DATA_HOME") {
+        Ok(ref dir) if *dir == empty_string => home_dir,
+        Err(_) => format!("{}/.local/share", home_dir),
+        Ok(dir) => dir,
+    })
+}
+
+fn get_default_log_dir() -> Option<String> {
+    let xdg_data_home = match get_xdg_data_home() {
+        None => return None,
+        Some(dir) => dir,
+    };
+    Some(format!("{}/hookshot/logs", xdg_data_home))
+}
+
+fn get_default_checkout_dir() -> Option<String> {
+    let xdg_data_home = match get_xdg_data_home() {
+        None => return None,
+        Some(dir) => dir,
+    };
+    Some(format!("{}/hookshot/checkouts", xdg_data_home))
 }
 
 impl ServerConfig {
@@ -81,6 +116,10 @@ impl ServerConfig {
     }
 
     pub fn from(string: &str) -> Result<ServerConfig, Error> {
+        let default_port = 1469;
+        let default_checkout_dir = get_default_checkout_dir();
+        let default_log_dir = get_default_log_dir();
+
         let root = match toml::Parser::new(string).parse() {
             Some(value) => value,
             None => return Err(Error::ParseError),
@@ -96,20 +135,48 @@ impl ServerConfig {
         };
         let u16_max = u16::max_value() as i64;
         let port = match config.lookup("port") {
-            None => return Err(Error::MissingPort),
+            None => default_port,
             Some(&Value::Integer(port)) if port < u16_max => port as u16,
             _ => return Err(Error::InvalidPort),
         };
+
         let checkout_root = match lookup_as_string(config, "checkout_root") {
-            LookupResult::Missing => return Err(Error::MissingCheckoutRoot),
+            LookupResult::Missing => {
+                let checkout_root_string = match default_checkout_dir {
+                    None => return Err(Error::MissingCheckoutRoot),
+                    Some(dir) => dir,
+                };
+                let checkout_root = Path::new(&checkout_root_string);
+                if let Err(_) = fs::create_dir_all(&checkout_root) {
+                    return Err(Error::DirectoryCreateError);
+                }
+                match VerifiedPath::directory(None, checkout_root) {
+                    Ok(v) => v,
+                    Err(_) => return Err(Error::InvalidCheckoutRoot),
+                }
+            }
             LookupResult::WrongType => return Err(Error::InvalidCheckoutRoot),
             LookupResult::Value(v) => match VerifiedPath::directory(None, Path::new(v)) {
                 Ok(v) => v,
                 Err(_) => return Err(Error::InvalidCheckoutRoot),
             },
         };
+
         let log_root = match lookup_as_string(config, "log_root") {
-            LookupResult::Missing => return Err(Error::MissingLogRoot),
+            LookupResult::Missing => {
+                let log_root_string = match default_log_dir {
+                    None => return Err(Error::MissingLogRoot),
+                    Some(dir) => dir,
+                };
+                let log_root = Path::new(&log_root_string);
+                if let Err(_) = fs::create_dir_all(&log_root) {
+                    return Err(Error::DirectoryCreateError);
+                }
+                match VerifiedPath::directory(None, log_root) {
+                    Ok(v) => v,
+                    Err(_) => return Err(Error::InvalidLogRoot),
+                }
+            }
             LookupResult::WrongType => return Err(Error::InvalidLogRoot),
             LookupResult::Value(v) => match VerifiedPath::directory(None, Path::new(v)) {
                 Ok(v) => v,
@@ -204,6 +271,7 @@ fn lookup_as_string<'a>(obj: &'a toml::Value, key: &'static str) -> LookupResult
 mod tests {
     use super::*;
     use std::path::Path;
+    use std::env;
 
     macro_rules! expect_error {
         ( $i:ident, $error:path ) => {{
@@ -269,6 +337,7 @@ mod tests {
 
     #[test]
     fn test_invalid_config_missing_checkout_root() {
+        env::set_var("XDG_DATA_HOME", "/tmp");
         let toml = r#"
             [config]
             secret = "it's a secret to everyone"
@@ -276,7 +345,8 @@ mod tests {
             hostname = "127.0.0.1"
             log_root = "/tmp"
         "#;
-        expect_error!(toml, Error::MissingCheckoutRoot);
+        let config = ServerConfig::from(&toml).unwrap();
+        assert_eq!(config.checkout_root.path(), Path::new("/tmp/hookshot/checkouts"));
     }
 
     #[test]
@@ -305,7 +375,8 @@ mod tests {
     }
 
     #[test]
-    fn test_invalid_config_missing_log_root() {
+    fn test_config_default_log_root() {
+        env::set_var("XDG_DATA_HOME", "/tmp");
         let toml = r#"
             [config]
             port = 5712
@@ -313,7 +384,8 @@ mod tests {
             secret = "shh"
             checkout_root = "/tmp"
         "#;
-        expect_error!(toml, Error::MissingLogRoot);
+        let config = ServerConfig::from(&toml).unwrap();
+        assert_eq!(config.log_root.path(), Path::new("/tmp/hookshot/logs"));
     }
 
 
@@ -341,6 +413,19 @@ mod tests {
             log_root = "/tmp"
         "#;
         expect_error!(toml, Error::InvalidPort);
+    }
+
+    #[test]
+    fn test_config_default_port() {
+        let toml = r#"
+            [config]
+            secret = "it's a secret to everyone"
+            hostname = "127.0.0.1"
+            checkout_root = "/tmp"
+            log_root = "/tmp"
+        "#;
+        let config = ServerConfig::from(&toml).unwrap();
+        assert_eq!(config.port, 1469);
     }
 
     #[test]
