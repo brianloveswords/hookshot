@@ -38,7 +38,6 @@ pub enum Error {
     InvalidEnvironmentTable,
     FileOpenError,
     FileReadError,
-    DirectoryCreateError,
 }
 
 impl fmt::Display for Error {
@@ -65,7 +64,6 @@ impl StdError for Error {
             Error::InvalidEnvironmentTable => "'env' table is invalid, check configuration",
             Error::FileOpenError => "could not open config file",
             Error::FileReadError => "could not read config file into string",
-            Error::DirectoryCreateError => "could not create default directory",
         }
     }
 }
