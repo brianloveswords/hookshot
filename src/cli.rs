@@ -170,7 +170,7 @@ fn start_server(config: ServerConfig) {
                 }
             };
 
-            match Signature::from(signature_string) {
+            match Signature::from_str(&signature_string) {
                 Some(signature) => signature,
                 None => {
                     println!("[{}]: could not parse signature", task_id);
@@ -202,9 +202,9 @@ fn start_server(config: ServerConfig) {
         // above, we should try to parse as a github message, otherwise go
         // simple message.
         println!("[{}]: attempting to parse message from payload", task_id);
-        let repo = match SimpleMessage::from(&payload) {
+        let repo = match SimpleMessage::from_str(&payload) {
             Ok(message) => GitRepo::from(message, &checkout_root),
-            Err(_) => match GitHubMessage::from(&payload) {
+            Err(_) => match GitHubMessage::from_str(&payload) {
                 Ok(message) => GitRepo::from(message, &checkout_root),
                 Err(_) => {
                     println!("[{}]: could not parse message", task_id);

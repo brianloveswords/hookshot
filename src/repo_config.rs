@@ -375,10 +375,6 @@ impl<'a> RepoConfig<'a> {
                 };
 
                 let ansible_task = if method == DeployMethod::Ansible {
-                    // This complicated looking match tries to create a
-                    // playbook/inventory combination by first preferring
-                    // configuration for the specific branch and falling back to
-                    // default where necessary.
                     match (playbook, inventory) {
                         (Some(playbook), Some(inventory)) =>
                             Some(AnsibleTask::new(playbook.to_string(),

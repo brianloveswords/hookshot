@@ -67,10 +67,10 @@ pub struct Signature {
     hex: String,
 }
 impl Signature {
-    pub fn from(sig: String) -> Option<Signature> {
+    pub fn from_str(sig: &str) -> Option<Signature> {
         let re = Regex::new(r"^([:word:]+)=([:xdigit:]+)$").unwrap();
 
-        let (hash, hex) = match re.captures(&sig) {
+        let (hash, hex) = match re.captures(sig) {
             None => return None,
             Some(caps) => match (caps.at(1), caps.at(2)) {
                 (Some(hash), Some(hex)) => (hash, hex),
@@ -114,9 +114,9 @@ mod tests {
     #[test]
     fn test_equality() {
         // generated with `echo -n "data" | openssl dgst -sha1 -hmac "key"`
-        let sigstring = String::from("sha1=104152c5bfdca07bc633eebd46199f0255c9f49d");
+        let sigstring = "sha1=104152c5bfdca07bc633eebd46199f0255c9f49d";
         let sig1 = Signature::create(HashType::SHA1, "data", "key");
-        let sig2 = Signature::from(sigstring).unwrap();
+        let sig2 = Signature::from_str(sigstring).unwrap();
         assert_eq!(sig1, sig2);
         assert!(sig1.verify("data", "key"));
     }

@@ -37,9 +37,9 @@ impl ToGitRepo for GitHubMessage {
 }
 
 impl GitHubMessage {
-    pub fn from(json_string: &str) -> Result<GitHubMessage, &'static str> {
+    pub fn from_str(json: &str) -> Result<GitHubMessage, &'static str> {
 
-        let data = match Json::from_str(&json_string) {
+        let data = match Json::from_str(&json) {
             Ok(data) => data,
             Err(_) => return Err("could not parse json"),
         };
@@ -127,7 +127,7 @@ pub struct SimpleMessage {
 }
 
 impl SimpleMessage {
-    pub fn from(json: &str) -> Result<SimpleMessage, &'static str> {
+    pub fn from_str(json: &str) -> Result<SimpleMessage, &'static str> {
         match json::decode::<SimpleMessage>(json) {
             Ok(msg) => Ok(msg),
             Err(_) => Err("could not decode json to message"),
@@ -177,7 +177,7 @@ mod tests {
         }
         "#;
 
-        let msg = match SimpleMessage::from(json) {
+        let msg = match SimpleMessage::from_str(json) {
             Err(_) => panic!("expected to be able to decode message"),
             Ok(msg) => msg,
         };
