@@ -2,6 +2,7 @@ use git::GitRepo;
 use notifier;
 use repo_config::{RepoConfig, DeployMethod};
 use server_config::Environment;
+use std::error::Error;
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
@@ -46,10 +47,9 @@ impl Runnable for DeployTask {
         let project_root = Path::new(&self.repo.local_path);
         let config = match RepoConfig::load(&project_root) {
             Err(e) => {
-                let err = format!("could not load config for repo {}: {} ({})",
+                let err = format!("could not load config for repo {}: {}",
                                   self.repo.remote_path,
-                                  e.desc,
-                                  e.subject.unwrap_or(String::from("")));
+                                  e.description());
                 logfile.write_all(format!("{}", err).as_bytes());
                 return println!("[{}]: {}", &task_id, err);
             }

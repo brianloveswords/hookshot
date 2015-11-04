@@ -1,7 +1,8 @@
 use ansible_task::AnsibleTask;
-use error::Error;
 use make_task::MakeTask;
 use std::collections::BTreeMap;
+use std::error::Error as StdError;
+use std::fmt;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
@@ -50,6 +51,61 @@ pub type BranchConfigMap<'a> = BTreeMap<String, BranchConfig<'a>>;
 // TODO: use https://crates.io/crates/url instead
 pub type URL = String;
 
+#[derive(Debug, PartialEq, Eq)]
+pub enum Error {
+    FileLoad,
+    FileRead,
+    Parse,
+    MissingDefault,
+    InvalidDefaultMethod,
+    InvalidDefaultMakeTask,
+    InvalidDefaultPlaybook,
+    InvalidDefaultInventory,
+    InvalidDefaultNotifyUrl,
+    MissingBranchConfig,
+    InvalidBranchConfig,
+    InvalidBranchEntry,
+    InvalidBranchEntryMethod,
+    InvalidBranchEntryPlaybook,
+    InvalidBranchEntryInventory,
+    InvalidBranchEntryNotifyUrl,
+    InvalidBranchEntryTask,
+    InvalidAnsibleConfig,
+    InvalidMakeTaskConfig,
+    MissingBranchTask,
+}
+impl StdError for Error {
+    fn description(&self) -> &str {
+        match *self {
+            Error::FileLoad => "could not open hookshot configuration",
+            Error::FileRead => "could not read file contents",
+            Error::Parse => "could not parse file as toml",
+            Error::MissingDefault => "missing `default` section",
+            Error::InvalidDefaultMethod => "invalid type for `default.method`, valid values are 'ansible' and 'makefile'",
+            Error::InvalidDefaultMakeTask => "`default.task` must be a valid, existing make task",
+            Error::InvalidDefaultPlaybook => "`default.playbook` must point to an existing file",
+            Error::InvalidDefaultInventory => "`default.inventory` must point to an existing file",
+            Error::InvalidDefaultNotifyUrl => "`default.notify_url` must be a URL",
+            Error::MissingBranchConfig => "must configure at least one branch (missing [branch.<name>])",
+            Error::InvalidBranchConfig => "`branch` must be a table",
+            Error::InvalidBranchEntry => "every `branch.<name>` entry must be a table",
+            Error::InvalidBranchEntryMethod => "invalid branch `method`, valid values are 'ansible' and 'makefile'",
+            Error::InvalidBranchEntryPlaybook => "branch `playbook` must point to an existing file",
+            Error::InvalidBranchEntryInventory => "branch `inventory` must point to an existing file",
+            Error::InvalidBranchEntryNotifyUrl => "branch `notify_url` must be valid URL",
+            Error::InvalidBranchEntryTask => "branch `task` must be valid, existing make task",
+            Error::InvalidAnsibleConfig => "could not combine default and branch config to find playbook + inventory combination",
+            Error::InvalidMakeTaskConfig => "could not combine default and branch config to find valid make task",
+            Error::MissingBranchTask => "cannot construct a task for branch between local config and default",
+        }
+    }
+}
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.description())
+    }
+}
+
 #[derive(Debug)]
 pub struct RepoConfig<'a> {
     default_method: DeployMethod,
@@ -70,17 +126,11 @@ impl<'a> RepoConfig<'a> {
         let config_path = project_root.join(".hookshot.conf");
         let mut file = match File::open(&config_path) {
             Ok(file) => file,
-            Err(_) => return Err(Error {
-                desc: "could not open hookshot configuration",
-                subject: Some(String::from(config_path.to_str().unwrap())),
-            }),
+            Err(_) => return Err(Error::FileLoad),
         };
         let mut contents = String::new();
         if file.read_to_string(&mut contents).is_err() {
-            return Err(Error {
-                desc: "could not read file contents",
-                subject: Some(String::from(config_path.to_str().unwrap())),
-            });
+            return Err(Error::FileRead);
         }
         Self::from_str(&contents, project_root)
     }
@@ -88,91 +138,61 @@ impl<'a> RepoConfig<'a> {
     pub fn from_str(string: &str, project_root: &'a Path) -> Result<RepoConfig<'a>, Error> {
         let root = match toml::Parser::new(string).parse() {
             Some(value) => value,
-            None => return Err(Error {
-                desc: "could not parse toml",
-                subject: None,
-            }),
+            None => return Err(Error::Parse),
         };
 
         let default = match root.get("default") {
             Some(value) => value,
-            None => return Err(Error {
-                desc: "missing 'default' section",
-                subject: Some(String::from("default")),
-            }),
+            None => return Err(Error::MissingDefault),
         };
 
         let default_method = match lookup_as_string(default, "method") {
             LookupResult::Missing => DeployMethod::Makefile,
-            LookupResult::WrongType => return Err(Error {
-                desc: "could not read 'default.method' as string",
-                subject: Some(String::from("default.method")),
-            }),
+            LookupResult::WrongType => return Err(Error::InvalidDefaultMethod),
             LookupResult::Value(v) => match v {
                 "ansible" => DeployMethod::Ansible,
                 "makefile" | "make" => DeployMethod::Makefile,
-                _ => return Err(Error {
-                    desc: "invalid type, valid values are 'ansible' and 'makefile'",
-                    subject: Some(String::from("default.method")),
-                }),
+                _ => return Err(Error::InvalidDefaultMethod),
             },
         };
 
         let default_task = match lookup_as_string(default, "task") {
             LookupResult::Missing => None,
-            LookupResult::WrongType => return Err(Error {
-                desc: "could not read 'default.task' as string",
-                subject: Some(String::from("default.task")),
-            }),
+            LookupResult::WrongType => return Err(Error::InvalidDefaultMakeTask),
             LookupResult::Value(v) => match MakeTask::new(project_root, v) {
                 Ok(v) => Some(v),
-                Err(err) => return Err(err),
+                Err(_) => return Err(Error::InvalidDefaultMakeTask),
             },
         };
 
         let default_playbook = match lookup_as_string(default, "playbook") {
             LookupResult::Missing => None,
-            LookupResult::WrongType => return Err(Error {
-                desc: "could not read 'default.playbook' as string",
-                subject: Some(String::from("default.playbook")),
-            }),
+            LookupResult::WrongType => return Err(Error::InvalidDefaultPlaybook),
             LookupResult::Value(v) => match VerifiedPath::file(Some(project_root), Path::new(v)) {
                 Ok(v) => Some(v),
-                Err(err) => return Err(err),
+                Err(_) => return Err(Error::InvalidDefaultPlaybook),
             },
         };
 
         let default_inventory = match lookup_as_string(default, "inventory") {
             LookupResult::Missing => None,
-            LookupResult::WrongType => return Err(Error {
-                desc: "could not read 'default.inventory' as string",
-                subject: Some(String::from("default.inventory")),
-            }),
+            LookupResult::WrongType => return Err(Error::InvalidDefaultInventory),
             LookupResult::Value(v) => match VerifiedPath::file(Some(project_root), Path::new(v)) {
                 Ok(v) => Some(v),
-                Err(err) => return Err(err),
+                Err(_) => return Err(Error::InvalidDefaultInventory),
             },
         };
 
         let default_notify_url = match lookup_as_string(default, "notify_url") {
             LookupResult::Missing => None,
-            LookupResult::WrongType => return Err(Error {
-                desc: "could not read 'default.notify_url' as string",
-                subject: Some(String::from("default.notify_url")),
-            }),
+            LookupResult::WrongType => return Err(Error::InvalidDefaultNotifyUrl),
             LookupResult::Value(v) => Some(v.to_string()),
         };
 
         let raw_branch = match root.get("branch") {
-            None => return Err(Error {
-                desc: "must configure at least one branch (missing [branch.*])",
-                subject: Some(String::from("branch.*")),
-            }),
+            None => return Err(Error::MissingBranchConfig),
             Some(v) => match v.as_table() {
-                None => return Err(Error {
-                    desc: "'branch' must be a table",
-                    subject: Some(String::from("branch")),
-                }),
+                None => return Err(Error::InvalidBranchConfig),
                 Some(v) => v,
             },
         };
@@ -181,51 +201,51 @@ impl<'a> RepoConfig<'a> {
 
         for (key, table) in raw_branch.iter() {
             if table.as_table().is_none() {
-                return Err(Error {
-                    desc: "every 'branch' must be a table",
-                    subject: Some(key.clone()),
-                });
+                return Err(Error::InvalidBranchEntry);
             }
 
             let method = match lookup_as_string(table, "method") {
                 LookupResult::Missing => default_method,
-                LookupResult::WrongType => return Err(Error {
-                    desc: "could not read 'default.method' as string",
-                    subject: Some(String::from("default.method")),
-                }),
+                LookupResult::WrongType => return Err(Error::InvalidBranchEntryMethod),
                 LookupResult::Value(v) => match v {
                     "ansible" => DeployMethod::Ansible,
                     "makefile" | "make" => DeployMethod::Makefile,
-                    _ => return Err(Error {
-                        desc: "invalid type, valid values are 'ansible' and 'makefile'",
-                        subject: Some(String::from("default.method")),
-                    }),
+                    _ => return Err(Error::InvalidBranchEntryMethod),
                 },
             };
 
             let playbook = match lookup_as_string(table, "playbook") {
                 LookupResult::Missing => None,
-                LookupResult::WrongType => return Err(Error {
-                    desc: "branch 'playbook' not a string",
-                    subject: Some(format!("branch.{}.playbook", key)),
-                }),
+                LookupResult::WrongType => return Err(Error::InvalidBranchEntryPlaybook),
                 LookupResult::Value(v) =>
                     match VerifiedPath::file(Some(project_root), Path::new(v)) {
                         Ok(v) => Some(v),
-                        Err(err) => return Err(err),
+                        Err(_) => return Err(Error::InvalidBranchEntryPlaybook),
                     },
             };
             let inventory = match lookup_as_string(table, "inventory") {
                 LookupResult::Missing => None,
-                LookupResult::WrongType => return Err(Error {
-                    desc: "branch 'inventory' not a string",
-                    subject: Some(format!("branch.{}.inventory", key)),
-                }),
+                LookupResult::WrongType => return Err(Error::InvalidBranchEntryInventory),
                 LookupResult::Value(v) =>
                     match VerifiedPath::file(Some(project_root), Path::new(v)) {
                         Ok(v) => Some(v),
-                        Err(err) => return Err(err),
+                        Err(_) => return Err(Error::InvalidBranchEntryInventory),
                     },
+            };
+
+            let notify_url = match lookup_as_string(table, "notify_url") {
+                LookupResult::Missing => None,
+                LookupResult::WrongType => return Err(Error::InvalidBranchEntryNotifyUrl),
+                LookupResult::Value(v) => Some(v.to_string()),
+            };
+
+            let branch_make_task = match lookup_as_string(table, "task") {
+                LookupResult::Missing => None,
+                LookupResult::WrongType => return Err(Error::InvalidBranchEntryTask),
+                LookupResult::Value(v) => match MakeTask::new(project_root, v) {
+                    Ok(v) => Some(v),
+                    Err(_) => return Err(Error::InvalidBranchEntryTask),
+                },
             };
 
             let ansible_task = if method == DeployMethod::Ansible {
@@ -242,53 +262,33 @@ impl<'a> RepoConfig<'a> {
                     (Some(p), None, None, Some(i)) |
                     (None, None, Some(p), Some(i)) =>
                         Some(AnsibleTask::new(p.to_string(), i.to_string(), &project_root)),
-                    (_, _, _, _) => return Err(Error {
-                        desc: "could not combine default and branch config to find playbook + \
-                               inventory combination",
-                        subject: Some(format!("branch.{}", key)),
-                    }),
+                    (_, _, _, _) => return Err(Error::InvalidAnsibleConfig),
                 }
             } else {
                 None
             };
 
             let make_task = if method == DeployMethod::Makefile {
-                match lookup_as_string(table, "task") {
-                    LookupResult::Missing => None,
-                    LookupResult::WrongType => return Err(Error {
-                        desc: "branch 'task' not a string",
-                        subject: Some(format!("branch.{}.task", key)),
-                    }),
-                    LookupResult::Value(v) => match MakeTask::new(project_root, v) {
-                        Ok(v) => Some(v),
-                        Err(err) => return Err(err),
-                    },
+                match (branch_make_task, default_task.clone()) {
+                    (Some(task), _) => Some(task),
+                    (None, Some(task)) => Some(task),
+                    (None, None) => return Err(Error::InvalidMakeTaskConfig),
                 }
             } else {
                 None
             };
 
             if make_task.is_none() && ansible_task.is_none() {
-                return Err(Error {
-                    desc: "cannot construct a task for branch between local config and default",
-                    subject: Some(format!("branch.{}", key)),
-                });
+                return Err(Error::MissingBranchTask);
             }
 
-            branch.insert(key.clone(),
-                          BranchConfig {
-                              ansible_task: ansible_task,
-                              make_task: make_task,
-                              method: method,
-                              notify_url: match lookup_as_string(table, "notify_url") {
-                                  LookupResult::Missing => None,
-                                  LookupResult::WrongType => return Err(Error {
-                                      desc: "branch 'notify_url' not a string",
-                                      subject: Some(format!("branch.{}.notify_url", key)),
-                                  }),
-                                  LookupResult::Value(v) => Some(v.to_string()),
-                              },
-                          });
+            let branch_config = BranchConfig {
+                ansible_task: ansible_task,
+                make_task: make_task,
+                method: method,
+                notify_url: notify_url,
+            };
+            branch.insert(key.clone(), branch_config);
         }
 
         Ok(RepoConfig {

@@ -5,7 +5,7 @@ use std::io::Read;
 use std::path::Path;
 use std::process::{Command, Output};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MakeTask<'a> {
     task: String,
     path: &'a Path,
