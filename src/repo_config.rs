@@ -64,15 +64,15 @@ pub enum Error {
     InvalidDefaultNotifyUrl,
     MissingBranchConfig,
     InvalidBranchConfig,
-    InvalidBranchEntry,
-    InvalidBranchEntryMethod,
-    InvalidBranchEntryPlaybook,
-    InvalidBranchEntryInventory,
-    InvalidBranchEntryNotifyUrl,
-    InvalidBranchEntryTask,
+    InvalidBranch(String),
+    InvalidMethod(String),
+    InvalidPlaybook(String),
+    InvalidInventory(String),
+    InvalidNotifyUrl(String),
+    InvalidTask(String),
+    MissingTask(String),
     InvalidAnsibleConfig,
     InvalidMakeTaskConfig,
-    MissingBranchTask,
 }
 impl StdError for Error {
     fn description(&self) -> &str {
@@ -88,21 +88,36 @@ impl StdError for Error {
             Error::InvalidDefaultNotifyUrl => "`default.notify_url` must be a URL",
             Error::MissingBranchConfig => "must configure at least one branch (missing [branch.<name>])",
             Error::InvalidBranchConfig => "`branch` must be a table",
-            Error::InvalidBranchEntry => "every `branch.<name>` entry must be a table",
-            Error::InvalidBranchEntryMethod => "invalid branch `method`, valid values are 'ansible' and 'makefile'",
-            Error::InvalidBranchEntryPlaybook => "branch `playbook` must point to an existing file",
-            Error::InvalidBranchEntryInventory => "branch `inventory` must point to an existing file",
-            Error::InvalidBranchEntryNotifyUrl => "branch `notify_url` must be valid URL",
-            Error::InvalidBranchEntryTask => "branch `task` must be valid, existing make task",
+            Error::InvalidBranch(_) => "every `branch.<name>` entry must be a table",
+            Error::InvalidMethod(_) => "invalid branch `method`, valid values are 'ansible' and 'makefile'",
+            Error::InvalidPlaybook(_) => "branch `playbook` must point to an existing file",
+            Error::InvalidInventory(_) => "branch `inventory` must point to an existing file",
+            Error::InvalidNotifyUrl(_) => "branch `notify_url` must be valid URL",
+            Error::InvalidTask(_) => "branch `task` must be valid, existing make task",
+            Error::MissingTask(_) => "cannot construct a task for branch between local config and default",
             Error::InvalidAnsibleConfig => "could not combine default and branch config to find playbook + inventory combination",
             Error::InvalidMakeTaskConfig => "could not combine default and branch config to find valid make task",
-            Error::MissingBranchTask => "cannot construct a task for branch between local config and default",
         }
     }
 }
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.description())
+    }
+}
+impl Error {
+    pub fn related_branch(&self) -> Option<&str> {
+        match *self {
+            Error::InvalidBranch(ref s) |
+            Error::InvalidMethod(ref s) |
+            Error::InvalidPlaybook(ref s) |
+            Error::InvalidInventory(ref s) |
+            Error::InvalidNotifyUrl(ref s) |
+            Error::InvalidTask(ref s) |
+            Error::MissingTask(ref s) => Some(s),
+            _ => None,
+        }
+
     }
 }
 
@@ -197,54 +212,54 @@ impl<'a> RepoConfig<'a> {
             },
         };
 
-        let mut branch = BranchConfigMap::new();
+        let mut branch_table = BranchConfigMap::new();
 
-        for (key, table) in raw_branch.iter() {
+        for (branch, table) in raw_branch.iter() {
             if table.as_table().is_none() {
-                return Err(Error::InvalidBranchEntry);
+                return Err(Error::InvalidBranch(branch.clone()));
             }
 
             let method = match lookup_as_string(table, "method") {
                 LookupResult::Missing => default_method,
-                LookupResult::WrongType => return Err(Error::InvalidBranchEntryMethod),
+                LookupResult::WrongType => return Err(Error::InvalidMethod(branch.clone())),
                 LookupResult::Value(v) => match v {
                     "ansible" => DeployMethod::Ansible,
                     "makefile" | "make" => DeployMethod::Makefile,
-                    _ => return Err(Error::InvalidBranchEntryMethod),
+                    _ => return Err(Error::InvalidMethod(branch.clone())),
                 },
             };
 
             let playbook = match lookup_as_string(table, "playbook") {
                 LookupResult::Missing => None,
-                LookupResult::WrongType => return Err(Error::InvalidBranchEntryPlaybook),
+                LookupResult::WrongType => return Err(Error::InvalidPlaybook(branch.clone())),
                 LookupResult::Value(v) =>
                     match VerifiedPath::file(Some(project_root), Path::new(v)) {
                         Ok(v) => Some(v),
-                        Err(_) => return Err(Error::InvalidBranchEntryPlaybook),
+                        Err(_) => return Err(Error::InvalidPlaybook(branch.clone())),
                     },
             };
             let inventory = match lookup_as_string(table, "inventory") {
                 LookupResult::Missing => None,
-                LookupResult::WrongType => return Err(Error::InvalidBranchEntryInventory),
+                LookupResult::WrongType => return Err(Error::InvalidInventory(branch.clone())),
                 LookupResult::Value(v) =>
                     match VerifiedPath::file(Some(project_root), Path::new(v)) {
                         Ok(v) => Some(v),
-                        Err(_) => return Err(Error::InvalidBranchEntryInventory),
+                        Err(_) => return Err(Error::InvalidInventory(branch.clone())),
                     },
             };
 
             let notify_url = match lookup_as_string(table, "notify_url") {
                 LookupResult::Missing => None,
-                LookupResult::WrongType => return Err(Error::InvalidBranchEntryNotifyUrl),
+                LookupResult::WrongType => return Err(Error::InvalidNotifyUrl(branch.clone())),
                 LookupResult::Value(v) => Some(v.to_string()),
             };
 
             let branch_make_task = match lookup_as_string(table, "task") {
                 LookupResult::Missing => None,
-                LookupResult::WrongType => return Err(Error::InvalidBranchEntryTask),
+                LookupResult::WrongType => return Err(Error::InvalidTask(branch.clone())),
                 LookupResult::Value(v) => match MakeTask::new(project_root, v) {
                     Ok(v) => Some(v),
-                    Err(_) => return Err(Error::InvalidBranchEntryTask),
+                    Err(_) => return Err(Error::InvalidTask(branch.clone())),
                 },
             };
 
@@ -279,7 +294,7 @@ impl<'a> RepoConfig<'a> {
             };
 
             if make_task.is_none() && ansible_task.is_none() {
-                return Err(Error::MissingBranchTask);
+                return Err(Error::MissingTask(branch.clone()));
             }
 
             let branch_config = BranchConfig {
@@ -288,7 +303,7 @@ impl<'a> RepoConfig<'a> {
                 method: method,
                 notify_url: notify_url,
             };
-            branch.insert(key.clone(), branch_config);
+            branch_table.insert(branch.clone(), branch_config);
         }
 
         Ok(RepoConfig {
@@ -297,7 +312,7 @@ impl<'a> RepoConfig<'a> {
             default_playbook: default_playbook,
             default_inventory: default_inventory,
             default_notify_url: default_notify_url,
-            branch: branch,
+            branch: branch_table,
             project_root: project_root,
         })
     }

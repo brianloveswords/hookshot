@@ -47,9 +47,10 @@ impl Runnable for DeployTask {
         let project_root = Path::new(&self.repo.local_path);
         let config = match RepoConfig::load(&project_root) {
             Err(e) => {
-                let err = format!("could not load config for repo {}: {}",
+                let err = format!("could not load config for repo {}: {} (branch: {})",
                                   self.repo.remote_path,
-                                  e.description());
+                                  e.description(),
+                                  e.related_branch().unwrap_or("None"));
                 logfile.write_all(format!("{}", err).as_bytes());
                 return println!("[{}]: {}", &task_id, err);
             }
