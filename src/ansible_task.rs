@@ -4,7 +4,7 @@ use server_config::Environment;
 use std::path::Path;
 use std::process::{Command, Output};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AnsibleTask<'a> {
     pub playbook: String,
     pub inventory: String,

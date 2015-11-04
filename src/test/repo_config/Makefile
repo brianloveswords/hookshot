@@ -6,3 +6,6 @@ deploy:
 
 clean:
 	echo "cleaning the stuff"
+
+build:
+	echo "build"

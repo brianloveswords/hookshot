@@ -119,15 +119,8 @@ fn send_message(task: &DeployTask, config: &RepoConfig, status: TaskState) {
 
 fn get_notify_url<'a>(task: &DeployTask, config: &'a RepoConfig) -> Option<&'a String> {
     let branch = &task.repo.branch;
-    let branch_notify_url = match config.lookup_branch(branch) {
+    match config.lookup_branch(branch) {
         Some(branch) => branch.notify_url.as_ref(),
         None => None,
-    };
-
-    let default_notify_url = config.default_notify_url.as_ref();
-
-    match (branch_notify_url, default_notify_url) {
-        (Some(url), _) | (None, Some(url)) => Some(url),
-        (None, None) => None,
     }
 }
