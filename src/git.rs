@@ -96,6 +96,7 @@ impl GitRepo {
         let output = Command::new("git")
                          .current_dir(&self.local_path)
                          .arg("fetch")
+                         .arg("--tags")
                          .output();
 
         let result = match output {
@@ -141,7 +142,7 @@ impl GitRepo {
                          .current_dir(&self.local_path)
                          .arg("reset")
                          .arg("--hard")
-                         .arg(format!("origin/{}", &self.refstring))
+                         .arg(&self.refstring)
                          .output();
 
         let result = match output {
