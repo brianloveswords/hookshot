@@ -130,8 +130,8 @@ impl GitRepo {
     /// (test -d <local_path> && \
     ///   cd <local_path> && \
     ///   git fetch && \
-    ///   git reset --hard origin/<branch>) || \
-    /// git clone --depth=1 --single-branch -b <branch> <remote_path> <local_path>
+    ///   git reset --hard <ref>) || \
+    /// git clone --depth=1 --single-branch -b <ref> <remote_path> <local_path>
     /// ```
     pub fn get_latest(&self) -> Result<Output, CommandError> {
         if let Err(e) = self.fetch() {
