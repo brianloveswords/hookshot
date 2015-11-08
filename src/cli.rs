@@ -217,7 +217,7 @@ fn start_server(config: ServerConfig) {
 
         let environment = match config_clone.environment_for(&repo.owner,
                                                              &repo.name,
-                                                             &repo.branch) {
+                                                             &repo.refstring) {
             Ok(environment) => environment,
             Err(_) => {
                 println!("[{}]: warning: error loading environment for {}, definition flawed",

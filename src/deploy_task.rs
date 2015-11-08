@@ -59,9 +59,9 @@ impl Runnable for DeployTask {
 
         notifier::started(&self, &config);
 
-        let branch_config = match config.lookup_branch(&self.repo.branch) {
+        let ref_config = match config.lookup(self.repo.reftype, &self.repo.refstring) {
             None => {
-                let err = format!("No config for branch '{}'", &self.repo.branch);
+                let err = format!("No config for ref '{}'", &self.repo.refstring);
                 logfile.write_all(format!("{}", err).as_bytes());
                 return println!("[{}]: {}", &task_id, err);
             }
@@ -70,10 +70,10 @@ impl Runnable for DeployTask {
 
         // TODO: refactor this, use a trait or something.
         let output_result = {
-            match branch_config.method {
-                DeployMethod::Ansible => match branch_config.ansible_task() {
+            match ref_config.method {
+                DeployMethod::Ansible => match ref_config.ansible_task() {
                     None => {
-                        let err = format!("No task for branch '{}'", &self.repo.branch);
+                        let err = format!("No task for ref '{}'", &self.repo.refstring);
                         logfile.write_all(format!("{}", err).as_bytes());
                         return println!("[{}]: {}", &task_id, err);
                     }
@@ -83,9 +83,9 @@ impl Runnable for DeployTask {
                         task.run(&self.env)
                     }
                 },
-                DeployMethod::Makefile => match branch_config.make_task() {
+                DeployMethod::Makefile => match ref_config.make_task() {
                     None => {
-                        let err = format!("No task for branch '{}'", &self.repo.branch);
+                        let err = format!("No task for branch '{}'", &self.repo.refstring);
                         logfile.write_all(format!("{}", err).as_bytes());
                         return println!("[{}]: {}", &task_id, err);
                     }

@@ -1,4 +1,5 @@
 use deploy_task::DeployTask;
+use message::RefType;
 use hyper::client::Client;
 use hyper::header::ContentType;
 use repo_config::RepoConfig;
@@ -16,7 +17,8 @@ struct Message<'a> {
     task_id: &'a String,
     task_url: &'a String,
     owner: &'a String,
-    branch: &'a String,
+    reftype: RefType,
+    refstring: &'a String,
     repo: &'a String,
     sha: &'a String,
 }
@@ -81,7 +83,8 @@ fn send_message(task: &DeployTask, config: &RepoConfig, status: TaskState) {
         task_url: &task_url,
         sha: &repo.sha,
         owner: &repo.owner,
-        branch: &repo.branch,
+        refstring: &repo.refstring,
+        reftype: repo.reftype,
         repo: &repo.name,
     };
 
@@ -118,9 +121,10 @@ fn send_message(task: &DeployTask, config: &RepoConfig, status: TaskState) {
 }
 
 fn get_notify_url<'a>(task: &DeployTask, config: &'a RepoConfig) -> Option<&'a String> {
-    let branch = &task.repo.branch;
-    match config.lookup_branch(branch) {
-        Some(branch) => branch.notify_url.as_ref(),
+    let refstring = &task.repo.refstring;
+    let reftype = task.repo.reftype;
+    match config.lookup(reftype, refstring) {
+        Some(refconfig) => refconfig.notify_url.as_ref(),
         None => None,
     }
 }

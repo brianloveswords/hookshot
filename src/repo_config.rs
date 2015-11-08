@@ -1,4 +1,5 @@
 use ansible_task::AnsibleTask;
+use message::RefType;
 use make_task::MakeTask;
 use std::collections::BTreeMap;
 use std::error::Error as StdError;
@@ -161,11 +162,6 @@ impl Error {
     }
 }
 
-enum LookupType {
-    Branch,
-    Tag,
-}
-
 #[derive(Debug)]
 pub struct RepoConfig<'a> {
     branch: Option<ConfigMap<'a>>,
@@ -175,18 +171,18 @@ pub struct RepoConfig<'a> {
 
 impl<'a> RepoConfig<'a> {
     pub fn lookup_branch(&self, name: &str) -> Option<&Config<'a>> {
-        self.lookup(LookupType::Branch, name)
+        self.lookup(RefType::branch, name)
     }
 
     pub fn lookup_tag(&self, name: &str) -> Option<&Config<'a>> {
-        self.lookup(LookupType::Tag, name)
+        self.lookup(RefType::tag, name)
     }
 
-    fn lookup(&self, group: LookupType, name: &str) -> Option<&Config<'a>> {
+    pub fn lookup(&self, group: RefType, name: &str) -> Option<&Config<'a>> {
         let structure = {
             let possible = match group {
-                LookupType::Branch => &self.branch,
-                LookupType::Tag => &self.tag,
+                RefType::branch => &self.branch,
+                RefType::tag => &self.tag,
             };
 
             match possible {

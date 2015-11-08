@@ -8,6 +8,7 @@ use error::CommandError;
 use std::path::Path;
 use std::process::{Command, Output};
 use verified_path::directory_exists;
+use message::RefType;
 
 pub struct GitRepo {
     /// Owner of the repository
@@ -16,9 +17,13 @@ pub struct GitRepo {
     /// Name of the repository
     pub name: String,
 
-    /// Branch to check out. We require this so we can create the smallest
+    /// Reference to check out. We require this so we can create the smallest
     /// checkout possible.
-    pub branch: String,
+    pub refstring: String,
+
+    /// Reference type (whether this is a branch or a tag). Used to look up
+    /// the appropriate action from the repository configuration.
+    pub reftype: RefType,
 
     /// Specific SHA for this event.
     pub sha: String,
@@ -41,7 +46,7 @@ impl GitRepo {
     }
 
     pub fn fully_qualified_branch(&self) -> String {
-        format!("{}.{}.{}", &self.owner, &self.name, &self.branch)
+        format!("{}.{}.{}", &self.owner, &self.name, &self.refstring)
     }
 
     fn clone(&self) -> Result<Output, CommandError> {
@@ -50,7 +55,7 @@ impl GitRepo {
                          .arg("--depth=1")
                          .arg("--single-branch")
                          .arg("-b")
-                         .arg(&self.branch)
+                         .arg(&self.refstring)
                          .arg(&self.remote_path)
                          .arg(&self.local_path)
                          .output();
@@ -136,7 +141,7 @@ impl GitRepo {
                          .current_dir(&self.local_path)
                          .arg("reset")
                          .arg("--hard")
-                         .arg(format!("origin/{}", &self.branch))
+                         .arg(format!("origin/{}", &self.refstring))
                          .output();
 
         let result = match output {
@@ -162,6 +167,7 @@ impl GitRepo {
 #[cfg(test)]
 mod tests {
     use super::GitRepo;
+    use message::RefType;
     use tempdir::TempDir;
     use verified_path::directory_exists;
 
@@ -171,7 +177,8 @@ mod tests {
         let git = GitRepo {
             owner: String::from("test"),
             name: String::from("test"),
-            branch: String::from("master"),
+            refstring: String::from("master"),
+            reftype: RefType::branch,
             sha: String::from("abc"),
             remote_path: String::from("src/test/test_repo"),
             local_path: String::from(local_path.to_str().unwrap()),
@@ -187,7 +194,8 @@ mod tests {
         let git = GitRepo {
             owner: String::from("test"),
             name: String::from("test"),
-            branch: String::from("master"),
+            refstring: String::from("master"),
+            reftype: RefType::branch,
             sha: String::from("abc"),
             remote_path: String::from("src/test/test_repo"),
             local_path: String::from(local_path.to_str().unwrap()),
@@ -213,7 +221,8 @@ mod tests {
         let git = GitRepo {
             owner: String::from("test"),
             name: String::from("test"),
-            branch: String::from("master"),
+            refstring: String::from("master"),
+            reftype: RefType::branch,
             sha: String::from("abc"),
             remote_path: String::from("src/test/test_repo"),
             local_path: String::from(local_path.to_str().unwrap()),
@@ -226,7 +235,8 @@ mod tests {
         let git = GitRepo {
             owner: String::from("owner"),
             name: String::from("name"),
-            branch: String::from("branch"),
+            refstring: String::from("branch"),
+            reftype: RefType::branch,
             sha: String::from("abc"),
             remote_path: String::from("doesn't matter"),
             local_path: String::from("irrelevant"),
