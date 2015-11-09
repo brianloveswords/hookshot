@@ -26,8 +26,17 @@ impl Runnable for DeployTask {
         let task_id = self.id.to_string();
 
         // Insert the checkout path for the current checkout to the environment
-        self.env.insert(String::from("hookshot_checkout_path"),
-                        self.repo.local_path.clone());
+        self.env.insert("hookshot_checkout_path".to_owned(), self.repo.local_path.clone());
+
+        // Insert git data into the environment
+        // TODO: figure out if env type can get away without having to own its
+        // keys and values
+        self.env.insert("git_ref".to_owned(), self.repo.refstring.clone());
+        self.env.insert("git_ref_type".to_owned(), self.repo.reftype.to_string());
+        self.env.insert("git_commit_sha".to_owned(), self.repo.sha.clone());
+        self.env.insert("git_repo_name".to_owned(), self.repo.name.clone());
+        self.env.insert("git_repo_owner".to_owned(), self.repo.owner.clone());
+
 
         // Truncate the logfile and write "task running..."
         let logfile_path = Path::new(&self.logdir).join(format!("{}.log", task_id));
@@ -85,7 +94,7 @@ impl Runnable for DeployTask {
                 },
                 DeployMethod::Makefile => match ref_config.make_task() {
                     None => {
-                        let err = format!("No task for branch '{}'", &self.repo.refstring);
+                        let err = format!("No task for ref '{}'", &self.repo.refstring);
                         logfile.write_all(format!("{}", err).as_bytes());
                         return println!("[{}]: {}", &task_id, err);
                     }

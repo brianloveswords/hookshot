@@ -1,4 +1,5 @@
 use git::{GitRepo, ToGitRepo};
+use std::string::ToString;
 use rustc_serialize::json::{self, Json};
 
 // We allow non-camel case types here so we can use RustcDecodable and
@@ -8,6 +9,15 @@ use rustc_serialize::json::{self, Json};
 pub enum RefType {
     tag,
     branch,
+}
+
+impl ToString for RefType {
+    fn to_string(&self) -> String {
+        match *self {
+            RefType::tag => "tag".to_owned(),
+            RefType::branch => "branch".to_owned(),
+        }
+    }
 }
 
 #[derive(Clone, Debug)]

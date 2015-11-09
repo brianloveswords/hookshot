@@ -271,7 +271,7 @@ fn start_server(config: ServerConfig) {
 
         logfile.write_all(b"task pending");
 
-        let location = format!("/tasks/{}", task_id);
+        let location = format!("http://{}/tasks/{}", config_clone.hostname, task_id);
         let response_body = format!("Location: {}", location);
         Ok(Response::with((Header(Connection::close()),
                            Header(Location(location)),

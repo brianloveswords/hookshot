@@ -142,7 +142,7 @@ impl GitRepo {
                          .current_dir(&self.local_path)
                          .arg("reset")
                          .arg("--hard")
-                         .arg(&self.refstring)
+                         .arg(&self.sha)
                          .output();
 
         let result = match output {
@@ -180,7 +180,7 @@ mod tests {
             name: String::from("test"),
             refstring: String::from("master"),
             reftype: RefType::branch,
-            sha: String::from("abc"),
+            sha: String::from("HEAD"),
             remote_path: String::from("src/test/test_repo"),
             local_path: String::from(local_path.to_str().unwrap()),
         };
@@ -197,7 +197,7 @@ mod tests {
             name: String::from("test"),
             refstring: String::from("master"),
             reftype: RefType::branch,
-            sha: String::from("abc"),
+            sha: String::from("HEAD"),
             remote_path: String::from("src/test/test_repo"),
             local_path: String::from(local_path.to_str().unwrap()),
         };
@@ -224,7 +224,7 @@ mod tests {
             name: String::from("test"),
             refstring: String::from("master"),
             reftype: RefType::branch,
-            sha: String::from("abc"),
+            sha: String::from("HEAD"),
             remote_path: String::from("src/test/test_repo"),
             local_path: String::from(local_path.to_str().unwrap()),
         };
@@ -238,7 +238,7 @@ mod tests {
             name: String::from("name"),
             refstring: String::from("branch"),
             reftype: RefType::branch,
-            sha: String::from("abc"),
+            sha: String::from("HEAD"),
             remote_path: String::from("doesn't matter"),
             local_path: String::from("irrelevant"),
         };
