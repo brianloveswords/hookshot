@@ -2,6 +2,7 @@ use error::{Error, CommandError};
 use server_config::Environment;
 use std::fs::File;
 use std::io::Read;
+use std::ascii::AsciiExt;
 use std::path::Path;
 use std::process::{Command, Output};
 
@@ -53,7 +54,8 @@ impl<'a> MakeTask<'a> {
         cmd.arg(&self.task);
 
         for (k, v) in env {
-            cmd.env(k, v);
+            let uppercase_key = k.chars().map(|c| c.to_ascii_uppercase()).collect::<String>();
+            cmd.env(uppercase_key, v);
         }
 
         match cmd.output() {

@@ -2,6 +2,7 @@ use error::CommandError;
 use rustc_serialize::json;
 use server_config::Environment;
 use std::path::Path;
+use std::ascii::AsciiExt;
 use std::process::{Command, Output};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -24,7 +25,8 @@ impl<'a> AnsibleTask<'a> {
         let mut command = Command::new("ansible-playbook");
         command.current_dir(&self.project_root);
         for (k, v) in env {
-            command.env(k, v);
+            let uppercase_key = k.chars().map(|c| c.to_ascii_uppercase()).collect::<String>();
+            command.env(uppercase_key, v);
             command.arg("-e");
             // We use JSON encoding on the string as a way of making it safe for
             // use as a quoted command line variable.

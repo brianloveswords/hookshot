@@ -37,7 +37,6 @@ impl Runnable for DeployTask {
         self.env.insert("git_repo_name".to_owned(), self.repo.name.clone());
         self.env.insert("git_repo_owner".to_owned(), self.repo.owner.clone());
 
-
         // Truncate the logfile and write "task running..."
         let logfile_path = Path::new(&self.logdir).join(format!("{}.log", task_id));
         let mut logfile = match File::create(&logfile_path) {
