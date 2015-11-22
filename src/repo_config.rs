@@ -31,7 +31,7 @@ impl ToString for DeployMethod {
 pub struct Config<'a> {
     pub pattern: String,
     pub method: DeployMethod,
-    pub notify_url: Option<URL>,
+    pub notify_url: Option<Vec<URL>>,
     make_task: Option<MakeTask<'a>>,
     ansible_task: Option<AnsibleTask<'a>>,
 }
@@ -262,45 +262,45 @@ impl<'a> RepoConfig<'a> {
 
         let default_method = match lookup_as_string(default, "method") {
             LookupResult::Missing => None,
-            LookupResult::WrongType => return Err(Error::InvalidDefaultMethod),
-            LookupResult::Value(v) => match v {
+            LookupResult::StringValue(v) => match v {
                 "ansible" => Some(DeployMethod::Ansible),
                 "makefile" | "make" => Some(DeployMethod::Makefile),
                 _ => return Err(Error::InvalidDefaultMethod),
             },
+            _ => return Err(Error::InvalidDefaultMethod),
         };
 
         let default_task = match lookup_as_string(default, "task") {
             LookupResult::Missing => None,
-            LookupResult::WrongType => return Err(Error::InvalidDefaultMakeTask),
-            LookupResult::Value(v) => match MakeTask::new(project_root, v) {
+            LookupResult::StringValue(v) => match MakeTask::new(project_root, v) {
                 Ok(v) => Some(v),
                 Err(_) => return Err(Error::InvalidDefaultMakeTask),
             },
+            _ => return Err(Error::InvalidDefaultMakeTask),
         };
 
         let default_playbook = match lookup_as_string(default, "playbook") {
             LookupResult::Missing => None,
-            LookupResult::WrongType => return Err(Error::InvalidDefaultPlaybook),
-            LookupResult::Value(v) => match VerifiedPath::file(Some(project_root), Path::new(v)) {
+            LookupResult::StringValue(v) => match VerifiedPath::file(Some(project_root), Path::new(v)) {
                 Ok(v) => Some(v),
                 Err(_) => return Err(Error::InvalidDefaultPlaybook),
             },
+            _ => return Err(Error::InvalidDefaultPlaybook),
         };
 
         let default_inventory = match lookup_as_string(default, "inventory") {
             LookupResult::Missing => None,
-            LookupResult::WrongType => return Err(Error::InvalidDefaultInventory),
-            LookupResult::Value(v) => match VerifiedPath::file(Some(project_root), Path::new(v)) {
+            LookupResult::StringValue(v) => match VerifiedPath::file(Some(project_root), Path::new(v)) {
                 Ok(v) => Some(v),
                 Err(_) => return Err(Error::InvalidDefaultInventory),
             },
+            _ => return Err(Error::InvalidDefaultInventory),
         };
 
-        let default_notify_url = match lookup_as_string(default, "notify_url") {
+        let default_notify_url = match lookup_as_array(default, "notify_url") {
             LookupResult::Missing => None,
-            LookupResult::WrongType => return Err(Error::InvalidDefaultNotifyUrl),
-            LookupResult::Value(v) => Some(v.to_string()),
+            LookupResult::VectorValue(v) => Some(v),
+            _ => return Err(Error::InvalidDefaultNotifyUrl),
         };
 
         let mut config_groups = BTreeMap::new();
@@ -328,46 +328,46 @@ impl<'a> RepoConfig<'a> {
                         Some(method) => method,
                         None => return Err(Error::MissingMethod(pattern.clone())),
                     },
-                    LookupResult::WrongType => return Err(Error::InvalidMethod(pattern.clone())),
-                    LookupResult::Value(v) => match v {
+                    LookupResult::StringValue(v) => match v {
                         "ansible" => DeployMethod::Ansible,
                         "makefile" | "make" => DeployMethod::Makefile,
                         _ => return Err(Error::InvalidMethod(pattern.clone())),
                     },
+                    _ => return Err(Error::InvalidMethod(pattern.clone())),
                 };
 
                 let playbook = match lookup_as_string(config, "playbook") {
                     LookupResult::Missing => default_playbook.clone(),
-                    LookupResult::WrongType => return Err(Error::InvalidPlaybook(pattern.clone())),
-                    LookupResult::Value(v) =>
+                    LookupResult::StringValue(v) =>
                         match VerifiedPath::file(Some(project_root), Path::new(v)) {
                             Ok(v) => Some(v),
                             Err(_) => return Err(Error::InvalidPlaybook(pattern.clone())),
                         },
+                    _ => return Err(Error::InvalidPlaybook(pattern.clone())),
                 };
                 let inventory = match lookup_as_string(config, "inventory") {
                     LookupResult::Missing => default_inventory.clone(),
-                    LookupResult::WrongType => return Err(Error::InvalidInventory(pattern.clone())),
-                    LookupResult::Value(v) =>
+                    LookupResult::StringValue(v) =>
                         match VerifiedPath::file(Some(project_root), Path::new(v)) {
                             Ok(v) => Some(v),
                             Err(_) => return Err(Error::InvalidInventory(pattern.clone())),
                         },
+                    _ => return Err(Error::InvalidInventory(pattern.clone()))
                 };
 
-                let notify_url = match lookup_as_string(config, "notify_url") {
+                let notify_url = match lookup_as_array(config, "notify_url") {
                     LookupResult::Missing => default_notify_url.clone(),
-                    LookupResult::WrongType => return Err(Error::InvalidNotifyUrl(pattern.clone())),
-                    LookupResult::Value(v) => Some(v.to_string()),
+                    LookupResult::VectorValue(v) => Some(v),
+                    _ => return Err(Error::InvalidNotifyUrl(pattern.clone())),
                 };
 
                 let branch_make_task = match lookup_as_string(config, "task") {
                     LookupResult::Missing => None,
-                    LookupResult::WrongType => return Err(Error::InvalidMakeTask(pattern.clone())),
-                    LookupResult::Value(v) => match MakeTask::new(project_root, v) {
+                    LookupResult::StringValue(v) => match MakeTask::new(project_root, v) {
                         Ok(v) => Some(v),
                         Err(_) => return Err(Error::InvalidMakeTask(pattern.clone())),
                     },
+                    _ => return Err(Error::InvalidMakeTask(pattern.clone())),
                 };
 
                 let ansible_task = if method == DeployMethod::Ansible {
@@ -401,7 +401,7 @@ impl<'a> RepoConfig<'a> {
                     ansible_task: ansible_task,
                     make_task: make_task,
                     method: method,
-                    notify_url: notify_url,
+                    notify_url: notify_url
                 };
 
                 let mut map = config_groups.get_mut(group_type).unwrap();
@@ -421,18 +421,43 @@ impl<'a> RepoConfig<'a> {
 enum LookupResult<'a> {
     Missing,
     WrongType,
-    Value(&'a str),
+    StringValue(&'a str),
+    VectorValue(Vec<String>)
 }
+
+fn as_string<'a>(val: &'a toml::Value) -> LookupResult<'a> {
+    match val.as_str() {
+        None => LookupResult::WrongType,
+        Some(v) => LookupResult::StringValue(v),
+   }
+}
+
 
 fn lookup_as_string<'a>(obj: &'a toml::Value, key: &'static str) -> LookupResult<'a> {
     match obj.lookup(key) {
         None => LookupResult::Missing,
-        Some(v) => {
-            match v.as_str() {
-                None => LookupResult::WrongType,
-                Some(v) => LookupResult::Value(v),
-            }
-        }
+        Some(v) => as_string(v)
+    }
+}
+
+fn lookup_as_array<'a>(obj: &'a toml::Value, key: &'static str) -> LookupResult<'a> {
+    match obj.lookup(key) {
+        None => LookupResult::Missing,
+        Some(val) => match val.as_slice() {
+            None => LookupResult::WrongType,
+            Some(vec_val) => match vec_val.get(0) {
+                None => LookupResult::Missing,
+                Some(first_item) => match as_string(first_item) {
+                    LookupResult::StringValue(_) => {
+                      LookupResult::VectorValue(
+                        vec_val.iter().map(|item| String::from(item.as_str().unwrap())).collect::<Vec<String>>()
+                      )
+                    },
+                    _ => LookupResult::WrongType
+                },
+            },
+        },
+
     }
 }
 
@@ -477,7 +502,7 @@ mod tests {
             assert_eq!(ansible_task.playbook, "ansible/deploy.yml");
             assert_eq!(config.method, DeployMethod::Ansible);
             assert!(config.make_task.is_none());
-            assert_eq!(notify_url, "http://example.org");
+            assert_eq!(notify_url, vec!["http://example.org"]);
         }
         // brian-test-branch config
         {
