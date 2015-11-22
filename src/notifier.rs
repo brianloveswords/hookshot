@@ -94,33 +94,36 @@ fn send_message(task: &DeployTask, config: &RepoConfig, status: TaskState) {
     };
 
     let client = Client::new();
-    println!("[{}]: notifier: sending {} message to {}",
-             &task.id,
-             &status,
-             &notify_url);
 
     // Spawn a new thread to send the message so we don't block the task
     let task_id = task.id.clone();
-    let notify_url = notify_url.clone();
+    let notifiers = notify_url.clone();
     let secret = task.secret.clone();
+
     thread::spawn(move || {
         let sig = Signature::create(HashType::SHA256, &request_body, &secret);
 
-        let request = client.post(&notify_url)
-            .header(XHookshotSignature(sig.to_string()))
-            .header(ContentType::json())
-            .body(&request_body)
-            .send();
-
-        if request.is_err() {
-            println!("[{}]: notifier: could not send message {}",
+        for notify_url in &notifiers {
+            println!("[{}]: notifier: sending {} message to {}",
                      &task_id,
-                     &request.unwrap_err());
+                     &status,
+                     &notify_url);
+            let request = client.post(notify_url)
+                .header(XHookshotSignature(sig.to_string()))
+                .header(ContentType::json())
+                .body(&request_body)
+                .send();
+
+            if request.is_err() {
+                println!("[{}]: notifier: could not send message {}",
+                         &task_id,
+                         &request.unwrap_err());
+            }
         }
     });
 }
 
-fn get_notify_url<'a>(task: &DeployTask, config: &'a RepoConfig) -> Option<&'a String> {
+fn get_notify_url<'a>(task: &DeployTask, config: &'a RepoConfig) -> Option<&'a Vec<String>> {
     let refstring = &task.repo.refstring;
     let reftype = task.repo.reftype;
     match config.lookup(reftype, refstring) {
