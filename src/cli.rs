@@ -114,7 +114,7 @@ fn start_server(config: ServerConfig) {
         };
 
         let logfile_path = Path::new(&config_clone.log_root.to_string())
-                               .join(format!("{}.log", uuid.to_string()));
+            .join(format!("{}.log", uuid.to_string()));
 
         let mut file = {
             match File::open(&logfile_path) {
@@ -231,14 +231,12 @@ fn start_server(config: ServerConfig) {
         // back. If we aren't able to create it we shouldn't accept the task
         // because we will be unable to report task status.
         let logfile_path = Path::new(log_root).join(format!("{}.log", task_id.to_string()));
-        let mut logfile = {
-            match File::create(&logfile_path) {
-                Ok(file) => file,
-                Err(e) => {
-                    println!("[{}]: could not open logfile for writing: {}", task_id, e);
-                    return Ok(Response::with((Header(Connection::close()),
-                                              status::InternalServerError)));
-                }
+        let mut logfile = match File::create(&logfile_path) {
+            Ok(file) => file,
+            Err(e) => {
+                println!("[{}]: could not open logfile for writing: {}", task_id, e);
+                return Ok(Response::with((Header(Connection::close()),
+                                          status::InternalServerError)));
             }
         };
 
