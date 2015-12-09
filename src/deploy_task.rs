@@ -4,6 +4,7 @@ use git::GitRepo;
 use notifier;
 use repo_config::{RepoConfig, DeployMethod};
 use server_config::Environment;
+use std::env;
 use std::error::Error;
 use std::fs::File;
 use std::io::Write;
@@ -48,15 +49,18 @@ impl Runnable for DeployTask {
         };
         logfile.write_all(b"\ntask running...\n");
 
-        // Log the environment variables
-        logfile.write_all(format!("environment: {}\n", format_environment(&self.env)).as_bytes());
+        // Log the hookshot environment variables
+        logfile.write_all(format!("hookshot environment:\n---------------------\n {}\n", format_environment(&self.env)).as_bytes());
+
+        // Log the system environment variables
+        logfile.write_all(format!("system environment:\n------------------\n {}\n", format_os_environment()).as_bytes());
 
         // Log the current user
-        logfile.write_all(format!("user: {}\n", users::get_current_username().unwrap_or("<none>".to_owned())).as_bytes());
+        logfile.write_all(format!("user: {}\n\n", users::get_current_username().unwrap_or("<none>".to_owned())).as_bytes());
 
         // Log what time the task started.
         let time_task_started = UTC::now();
-        logfile.write_all(format!("started: {}...\n", time_task_started).as_bytes());
+        logfile.write_all(format!("started: {}\n", time_task_started).as_bytes());
 
         if let Err(git_error) = self.repo.get_latest() {
             let stderr = String::from_utf8(git_error.output.unwrap().stderr).unwrap();
@@ -150,8 +154,8 @@ impl Runnable for DeployTask {
         // Log what time the task ended and how long it took
         let time_task_ended = UTC::now();
         let duration = time_task_ended - time_task_started;
-        logfile.write_all(format!("task finished: {}...\n", time_task_ended).as_bytes());
-        logfile.write_all(format!("duration: {}...\n", format_duration(duration)).as_bytes());
+        logfile.write_all(format!("task finished: {}\n", time_task_ended).as_bytes());
+        logfile.write_all(format!("duration: {}...\n\n", format_duration(duration)).as_bytes());
 
         // Log the exit code and the standard streams
         logfile.write_all(format!("exit code: {}.\n", exit_code).as_bytes());
@@ -183,6 +187,14 @@ fn format_duration(duration: Duration) -> String {
 fn format_environment(env: &Environment) -> String {
     let mut env_string = String::new();
     for (k, v) in env.iter() {
+        env_string.push_str(&format!("{}: {}\n", k, v))
+    }
+    env_string
+}
+
+fn format_os_environment() -> String {
+    let mut env_string = String::new();
+    for (k, v) in env::vars() {
         env_string.push_str(&format!("{}: {}\n", k, v))
     }
     env_string
