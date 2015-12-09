@@ -56,7 +56,7 @@ impl Runnable for DeployTask {
         logfile.write_all(format!("hookshot environment:\n---------------------\n{}\n", format_environment(&self.env)).as_bytes());
 
         // Log the system environment variables
-        logfile.write_all(format!("system environment:\n------------------\n{}\n", format_os_environment()).as_bytes());
+        logfile.write_all(format!("system environment:\n-------------------\n{}\n", format_os_environment()).as_bytes());
 
         // Log what time the task started.
         let time_task_started = UTC::now();
