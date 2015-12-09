@@ -49,10 +49,10 @@ impl Runnable for DeployTask {
         logfile.write_all(b"\ntask running...\n");
 
         // Log the environment variables
-        logfile.write_all(format!("environment: {}", format_environment(&self.env)).as_bytes());
+        logfile.write_all(format!("environment: {}\n", format_environment(&self.env)).as_bytes());
 
         // Log the current user
-        logfile.write_all(format!("user: {}", users::get_current_username().unwrap_or("<none>".to_owned())).as_bytes());
+        logfile.write_all(format!("user: {}\n", users::get_current_username().unwrap_or("<none>".to_owned())).as_bytes());
 
         // Log what time the task started.
         let time_task_started = UTC::now();
