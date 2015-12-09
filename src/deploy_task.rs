@@ -1,3 +1,5 @@
+use chrono::UTC;
+use chrono::duration::Duration;
 use git::GitRepo;
 use notifier;
 use repo_config::{RepoConfig, DeployMethod};
@@ -7,6 +9,7 @@ use std::fs::File;
 use std::io::Write;
 use std::path::Path;
 use task_manager::Runnable;
+use users;
 use uuid::Uuid;
 
 pub struct DeployTask {
@@ -44,6 +47,16 @@ impl Runnable for DeployTask {
             Err(_) => return println!("[{}]: could not open logfile for writing", &task_id),
         };
         logfile.write_all(b"\ntask running...\n");
+
+        // Log the environment variables
+        logfile.write_all(format!("environment: {}", format_environment(&self.env)).as_bytes());
+
+        // Log the current user
+        logfile.write_all(format!("user: {}", users::get_current_username().unwrap_or("<none>".to_owned())).as_bytes());
+
+        // Log what time the task started.
+        let time_task_started = UTC::now();
+        logfile.write_all(format!("started: {}...\n", time_task_started).as_bytes());
 
         if let Err(git_error) = self.repo.get_latest() {
             let stderr = String::from_utf8(git_error.output.unwrap().stderr).unwrap();
@@ -134,10 +147,43 @@ impl Runnable for DeployTask {
         };
         println!("[{}]: run {}", self.id, exit_status);
 
-        logfile.write_all(format!("done, exit code: {}.\n", exit_code).as_bytes());
+        // Log what time the task ended and how long it took
+        let time_task_ended = UTC::now();
+        let duration = time_task_ended - time_task_started;
+        logfile.write_all(format!("task finished: {}...\n", time_task_ended).as_bytes());
+        logfile.write_all(format!("duration: {}...\n", format_duration(duration)).as_bytes());
+
+        // Log the exit code and the standard streams
+        logfile.write_all(format!("exit code: {}.\n", exit_code).as_bytes());
         logfile.write_all(b"\n==stdout==\n");
         logfile.write_all(&output.stdout);
         logfile.write_all(b"\n==stderr==\n");
         logfile.write_all(&output.stderr);
     }
+}
+
+
+fn format_duration(duration: Duration) -> String {
+    let mut minutes = 0i64;
+    let mut seconds = duration.num_seconds();
+    if seconds >= 60 {
+        minutes = seconds / 60;
+        seconds = seconds % 60;
+    }
+    match (minutes, seconds) {
+        (0, 1) => format!("{} second", seconds),
+        (0, _) => format!("{} seconds", seconds),
+        (1, 0) => format!("{} minute", minutes),
+        (1, 1) => format!("{} minute, {} second", minutes, seconds),
+        (1, _) => format!("{} minute, {} seconds", minutes, seconds),
+        (_, _) => format!("{} minutes, {} seconds", minutes, seconds),
+    }
+}
+
+fn format_environment(env: &Environment) -> String {
+    let mut env_string = String::new();
+    for (k, v) in env.iter() {
+        env_string.push_str(&format!("{}: {}\n", k, v))
+    }
+    env_string
 }

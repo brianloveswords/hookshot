@@ -1,5 +1,5 @@
-#[macro_use]
-extern crate hyper;
+extern crate chrono;
+#[macro_use] extern crate hyper;
 extern crate getopts;
 extern crate iron;
 extern crate openssl;
@@ -8,6 +8,7 @@ extern crate router;
 extern crate rustc_serialize;
 extern crate tempdir;
 extern crate toml;
+extern crate users;
 extern crate uuid;
 pub mod cli;
 pub mod config;

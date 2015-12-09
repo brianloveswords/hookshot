@@ -4,16 +4,18 @@ version = "1.0.0"
 authors = ["Brian J Brennan <brianloveswords@gmail.com>"]
 
 [dependencies]
+chrono = "*"
+getopts = "*"
+hyper = "*"
 iron = "*"
 openssl = "*"
-toml = "*"
-rustc-serialize = "*"
 regex = "*"
-uuid = "*"
-tempdir = "*"
 router = "*"
-hyper = "*"
-getopts = "*"
+rustc-serialize = "*"
+tempdir = "*"
+toml = "*"
+users = "*"
+uuid = "*"
 
 [[bin]]
 doc = false
