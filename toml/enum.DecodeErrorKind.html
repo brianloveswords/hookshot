@@ -24,10 +24,10 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         
         <p class='location'><a href='index.html'>toml</a></p><script>window.sidebarCurrent = {name: 'DecodeErrorKind', ty: 'enum', relpath: ''};</script><script defer src="sidebar-items.js"></script>
-    </section>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
@@ -45,36 +45,44 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-5972' class='srclink' href='../src/toml/serialization.rs.html#94-109' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-1177' class='srclink' href='../src/toml/decoder/mod.rs.html#33-54' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum DecodeErrorKind {
-    ApplicationError(<a class='struct' href='http://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>),
-    ExpectedField(&amp;'static <a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>),
-    ExpectedType(&amp;'static <a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, &amp;'static <a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>),
-    ExpectedMapKey(<a href='http://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>),
-    ExpectedMapElement(<a href='http://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>),
+    ApplicationError(<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>),
+    ExpectedField(<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;'static <a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;),
+    UnknownField,
+    ExpectedType(&amp;'static <a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, &amp;'static <a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>),
+    ExpectedMapKey(<a href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>),
+    ExpectedMapElement(<a href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>),
     NoEnumVariants,
     NilTooLong,
+    SyntaxError,
+    EndOfStream,
 }</pre><div class='docblock'><p>Enumeration of possible errors which can occur while decoding a structure.</p>
 </div><h2 class='variants'>Variants</h2>
 <table><tr><td id='variant.ApplicationError'><code>ApplicationError</code></td><td><div class='docblock'><p>An error flagged by the application, e.g. value out of range</p>
 </div></td></tr><tr><td id='variant.ExpectedField'><code>ExpectedField</code></td><td><div class='docblock'><p>A field was expected, but none was found.</p>
+</div></td></tr><tr><td id='variant.UnknownField'><code>UnknownField</code></td><td><div class='docblock'><p>A field was found, but it was not an expected one.</p>
 </div></td></tr><tr><td id='variant.ExpectedType'><code>ExpectedType</code></td><td><div class='docblock'><p>A field was found, but it had the wrong type.</p>
 </div></td></tr><tr><td id='variant.ExpectedMapKey'><code>ExpectedMapKey</code></td><td><div class='docblock'><p>The nth map key was expected, but none was found.</p>
 </div></td></tr><tr><td id='variant.ExpectedMapElement'><code>ExpectedMapElement</code></td><td><div class='docblock'><p>The nth map element was expected, but none was found.</p>
 </div></td></tr><tr><td id='variant.NoEnumVariants'><code>NoEnumVariants</code></td><td><div class='docblock'><p>An enum decoding was requested, but no variants were supplied</p>
 </div></td></tr><tr><td id='variant.NilTooLong'><code>NilTooLong</code></td><td><div class='docblock'><p>The unit type was being decoded, but a non-zero length string was found</p>
-</div></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='http://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='enum' href='../toml/enum.DecodeErrorKind.html' title='toml::DecodeErrorKind'>DecodeErrorKind</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='http://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='http://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='http://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
-</div><h3 class='impl'><code>impl <a class='trait' href='http://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a> for <a class='enum' href='../toml/enum.DecodeErrorKind.html' title='toml::DecodeErrorKind'>DecodeErrorKind</a></code></h3><div class='impl-items'><h4 id='method.eq' class='method'><code>fn <a href='http://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class='enum' href='../toml/enum.DecodeErrorKind.html' title='toml::DecodeErrorKind'>DecodeErrorKind</a>) -&gt; <a href='http://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
-<h4 id='method.ne' class='method'><code>fn <a href='http://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.ne' class='fnname'>ne</a>(&amp;self, __arg_0: &amp;<a class='enum' href='../toml/enum.DecodeErrorKind.html' title='toml::DecodeErrorKind'>DecodeErrorKind</a>) -&gt; <a href='http://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+</div></td></tr><tr><td id='variant.SyntaxError'><code>SyntaxError</code></td><td><div class='docblock'><p>There was an error with the syntactical structure of the TOML.</p>
+</div></td></tr><tr><td id='variant.EndOfStream'><code>EndOfStream</code></td><td><div class='docblock'><p>The end of the TOML input was reached too soon</p>
+</div></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='enum' href='../toml/enum.DecodeErrorKind.html' title='toml::DecodeErrorKind'>DecodeErrorKind</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a> for <a class='enum' href='../toml/enum.DecodeErrorKind.html' title='toml::DecodeErrorKind'>DecodeErrorKind</a></code></h3><div class='impl-items'><h4 id='method.eq' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class='enum' href='../toml/enum.DecodeErrorKind.html' title='toml::DecodeErrorKind'>DecodeErrorKind</a>) -&gt; <a href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<h4 id='method.ne' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.ne' class='fnname'>ne</a>(&amp;self, __arg_0: &amp;<a class='enum' href='../toml/enum.DecodeErrorKind.html' title='toml::DecodeErrorKind'>DecodeErrorKind</a>) -&gt; <a href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
+    <aside id="help" class="hidden">
         <div>
+            <h1 class="hidden">Help</h1>
+
             <div class="shortcuts">
-                <h1>Keyboard Shortcuts</h1>
+                <h2>Keyboard Shortcuts</h2>
 
                 <dl>
                     <dt>?</dt>
@@ -91,7 +99,7 @@
             </div>
 
             <div class="infos">
-                <h1>Search Tricks</h1>
+                <h2>Search Tricks</h2>
 
                 <p>
                     Prefix searches with a type followed by a colon (e.g.
@@ -101,8 +109,8 @@
                 <p>
                     Accepted types are: <code>fn</code>, <code>mod</code>,
                     <code>struct</code>, <code>enum</code>,
-                    <code>trait</code>, <code>typedef</code> (or
-                    <code>tdef</code>).
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
                 </p>
 
                 <p>
@@ -111,7 +119,7 @@
                 </p>
             </div>
         </div>
-    </div>
+    </aside>
 
     
 

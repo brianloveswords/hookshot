@@ -24,10 +24,10 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         
         <p class='location'><a href='../index.html'>route_recognizer</a>::<wbr><a href='index.html'>nfa</a></p><script>window.sidebarCurrent = {name: 'Match', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
-    </section>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
@@ -45,23 +45,25 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-1283' class='srclink' href='../../src/route_recognizer/nfa.rs.html#185-188' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-204' class='srclink' href='../../src/route_recognizer/nfa.rs.html#185-188' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Match&lt;'a&gt; {
-    pub state: <a href='http://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>,
-    pub captures: <a class='struct' href='http://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;&amp;'a <a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;,
+    pub state: <a href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>,
+    pub captures: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;&amp;'a <a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;,
 }</pre><h2 class='fields'>Fields</h2>
 <table><tr class='stab '>
                                   <td id='structfield.state'><code>state</code></td><td></td></tr><tr class='stab '>
-                                  <td id='structfield.captures'><code>captures</code></td><td></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;'a&gt; <a class='struct' href='../../route_recognizer/nfa/struct.Match.html' title='route_recognizer::nfa::Match'>Match</a>&lt;'a&gt;</code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>&lt;'b&gt;(state: <a href='http://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, captures: <a class='struct' href='http://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;&amp;'b <a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;) -&gt; <a class='struct' href='../../route_recognizer/nfa/struct.Match.html' title='route_recognizer::nfa::Match'>Match</a>&lt;'b&gt;</code></h4>
+                                  <td id='structfield.captures'><code>captures</code></td><td></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;'a&gt; <a class='struct' href='../../route_recognizer/nfa/struct.Match.html' title='route_recognizer::nfa::Match'>Match</a>&lt;'a&gt;</code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>&lt;'b&gt;(state: <a href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, captures: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;&amp;'b <a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;) -&gt; <a class='struct' href='../../route_recognizer/nfa/struct.Match.html' title='route_recognizer::nfa::Match'>Match</a>&lt;'b&gt;</code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
+    <aside id="help" class="hidden">
         <div>
+            <h1 class="hidden">Help</h1>
+
             <div class="shortcuts">
-                <h1>Keyboard Shortcuts</h1>
+                <h2>Keyboard Shortcuts</h2>
 
                 <dl>
                     <dt>?</dt>
@@ -78,7 +80,7 @@
             </div>
 
             <div class="infos">
-                <h1>Search Tricks</h1>
+                <h2>Search Tricks</h2>
 
                 <p>
                     Prefix searches with a type followed by a colon (e.g.
@@ -88,8 +90,8 @@
                 <p>
                     Accepted types are: <code>fn</code>, <code>mod</code>,
                     <code>struct</code>, <code>enum</code>,
-                    <code>trait</code>, <code>typedef</code> (or
-                    <code>tdef</code>).
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
                 </p>
 
                 <p>
@@ -98,7 +100,7 @@
                 </p>
             </div>
         </div>
-    </div>
+    </aside>
 
     
 

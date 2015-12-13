@@ -24,10 +24,10 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         
         <p class='location'><a href='index.html'>modifier</a></p><script>window.sidebarCurrent = {name: 'Modifier', ty: 'trait', relpath: ''};</script><script defer src="sidebar-items.js"></script>
-    </section>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
@@ -46,7 +46,7 @@
                 [<span class='inner'>&#x2212;</span>]
             </a>
         </span><a id='src-4' class='srclink' href='../src/modifier/lib.rs.html#10-13' title='goto source code'>[src]</a></span></h1>
-<pre class='rust trait'>pub trait Modifier&lt;F: ?<a class='trait' href='http://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a>&gt; {
+<pre class='rust trait'>pub trait Modifier&lt;F: ?<a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a>&gt; {
     fn <a href='#tymethod.modify' class='fnname'>modify</a>(self, &amp;mut F);
 }</pre><div class='docblock'><p>Allows use of the implemented type as an argument to Set::set.</p>
 
@@ -59,12 +59,12 @@ to perform complex updates to the parameter of Modifier.</p>
 </div></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
-    <li><code>impl&lt;X, M1&gt; <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt; for <a href='http://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(M1,)</a> <span class='where'>where M1: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;</span></code></li>
-<li><code>impl&lt;X, M1, M2&gt; <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt; for <a href='http://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(M1, M2)</a> <span class='where'>where M1: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;, M2: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;</span></code></li>
-<li><code>impl&lt;X, M1, M2, M3&gt; <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt; for <a href='http://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(M1, M2, M3)</a> <span class='where'>where M1: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;, M2: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;, M3: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;</span></code></li>
-<li><code>impl&lt;X, M1, M2, M3, M4&gt; <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt; for <a href='http://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(M1, M2, M3, M4)</a> <span class='where'>where M1: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;, M2: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;, M3: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;, M4: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;</span></code></li>
-<li><code>impl&lt;X, M1, M2, M3, M4, M5&gt; <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt; for <a href='http://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(M1, M2, M3, M4, M5)</a> <span class='where'>where M1: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;, M2: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;, M3: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;, M4: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;, M5: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;</span></code></li>
-<li><code>impl&lt;X, M1, M2, M3, M4, M5, M6&gt; <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt; for <a href='http://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(M1, M2, M3, M4, M5, M6)</a> <span class='where'>where M1: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;, M2: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;, M3: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;, M4: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;, M5: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;, M6: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;</span></code></li>
+    <li><code>impl&lt;X, M1&gt; <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt; for <a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(M1,)</a> <span class='where'>where M1: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;</span></code></li>
+<li><code>impl&lt;X, M1, M2&gt; <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt; for <a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(M1, M2)</a> <span class='where'>where M1: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;, M2: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;</span></code></li>
+<li><code>impl&lt;X, M1, M2, M3&gt; <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt; for <a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(M1, M2, M3)</a> <span class='where'>where M1: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;, M2: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;, M3: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;</span></code></li>
+<li><code>impl&lt;X, M1, M2, M3, M4&gt; <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt; for <a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(M1, M2, M3, M4)</a> <span class='where'>where M1: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;, M2: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;, M3: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;, M4: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;</span></code></li>
+<li><code>impl&lt;X, M1, M2, M3, M4, M5&gt; <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt; for <a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(M1, M2, M3, M4, M5)</a> <span class='where'>where M1: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;, M2: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;, M3: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;, M4: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;, M5: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;</span></code></li>
+<li><code>impl&lt;X, M1, M2, M3, M4, M5, M6&gt; <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt; for <a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(M1, M2, M3, M4, M5, M6)</a> <span class='where'>where M1: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;, M2: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;, M3: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;, M4: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;, M5: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;, M6: <a class='trait' href='../modifier/trait.Modifier.html' title='modifier::Modifier'>Modifier</a>&lt;X&gt;</span></code></li>
 </ul><script type="text/javascript" async
                               src="../implementors/modifier/trait.Modifier.js">
                       </script></section>
@@ -72,10 +72,12 @@ to perform complex updates to the parameter of Modifier.</p>
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
+    <aside id="help" class="hidden">
         <div>
+            <h1 class="hidden">Help</h1>
+
             <div class="shortcuts">
-                <h1>Keyboard Shortcuts</h1>
+                <h2>Keyboard Shortcuts</h2>
 
                 <dl>
                     <dt>?</dt>
@@ -92,7 +94,7 @@ to perform complex updates to the parameter of Modifier.</p>
             </div>
 
             <div class="infos">
-                <h1>Search Tricks</h1>
+                <h2>Search Tricks</h2>
 
                 <p>
                     Prefix searches with a type followed by a colon (e.g.
@@ -102,8 +104,8 @@ to perform complex updates to the parameter of Modifier.</p>
                 <p>
                     Accepted types are: <code>fn</code>, <code>mod</code>,
                     <code>struct</code>, <code>enum</code>,
-                    <code>trait</code>, <code>typedef</code> (or
-                    <code>tdef</code>).
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
                 </p>
 
                 <p>
@@ -112,7 +114,7 @@ to perform complex updates to the parameter of Modifier.</p>
                 </p>
             </div>
         </div>
-    </div>
+    </aside>
 
     
 

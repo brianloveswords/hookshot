@@ -24,10 +24,10 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         <a href='../getopts/index.html'><img src='http://www.rust-lang.org/logos/rust-logo-128x128-blk-v2.png' alt='' width='100'></a>
         <p class='location'><a href='index.html'>getopts</a></p><script>window.sidebarCurrent = {name: 'Options', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
-    </section>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
@@ -45,7 +45,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-19' class='srclink' href='../src/getopts/lib.rs.html#124-127' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-17' class='srclink' href='../src/getopts/lib.rs.html#124-127' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Options {
     // some fields omitted
 }</pre><div class='docblock'><p>A description of the options that a program can handle.</p>
@@ -53,9 +53,9 @@
 <div class='docblock'><p>Create a blank set of options.</p>
 </div><h4 id='method.parsing_style' class='method'><code>fn <a href='#method.parsing_style' class='fnname'>parsing_style</a>(&amp;mut self, style: <a class='enum' href='../getopts/enum.ParsingStyle.html' title='getopts::ParsingStyle'>ParsingStyle</a>) -&gt; &amp;mut <a class='struct' href='../getopts/struct.Options.html' title='getopts::Options'>Options</a></code></h4>
 <div class='docblock'><p>Set the parsing style.</p>
-</div><h4 id='method.opt' class='method'><code>fn <a href='#method.opt' class='fnname'>opt</a>(&amp;mut self, short_name: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, long_name: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, desc: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, hint: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, hasarg: <a class='enum' href='../getopts/enum.HasArg.html' title='getopts::HasArg'>HasArg</a>, occur: <a class='enum' href='../getopts/enum.Occur.html' title='getopts::Occur'>Occur</a>) -&gt; &amp;mut <a class='struct' href='../getopts/struct.Options.html' title='getopts::Options'>Options</a></code></h4>
+</div><h4 id='method.opt' class='method'><code>fn <a href='#method.opt' class='fnname'>opt</a>(&amp;mut self, short_name: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, long_name: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, desc: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, hint: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, hasarg: <a class='enum' href='../getopts/enum.HasArg.html' title='getopts::HasArg'>HasArg</a>, occur: <a class='enum' href='../getopts/enum.Occur.html' title='getopts::Occur'>Occur</a>) -&gt; &amp;mut <a class='struct' href='../getopts/struct.Options.html' title='getopts::Options'>Options</a></code></h4>
 <div class='docblock'><p>Create a generic option group, stating all parameters explicitly.</p>
-</div><h4 id='method.optflag' class='method'><code>fn <a href='#method.optflag' class='fnname'>optflag</a>(&amp;mut self, short_name: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, long_name: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, desc: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; &amp;mut <a class='struct' href='../getopts/struct.Options.html' title='getopts::Options'>Options</a></code></h4>
+</div><h4 id='method.optflag' class='method'><code>fn <a href='#method.optflag' class='fnname'>optflag</a>(&amp;mut self, short_name: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, long_name: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, desc: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; &amp;mut <a class='struct' href='../getopts/struct.Options.html' title='getopts::Options'>Options</a></code></h4>
 <div class='docblock'><p>Create a long option that is optional and does not take an argument.</p>
 
 <ul>
@@ -63,7 +63,7 @@
 <li><code>long_name</code> - e.g. <code>&quot;help&quot;</code> for a <code>--help</code> option, or <code>&quot;&quot;</code> for none</li>
 <li><code>desc</code> - Description for usage help</li>
 </ul>
-</div><h4 id='method.optflagmulti' class='method'><code>fn <a href='#method.optflagmulti' class='fnname'>optflagmulti</a>(&amp;mut self, short_name: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, long_name: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, desc: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; &amp;mut <a class='struct' href='../getopts/struct.Options.html' title='getopts::Options'>Options</a></code></h4>
+</div><h4 id='method.optflagmulti' class='method'><code>fn <a href='#method.optflagmulti' class='fnname'>optflagmulti</a>(&amp;mut self, short_name: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, long_name: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, desc: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; &amp;mut <a class='struct' href='../getopts/struct.Options.html' title='getopts::Options'>Options</a></code></h4>
 <div class='docblock'><p>Create a long option that can occur more than once and does not
 take an argument.</p>
 
@@ -72,7 +72,7 @@ take an argument.</p>
 <li><code>long_name</code> - e.g. <code>&quot;help&quot;</code> for a <code>--help</code> option, or <code>&quot;&quot;</code> for none</li>
 <li><code>desc</code> - Description for usage help</li>
 </ul>
-</div><h4 id='method.optflagopt' class='method'><code>fn <a href='#method.optflagopt' class='fnname'>optflagopt</a>(&amp;mut self, short_name: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, long_name: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, desc: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, hint: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; &amp;mut <a class='struct' href='../getopts/struct.Options.html' title='getopts::Options'>Options</a></code></h4>
+</div><h4 id='method.optflagopt' class='method'><code>fn <a href='#method.optflagopt' class='fnname'>optflagopt</a>(&amp;mut self, short_name: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, long_name: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, desc: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, hint: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; &amp;mut <a class='struct' href='../getopts/struct.Options.html' title='getopts::Options'>Options</a></code></h4>
 <div class='docblock'><p>Create a long option that is optional and takes an optional argument.</p>
 
 <ul>
@@ -82,7 +82,7 @@ take an argument.</p>
 <li><code>hint</code> - Hint that is used in place of the argument in the usage help,
 e.g. <code>&quot;FILE&quot;</code> for a <code>-o FILE</code> option</li>
 </ul>
-</div><h4 id='method.optmulti' class='method'><code>fn <a href='#method.optmulti' class='fnname'>optmulti</a>(&amp;mut self, short_name: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, long_name: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, desc: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, hint: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; &amp;mut <a class='struct' href='../getopts/struct.Options.html' title='getopts::Options'>Options</a></code></h4>
+</div><h4 id='method.optmulti' class='method'><code>fn <a href='#method.optmulti' class='fnname'>optmulti</a>(&amp;mut self, short_name: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, long_name: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, desc: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, hint: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; &amp;mut <a class='struct' href='../getopts/struct.Options.html' title='getopts::Options'>Options</a></code></h4>
 <div class='docblock'><p>Create a long option that is optional, takes an argument, and may occur
 multiple times.</p>
 
@@ -93,7 +93,7 @@ multiple times.</p>
 <li><code>hint</code> - Hint that is used in place of the argument in the usage help,
 e.g. <code>&quot;FILE&quot;</code> for a <code>-o FILE</code> option</li>
 </ul>
-</div><h4 id='method.optopt' class='method'><code>fn <a href='#method.optopt' class='fnname'>optopt</a>(&amp;mut self, short_name: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, long_name: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, desc: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, hint: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; &amp;mut <a class='struct' href='../getopts/struct.Options.html' title='getopts::Options'>Options</a></code></h4>
+</div><h4 id='method.optopt' class='method'><code>fn <a href='#method.optopt' class='fnname'>optopt</a>(&amp;mut self, short_name: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, long_name: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, desc: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, hint: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; &amp;mut <a class='struct' href='../getopts/struct.Options.html' title='getopts::Options'>Options</a></code></h4>
 <div class='docblock'><p>Create a long option that is optional and takes an argument.</p>
 
 <ul>
@@ -103,7 +103,7 @@ e.g. <code>&quot;FILE&quot;</code> for a <code>-o FILE</code> option</li>
 <li><code>hint</code> - Hint that is used in place of the argument in the usage help,
 e.g. <code>&quot;FILE&quot;</code> for a <code>-o FILE</code> option</li>
 </ul>
-</div><h4 id='method.reqopt' class='method'><code>fn <a href='#method.reqopt' class='fnname'>reqopt</a>(&amp;mut self, short_name: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, long_name: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, desc: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, hint: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; &amp;mut <a class='struct' href='../getopts/struct.Options.html' title='getopts::Options'>Options</a></code></h4>
+</div><h4 id='method.reqopt' class='method'><code>fn <a href='#method.reqopt' class='fnname'>reqopt</a>(&amp;mut self, short_name: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, long_name: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, desc: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, hint: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; &amp;mut <a class='struct' href='../getopts/struct.Options.html' title='getopts::Options'>Options</a></code></h4>
 <div class='docblock'><p>Create a long option that is required and takes an argument.</p>
 
 <ul>
@@ -113,29 +113,30 @@ e.g. <code>&quot;FILE&quot;</code> for a <code>-o FILE</code> option</li>
 <li><code>hint</code> - Hint that is used in place of the argument in the usage help,
 e.g. <code>&quot;FILE&quot;</code> for a <code>-o FILE</code> option</li>
 </ul>
-</div><h4 id='method.parse' class='method'><code>fn <a href='#method.parse' class='fnname'>parse</a>&lt;C: <a class='trait' href='http://doc.rust-lang.org/nightly/core/iter/trait.IntoIterator.html' title='core::iter::IntoIterator'>IntoIterator</a>&gt;(&amp;self, args: C) -&gt; <a class='type' href='../getopts/type.Result.html' title='getopts::Result'>Result</a> <span class='where'>where C::Item: <a class='trait' href='http://doc.rust-lang.org/nightly/core/convert/trait.AsRef.html' title='core::convert::AsRef'>AsRef</a>&lt;<a class='struct' href='http://doc.rust-lang.org/nightly/std/ffi/os_str/struct.OsStr.html' title='std::ffi::os_str::OsStr'>OsStr</a>&gt;</span></code></h4>
+</div><h4 id='method.parse' class='method'><code>fn <a href='#method.parse' class='fnname'>parse</a>&lt;C: <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.IntoIterator.html' title='core::iter::IntoIterator'>IntoIterator</a>&gt;(&amp;self, args: C) -&gt; <a class='type' href='../getopts/type.Result.html' title='getopts::Result'>Result</a> <span class='where'>where C::Item: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.AsRef.html' title='core::convert::AsRef'>AsRef</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/ffi/os_str/struct.OsStr.html' title='std::ffi::os_str::OsStr'>OsStr</a>&gt;</span></code></h4>
 <div class='docblock'><p>Parse command line arguments according to the provided options.</p>
 
 <p>On success returns <code>Ok(Matches)</code>. Use methods such as <code>opt_present</code>
 <code>opt_str</code>, etc. to interrogate results.</p>
 
-<h1 id="panics" class='section-header'><a
-                           href="#panics">Panics</a></h1>
+<h1 id='panics' class='section-header'><a href='#panics'>Panics</a></h1>
 <p>Returns <code>Err(Fail)</code> on failure: use the <code>Debug</code> implementation of <code>Fail</code>
 to display information about it.</p>
-</div><h4 id='method.short_usage' class='method'><code>fn <a href='#method.short_usage' class='fnname'>short_usage</a>(&amp;self, program_name: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='struct' href='http://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a></code></h4>
+</div><h4 id='method.short_usage' class='method'><code>fn <a href='#method.short_usage' class='fnname'>short_usage</a>(&amp;self, program_name: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a></code></h4>
 <div class='docblock'><p>Derive a short one-line usage summary from a set of long options.</p>
-</div><h4 id='method.usage' class='method'><code>fn <a href='#method.usage' class='fnname'>usage</a>(&amp;self, brief: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='struct' href='http://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a></code></h4>
+</div><h4 id='method.usage' class='method'><code>fn <a href='#method.usage' class='fnname'>usage</a>(&amp;self, brief: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a></code></h4>
 <div class='docblock'><p>Derive a usage message from a set of options.</p>
 </div></div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
+    <aside id="help" class="hidden">
         <div>
+            <h1 class="hidden">Help</h1>
+
             <div class="shortcuts">
-                <h1>Keyboard Shortcuts</h1>
+                <h2>Keyboard Shortcuts</h2>
 
                 <dl>
                     <dt>?</dt>
@@ -152,7 +153,7 @@ to display information about it.</p>
             </div>
 
             <div class="infos">
-                <h1>Search Tricks</h1>
+                <h2>Search Tricks</h2>
 
                 <p>
                     Prefix searches with a type followed by a colon (e.g.
@@ -162,8 +163,8 @@ to display information about it.</p>
                 <p>
                     Accepted types are: <code>fn</code>, <code>mod</code>,
                     <code>struct</code>, <code>enum</code>,
-                    <code>trait</code>, <code>typedef</code> (or
-                    <code>tdef</code>).
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
                 </p>
 
                 <p>
@@ -172,7 +173,7 @@ to display information about it.</p>
                 </p>
             </div>
         </div>
-    </div>
+    </aside>
 
     
 

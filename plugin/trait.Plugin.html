@@ -24,10 +24,10 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         
         <p class='location'><a href='index.html'>plugin</a></p><script>window.sidebarCurrent = {name: 'Plugin', ty: 'trait', relpath: ''};</script><script defer src="sidebar-items.js"></script>
-    </section>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
@@ -45,10 +45,10 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-9' class='srclink' href='../src/plugin/lib.rs.html#14-25' title='goto source code'>[src]</a></span></h1>
-<pre class='rust trait'>pub trait Plugin&lt;E: ?<a class='trait' href='http://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a>&gt;: <a class='trait' href='../typemap/trait.Key.html' title='typemap::Key'>Key</a> {
+        </span><a id='src-7' class='srclink' href='../src/plugin/lib.rs.html#14-25' title='goto source code'>[src]</a></span></h1>
+<pre class='rust trait'>pub trait Plugin&lt;E: ?<a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a>&gt;: <a class='trait' href='../typemap/trait.Key.html' title='typemap::Key'>Key</a> {
     type Error;
-    fn <a href='#tymethod.eval' class='fnname'>eval</a>(&amp;mut E) -&gt; <a class='enum' href='http://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;Self::<a class='trait' href='../plugin/trait.Plugin.html' title='plugin::Plugin'>Value</a>, Self::<a class='trait' href='../plugin/trait.Plugin.html' title='plugin::Plugin'>Error</a>&gt;;
+    fn <a href='#tymethod.eval' class='fnname'>eval</a>(&amp;mut E) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;Self::<a class='trait' href='../plugin/trait.Plugin.html' title='plugin::Plugin'>Value</a>, Self::<a class='trait' href='../plugin/trait.Plugin.html' title='plugin::Plugin'>Error</a>&gt;;
 }</pre><div class='docblock'><p>Implementers of this trait can act as plugins for other types, via <code>OtherType::get&lt;P&gt;()</code>.</p>
 
 <p>To create a plugin, implement this trait and provide an empty implementation
@@ -60,7 +60,7 @@ of <code>Key</code> to associate the plugin with its return type, <code>Key::Val
 </div></div>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
-        <h3 id='tymethod.eval' class='method stab '><code>fn <a href='#tymethod.eval' class='fnname'>eval</a>(&amp;mut E) -&gt; <a class='enum' href='http://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;Self::<a class='trait' href='../plugin/trait.Plugin.html' title='plugin::Plugin'>Value</a>, Self::<a class='trait' href='../plugin/trait.Plugin.html' title='plugin::Plugin'>Error</a>&gt;</code></h3><div class='docblock'><p>Create the plugin from an instance of the extended type.</p>
+        <h3 id='tymethod.eval' class='method stab '><code>fn <a href='#tymethod.eval' class='fnname'>eval</a>(&amp;mut E) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;Self::<a class='trait' href='../plugin/trait.Plugin.html' title='plugin::Plugin'>Value</a>, Self::<a class='trait' href='../plugin/trait.Plugin.html' title='plugin::Plugin'>Error</a>&gt;</code></h3><div class='docblock'><p>Create the plugin from an instance of the extended type.</p>
 
 <p>While <code>eval</code> is given a mutable reference to the extended
 type, it is important for implementers to remember that
@@ -76,10 +76,12 @@ be taken when doing mutation on the extended type.</p>
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
+    <aside id="help" class="hidden">
         <div>
+            <h1 class="hidden">Help</h1>
+
             <div class="shortcuts">
-                <h1>Keyboard Shortcuts</h1>
+                <h2>Keyboard Shortcuts</h2>
 
                 <dl>
                     <dt>?</dt>
@@ -96,7 +98,7 @@ be taken when doing mutation on the extended type.</p>
             </div>
 
             <div class="infos">
-                <h1>Search Tricks</h1>
+                <h2>Search Tricks</h2>
 
                 <p>
                     Prefix searches with a type followed by a colon (e.g.
@@ -106,8 +108,8 @@ be taken when doing mutation on the extended type.</p>
                 <p>
                     Accepted types are: <code>fn</code>, <code>mod</code>,
                     <code>struct</code>, <code>enum</code>,
-                    <code>trait</code>, <code>typedef</code> (or
-                    <code>tdef</code>).
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
                 </p>
 
                 <p>
@@ -116,7 +118,7 @@ be taken when doing mutation on the extended type.</p>
                 </p>
             </div>
         </div>
-    </div>
+    </aside>
 
     
 

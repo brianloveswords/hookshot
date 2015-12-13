@@ -24,10 +24,10 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         
         <p class='location'><a href='../../index.html'>solicit</a>::<wbr><a href='../index.html'>http</a>::<wbr><a href='index.html'>connection</a></p><script>window.sidebarCurrent = {name: 'ReceiveFrame', ty: 'trait', relpath: ''};</script><script defer src="sidebar-items.js"></script>
-    </section>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
@@ -45,7 +45,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-5437' class='srclink' href='../../../src/solicit/http/connection.rs.html#154-158' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-749' class='srclink' href='../../../src/solicit/http/connection.rs.html#154-158' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait ReceiveFrame {
     fn <a href='#tymethod.recv_frame' class='fnname'>recv_frame</a>(&amp;mut self) -&gt; <a class='type' href='../../../solicit/http/type.HttpResult.html' title='solicit::http::HttpResult'>HttpResult</a>&lt;<a class='enum' href='../../../solicit/http/connection/enum.HttpFrame.html' title='solicit::http::connection::HttpFrame'>HttpFrame</a>&gt;;
 }</pre><div class='docblock'><p>A trait that should be implemented by types that can provide the functionality
@@ -65,10 +65,12 @@ of receiving HTTP/2 frames.</p>
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
+    <aside id="help" class="hidden">
         <div>
+            <h1 class="hidden">Help</h1>
+
             <div class="shortcuts">
-                <h1>Keyboard Shortcuts</h1>
+                <h2>Keyboard Shortcuts</h2>
 
                 <dl>
                     <dt>?</dt>
@@ -85,7 +87,7 @@ of receiving HTTP/2 frames.</p>
             </div>
 
             <div class="infos">
-                <h1>Search Tricks</h1>
+                <h2>Search Tricks</h2>
 
                 <p>
                     Prefix searches with a type followed by a colon (e.g.
@@ -95,8 +97,8 @@ of receiving HTTP/2 frames.</p>
                 <p>
                     Accepted types are: <code>fn</code>, <code>mod</code>,
                     <code>struct</code>, <code>enum</code>,
-                    <code>trait</code>, <code>typedef</code> (or
-                    <code>tdef</code>).
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
                 </p>
 
                 <p>
@@ -105,7 +107,7 @@ of receiving HTTP/2 frames.</p>
                 </p>
             </div>
         </div>
-    </div>
+    </aside>
 
     
 

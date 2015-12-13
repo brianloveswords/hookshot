@@ -24,10 +24,10 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         <a href='../iron/index.html'><img src='https://avatars0.githubusercontent.com/u/7853871?s=128' alt='' width='100'></a>
         <p class='location'><a href='index.html'>iron</a></p><script>window.sidebarCurrent = {name: 'Protocol', ty: 'enum', relpath: ''};</script><script defer src="sidebar-items.js"></script>
-    </section>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
@@ -45,12 +45,12 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-4187' class='srclink' href='../src/iron/iron.rs.html#39-50' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-747' class='srclink' href='../src/iron/iron.rs.html#39-50' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum Protocol {
     Http,
     Https {
-        certificate: <a class='struct' href='http://doc.rust-lang.org/nightly/std/path/struct.PathBuf.html' title='std::path::PathBuf'>PathBuf</a>,
-        key: <a class='struct' href='http://doc.rust-lang.org/nightly/std/path/struct.PathBuf.html' title='std::path::PathBuf'>PathBuf</a>,
+        certificate: <a class='struct' href='https://doc.rust-lang.org/nightly/std/path/struct.PathBuf.html' title='std::path::PathBuf'>PathBuf</a>,
+        key: <a class='struct' href='https://doc.rust-lang.org/nightly/std/path/struct.PathBuf.html' title='std::path::PathBuf'>PathBuf</a>,
     },
 }</pre><div class='docblock'><p>Protocol used to serve content. Future versions of Iron may add new protocols
 to this enum. Thus you should not exhaustively match on its variants.</p>
@@ -61,19 +61,21 @@ to this enum. Thus you should not exhaustively match on its variants.</p>
 
                                               <table><tr><td id='variant.Https.field.certificate'><code>certificate</code></td><td><div class='docblock'><p>Path to SSL certificate file</p>
 </div></td></tr><tr><td id='variant.Https.field.key'><code>key</code></td><td><div class='docblock'><p>Path to SSL private key file</p>
-</div></td></tr></table></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='enum' href='../iron/enum.Protocol.html' title='iron::Protocol'>Protocol</a></code></h3><div class='impl-items'><h4 id='method.name' class='method'><code>fn <a href='#method.name' class='fnname'>name</a>(&amp;self) -&gt; &amp;'static <a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a></code></h4>
+</div></td></tr></table></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='enum' href='../iron/enum.Protocol.html' title='iron::Protocol'>Protocol</a></code></h3><div class='impl-items'><h4 id='method.name' class='method'><code>fn <a href='#method.name' class='fnname'>name</a>(&amp;self) -&gt; &amp;'static <a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a></code></h4>
 <div class='docblock'><p>Return the name used for this protocol in a URI&#39;s scheme part.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='http://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='enum' href='../iron/enum.Protocol.html' title='iron::Protocol'>Protocol</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='http://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='enum' href='../iron/enum.Protocol.html' title='iron::Protocol'>Protocol</a></code></h4>
-<h4 id='method.clone_from' class='method'><code>fn <a href='http://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='enum' href='../iron/enum.Protocol.html' title='iron::Protocol'>Protocol</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='enum' href='../iron/enum.Protocol.html' title='iron::Protocol'>Protocol</a></code></h4>
+<h4 id='method.clone_from' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
+    <aside id="help" class="hidden">
         <div>
+            <h1 class="hidden">Help</h1>
+
             <div class="shortcuts">
-                <h1>Keyboard Shortcuts</h1>
+                <h2>Keyboard Shortcuts</h2>
 
                 <dl>
                     <dt>?</dt>
@@ -90,7 +92,7 @@ to this enum. Thus you should not exhaustively match on its variants.</p>
             </div>
 
             <div class="infos">
-                <h1>Search Tricks</h1>
+                <h2>Search Tricks</h2>
 
                 <p>
                     Prefix searches with a type followed by a colon (e.g.
@@ -100,8 +102,8 @@ to this enum. Thus you should not exhaustively match on its variants.</p>
                 <p>
                     Accepted types are: <code>fn</code>, <code>mod</code>,
                     <code>struct</code>, <code>enum</code>,
-                    <code>trait</code>, <code>typedef</code> (or
-                    <code>tdef</code>).
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
                 </p>
 
                 <p>
@@ -110,7 +112,7 @@ to this enum. Thus you should not exhaustively match on its variants.</p>
                 </p>
             </div>
         </div>
-    </div>
+    </aside>
 
     
 

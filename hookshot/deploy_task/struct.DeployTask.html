@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `DeployTask` struct in crate `hookshot`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, DeployTask">
+
+    <title>hookshot::deploy_task::DeployTask - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='../index.html'>hookshot</a>::<wbr><a href='index.html'>deploy_task</a></p><script>window.sidebarCurrent = {name: 'DeployTask', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content struct">
+<h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>hookshot</a>::<wbr><a href='index.html'>deploy_task</a>::<wbr><a class='struct' href=''>DeployTask</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-2021' class='srclink' href='../../src/hookshot/deploy_task.rs.html#16-23' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct DeployTask {
+    pub repo: <a class='struct' href='../../hookshot/git/struct.GitRepo.html' title='hookshot::git::GitRepo'>GitRepo</a>,
+    pub id: <a class='struct' href='../../uuid/struct.Uuid.html' title='uuid::Uuid'>Uuid</a>,
+    pub env: <a class='type' href='../../hookshot/server_config/type.Environment.html' title='hookshot::server_config::Environment'>Environment</a>,
+    pub logdir: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>,
+    pub host: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>,
+    pub secret: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>,
+}</pre><h2 class='fields'>Fields</h2>
+<table><tr class='stab '>
+                                  <td id='structfield.repo'><code>repo</code></td><td></td></tr><tr class='stab '>
+                                  <td id='structfield.id'><code>id</code></td><td></td></tr><tr class='stab '>
+                                  <td id='structfield.env'><code>env</code></td><td></td></tr><tr class='stab '>
+                                  <td id='structfield.logdir'><code>logdir</code></td><td></td></tr><tr class='stab '>
+                                  <td id='structfield.host'><code>host</code></td><td></td></tr><tr class='stab '>
+                                  <td id='structfield.secret'><code>secret</code></td><td></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../../hookshot/task_manager/trait.Runnable.html' title='hookshot::task_manager::Runnable'>Runnable</a> for <a class='struct' href='../../hookshot/deploy_task/struct.DeployTask.html' title='hookshot::deploy_task::DeployTask'>DeployTask</a></code></h3><div class='impl-items'><h4 id='method.run' class='method'><code>fn <a href='../../hookshot/task_manager/trait.Runnable.html#method.run' class='fnname'>run</a>(&amp;mut self)</code></h4>
+</div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "hookshot";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../jquery.js"></script>
+    <script src="../../main.js"></script>
+    
+    <script async src="../../search-index.js"></script>
+</body>
+</html>

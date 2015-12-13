@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/Users/brian/.cargo/registry/src/github.com-0a35038f75765ae4/iron-0.2.2/src/request/url.rs`.">
+    <meta name="description" content="Source to the Rust file `/Users/brian/.multirust/toolchains/stable/cargo/registry/src/github.com-0a35038f75765ae4/iron-0.2.3/src/request/url.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>url.rs.html -- source</title>
@@ -24,10 +24,10 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         <a href='../../../iron/index.html'><img src='https://avatars0.githubusercontent.com/u/7853871?s=128' alt='' width='100'></a>
         
-    </section>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
@@ -270,6 +270,24 @@
 <span id="228">228</span>
 <span id="229">229</span>
 <span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+<span id="242">242</span>
+<span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
+<span id="246">246</span>
+<span id="247">247</span>
+<span id="248">248</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! HTTP/HTTPS URL type for Iron.</span>
 
@@ -476,9 +494,27 @@
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>test_not_empty_username</span>() {
+        <span class='kw'>let</span> <span class='ident'>user</span> <span class='op'>=</span> <span class='ident'>Url</span>::<span class='ident'>parse</span>(<span class='string'>&quot;http://john:pass@example.com&quot;</span>).<span class='ident'>unwrap</span>().<span class='ident'>username</span>;
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>user</span>.<span class='ident'>unwrap</span>(), <span class='string'>&quot;john&quot;</span>);
+
+        <span class='kw'>let</span> <span class='ident'>user</span> <span class='op'>=</span> <span class='ident'>Url</span>::<span class='ident'>parse</span>(<span class='string'>&quot;http://john:@example.com&quot;</span>).<span class='ident'>unwrap</span>().<span class='ident'>username</span>;
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>user</span>.<span class='ident'>unwrap</span>(), <span class='string'>&quot;john&quot;</span>);
+    }
+
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_empty_password</span>() {
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>Url</span>::<span class='ident'>parse</span>(<span class='string'>&quot;http://michael@example.com&quot;</span>).<span class='ident'>unwrap</span>().<span class='ident'>password</span>.<span class='ident'>is_none</span>());
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>Url</span>::<span class='ident'>parse</span>(<span class='string'>&quot;http://:@example.com&quot;</span>).<span class='ident'>unwrap</span>().<span class='ident'>password</span>.<span class='ident'>is_none</span>());
+    }
+
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>test_not_empty_password</span>() {
+        <span class='kw'>let</span> <span class='ident'>pass</span> <span class='op'>=</span> <span class='ident'>Url</span>::<span class='ident'>parse</span>(<span class='string'>&quot;http://michael:pass@example.com&quot;</span>).<span class='ident'>unwrap</span>().<span class='ident'>password</span>;
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>pass</span>.<span class='ident'>unwrap</span>(), <span class='string'>&quot;pass&quot;</span>);
+
+        <span class='kw'>let</span> <span class='ident'>pass</span> <span class='op'>=</span> <span class='ident'>Url</span>::<span class='ident'>parse</span>(<span class='string'>&quot;http://:pass@example.com&quot;</span>).<span class='ident'>unwrap</span>().<span class='ident'>password</span>;
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>pass</span>.<span class='ident'>unwrap</span>(), <span class='string'>&quot;pass&quot;</span>);
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
@@ -507,10 +543,12 @@
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
+    <aside id="help" class="hidden">
         <div>
+            <h1 class="hidden">Help</h1>
+
             <div class="shortcuts">
-                <h1>Keyboard Shortcuts</h1>
+                <h2>Keyboard Shortcuts</h2>
 
                 <dl>
                     <dt>?</dt>
@@ -527,7 +565,7 @@
             </div>
 
             <div class="infos">
-                <h1>Search Tricks</h1>
+                <h2>Search Tricks</h2>
 
                 <p>
                     Prefix searches with a type followed by a colon (e.g.
@@ -537,8 +575,8 @@
                 <p>
                     Accepted types are: <code>fn</code>, <code>mod</code>,
                     <code>struct</code>, <code>enum</code>,
-                    <code>trait</code>, <code>typedef</code> (or
-                    <code>tdef</code>).
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
                 </p>
 
                 <p>
@@ -547,7 +585,7 @@
                 </p>
             </div>
         </div>
-    </div>
+    </aside>
 
     
 

@@ -24,10 +24,10 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         
         <p class='location'><a href='index.html'>bitflags</a></p><script>window.sidebarCurrent = {name: 'bitflags!', ty: 'macro', relpath: ''};</script><script defer src="sidebar-items.js"></script>
-    </section>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
@@ -269,8 +269,7 @@ bitmask flags. It is useful for creating typesafe wrappers for C APIs.</p>
 <p>The flags should only be defined for integer types, otherwise unexpected
 type errors may occur at compile time.</p>
 
-<h1 id="example" class='section-header'><a
-                           href="#example">Example</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='example' class='section-header'><a href='#example'>Example</a></h1><pre class='rust rust-example-rendered'>
 <span class='attribute'>#[<span class='ident'>macro_use</span>]</span>
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>bitflags</span>;
 
@@ -331,13 +330,11 @@ implementations:</p>
     <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;{:?}&quot;</span>, <span class='ident'>FLAG_B</span>), <span class='string'>&quot;FLAG_B&quot;</span>);
 }</pre>
 
-<h1 id="attributes" class='section-header'><a
-                           href="#attributes">Attributes</a></h1>
+<h1 id='attributes' class='section-header'><a href='#attributes'>Attributes</a></h1>
 <p>Attributes can be attached to the generated <code>struct</code> by placing them
 before the <code>flags</code> keyword.</p>
 
-<h1 id="trait-implementations" class='section-header'><a
-                           href="#trait-implementations">Trait implementations</a></h1>
+<h1 id='trait-implementations' class='section-header'><a href='#trait-implementations'>Trait implementations</a></h1>
 <p>The <code>Copy</code>, <code>Clone</code>, <code>PartialEq</code>, <code>Eq</code>, <code>PartialOrd</code>, <code>Ord</code> and <code>Hash</code>
 traits automatically derived for the <code>struct</code> using the <code>derive</code> attribute.
 Additional traits can be derived by providing an explicit <code>derive</code>
@@ -349,8 +346,7 @@ the union of the instances of the <code>struct</code> iterated over.</p>
 <p>The <code>Debug</code> trait is also implemented by displaying the bits value of the
 internal struct.</p>
 
-<h2 id="operators" class='section-header'><a
-                           href="#operators">Operators</a></h2>
+<h2 id='operators' class='section-header'><a href='#operators'>Operators</a></h2>
 <p>The following operator traits are implemented for the generated <code>struct</code>:</p>
 
 <ul>
@@ -361,8 +357,7 @@ internal struct.</p>
 <li><code>Not</code>: set complement</li>
 </ul>
 
-<h1 id="methods" class='section-header'><a
-                           href="#methods">Methods</a></h1>
+<h1 id='methods' class='section-header'><a href='#methods'>Methods</a></h1>
 <p>The following methods are defined for the generated <code>struct</code>:</p>
 
 <ul>
@@ -387,10 +382,12 @@ internal struct.</p>
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
+    <aside id="help" class="hidden">
         <div>
+            <h1 class="hidden">Help</h1>
+
             <div class="shortcuts">
-                <h1>Keyboard Shortcuts</h1>
+                <h2>Keyboard Shortcuts</h2>
 
                 <dl>
                     <dt>?</dt>
@@ -407,7 +404,7 @@ internal struct.</p>
             </div>
 
             <div class="infos">
-                <h1>Search Tricks</h1>
+                <h2>Search Tricks</h2>
 
                 <p>
                     Prefix searches with a type followed by a colon (e.g.
@@ -417,8 +414,8 @@ internal struct.</p>
                 <p>
                     Accepted types are: <code>fn</code>, <code>mod</code>,
                     <code>struct</code>, <code>enum</code>,
-                    <code>trait</code>, <code>typedef</code> (or
-                    <code>tdef</code>).
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
                 </p>
 
                 <p>
@@ -427,7 +424,7 @@ internal struct.</p>
                 </p>
             </div>
         </div>
-    </div>
+    </aside>
 
     
 

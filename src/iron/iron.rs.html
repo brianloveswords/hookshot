@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/Users/brian/.cargo/registry/src/github.com-0a35038f75765ae4/iron-0.2.2/src/iron.rs`.">
+    <meta name="description" content="Source to the Rust file `/Users/brian/.multirust/toolchains/stable/cargo/registry/src/github.com-0a35038f75765ae4/iron-0.2.3/src/iron.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>iron.rs.html -- source</title>
@@ -24,10 +24,10 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         <a href='../../iron/index.html'><img src='https://avatars0.githubusercontent.com/u/7853871?s=128' alt='' width='100'></a>
         
-    </section>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
@@ -212,6 +212,10 @@
 <span id="170">170</span>
 <span id="171">171</span>
 <span id="172">172</span>
+<span id="173">173</span>
+<span id="174">174</span>
+<span id="175">175</span>
+<span id="176">176</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Exposes the `Iron` type, the main entrance point of the</span>
 <span class='doccomment'>//! `Iron` library.</span>
@@ -242,10 +246,10 @@
     <span class='kw'>pub</span> <span class='ident'>handler</span>: <span class='ident'>H</span>,
 
     <span class='doccomment'>/// Once listening, the local address that this server is bound to.</span>
-    <span class='kw'>pub</span> <span class='ident'>addr</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>SocketAddr</span><span class='op'>&gt;</span>,
+    <span class='ident'>addr</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>SocketAddr</span><span class='op'>&gt;</span>,
 
     <span class='doccomment'>/// Once listening, the protocol used to serve content.</span>
-    <span class='kw'>pub</span> <span class='ident'>protocol</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>Protocol</span><span class='op'>&gt;</span>
+    <span class='ident'>protocol</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>Protocol</span><span class='op'>&gt;</span>
 }
 
 <span class='doccomment'>/// Protocol used to serve content. Future versions of Iron may add new protocols</span>
@@ -367,7 +371,11 @@
 }
 
 <span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>H</span>: <span class='ident'>Handler</span><span class='op'>&gt;</span> ::<span class='ident'>hyper</span>::<span class='ident'>server</span>::<span class='ident'>Handler</span> <span class='kw'>for</span> <span class='ident'>Iron</span><span class='op'>&lt;</span><span class='ident'>H</span><span class='op'>&gt;</span> {
-    <span class='kw'>fn</span> <span class='ident'>handle</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>http_req</span>: <span class='ident'>HttpRequest</span>, <span class='ident'>http_res</span>: <span class='ident'>HttpResponse</span><span class='op'>&lt;</span><span class='ident'>Fresh</span><span class='op'>&gt;</span>) {
+    <span class='kw'>fn</span> <span class='ident'>handle</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>http_req</span>: <span class='ident'>HttpRequest</span>, <span class='kw-2'>mut</span> <span class='ident'>http_res</span>: <span class='ident'>HttpResponse</span><span class='op'>&lt;</span><span class='ident'>Fresh</span><span class='op'>&gt;</span>) {
+        <span class='comment'>// Set some defaults in case request handler panics.</span>
+        <span class='comment'>// This should not be necessary anymore once stdlib&#39;s catch_panic becomes stable.</span>
+        <span class='op'>*</span><span class='ident'>http_res</span>.<span class='ident'>status_mut</span>() <span class='op'>=</span> <span class='ident'>status</span>::<span class='ident'>InternalServerError</span>;
+
         <span class='comment'>// Create `Request` wrapper.</span>
         <span class='kw'>match</span> <span class='ident'>Request</span>::<span class='ident'>from_http</span>(<span class='ident'>http_req</span>, <span class='self'>self</span>.<span class='ident'>addr</span>.<span class='ident'>clone</span>().<span class='ident'>unwrap</span>(),
                                  <span class='self'>self</span>.<span class='ident'>protocol</span>.<span class='ident'>as_ref</span>().<span class='ident'>unwrap</span>()) {
@@ -391,10 +399,12 @@
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
+    <aside id="help" class="hidden">
         <div>
+            <h1 class="hidden">Help</h1>
+
             <div class="shortcuts">
-                <h1>Keyboard Shortcuts</h1>
+                <h2>Keyboard Shortcuts</h2>
 
                 <dl>
                     <dt>?</dt>
@@ -411,7 +421,7 @@
             </div>
 
             <div class="infos">
-                <h1>Search Tricks</h1>
+                <h2>Search Tricks</h2>
 
                 <p>
                     Prefix searches with a type followed by a colon (e.g.
@@ -421,8 +431,8 @@
                 <p>
                     Accepted types are: <code>fn</code>, <code>mod</code>,
                     <code>struct</code>, <code>enum</code>,
-                    <code>trait</code>, <code>typedef</code> (or
-                    <code>tdef</code>).
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
                 </p>
 
                 <p>
@@ -431,7 +441,7 @@
                 </p>
             </div>
         </div>
-    </div>
+    </aside>
 
     
 

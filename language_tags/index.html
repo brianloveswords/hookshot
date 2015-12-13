@@ -24,10 +24,10 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         
         <p class='location'></p><script>window.sidebarCurrent = {name: 'language_tags', ty: 'mod', relpath: '../'};</script>
-    </section>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
@@ -57,8 +57,7 @@ header fields.</p>
 <p>This package currently supports parsing (fully conformant parser), formatting and comparing
 language tags.</p>
 
-<h1 id="examples" class='section-header'><a
-                           href="#examples">Examples</a></h1>
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
 <p>Create a simple language tag representing the French language as spoken
 in Belgium and print it:</p>
 <pre class='rust rust-example-rendered'>
@@ -155,10 +154,12 @@ in <code>de</code> the request should be rejected.</p>
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
+    <aside id="help" class="hidden">
         <div>
+            <h1 class="hidden">Help</h1>
+
             <div class="shortcuts">
-                <h1>Keyboard Shortcuts</h1>
+                <h2>Keyboard Shortcuts</h2>
 
                 <dl>
                     <dt>?</dt>
@@ -175,7 +176,7 @@ in <code>de</code> the request should be rejected.</p>
             </div>
 
             <div class="infos">
-                <h1>Search Tricks</h1>
+                <h2>Search Tricks</h2>
 
                 <p>
                     Prefix searches with a type followed by a colon (e.g.
@@ -185,8 +186,8 @@ in <code>de</code> the request should be rejected.</p>
                 <p>
                     Accepted types are: <code>fn</code>, <code>mod</code>,
                     <code>struct</code>, <code>enum</code>,
-                    <code>trait</code>, <code>typedef</code> (or
-                    <code>tdef</code>).
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
                 </p>
 
                 <p>
@@ -195,7 +196,7 @@ in <code>de</code> the request should be rejected.</p>
                 </p>
             </div>
         </div>
-    </div>
+    </aside>
 
     
 

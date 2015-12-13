@@ -24,10 +24,10 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         
         <p class='location'><a href='index.html'>toml</a></p><script>window.sidebarCurrent = {name: 'decode_str', ty: 'fn', relpath: ''};</script><script defer src="sidebar-items.js"></script>
-    </section>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
@@ -45,22 +45,25 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-8074' class='srclink' href='../src/toml/serialization.rs.html#387-391' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn decode_str&lt;T: <a class='trait' href='../rustc_serialize/serialize/trait.Decodable.html' title='rustc_serialize::serialize::Decodable'>Decodable</a>&gt;(s: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='enum' href='http://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;T&gt;</pre><div class='docblock'><p>Decodes a string into a toml-encoded value.</p>
+        </span><a id='src-1242' class='srclink' href='../src/toml/decoder/mod.rs.html#86-88' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn decode_str&lt;T: <a class='trait' href='../rustc_serialize/serialize/trait.Decodable.html' title='rustc_serialize::serialize::Decodable'>Decodable</a>&gt;(s: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;T&gt;</pre><div class='docblock'><p>Decodes a string into a toml-encoded value.</p>
 
 <p>This function will parse the given string into a TOML value, and then parse
-the TOML value into the desired type. If any error occurs <code>None</code> is return.
-If more fine-grained errors are desired, these steps should be driven
+the TOML value into the desired type. If any error occurs <code>None</code> is return.</p>
+
+<p>If more fine-grained errors are desired, these steps should be driven
 manually.</p>
 </div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
+    <aside id="help" class="hidden">
         <div>
+            <h1 class="hidden">Help</h1>
+
             <div class="shortcuts">
-                <h1>Keyboard Shortcuts</h1>
+                <h2>Keyboard Shortcuts</h2>
 
                 <dl>
                     <dt>?</dt>
@@ -77,7 +80,7 @@ manually.</p>
             </div>
 
             <div class="infos">
-                <h1>Search Tricks</h1>
+                <h2>Search Tricks</h2>
 
                 <p>
                     Prefix searches with a type followed by a colon (e.g.
@@ -87,8 +90,8 @@ manually.</p>
                 <p>
                     Accepted types are: <code>fn</code>, <code>mod</code>,
                     <code>struct</code>, <code>enum</code>,
-                    <code>trait</code>, <code>typedef</code> (or
-                    <code>tdef</code>).
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
                 </p>
 
                 <p>
@@ -97,7 +100,7 @@ manually.</p>
                 </p>
             </div>
         </div>
-    </div>
+    </aside>
 
     
 

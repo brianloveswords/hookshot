@@ -24,10 +24,10 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         
         <p class='location'><a href='index.html'>url</a></p><script>window.sidebarCurrent = {name: 'ErrorHandler', ty: 'type', relpath: ''};</script><script defer src="sidebar-items.js"></script>
-    </section>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
@@ -45,8 +45,8 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-3634' class='srclink' href='../src/url/parser.rs.html#85' title='goto source code'>[src]</a></span></h1>
-<pre class='rust typedef'>type ErrorHandler = fn(reason: <a class='enum' href='../url/enum.ParseError.html' title='url::ParseError'>ParseError</a>) -&gt; <a class='type' href='../url/type.ParseResult.html' title='url::ParseResult'>ParseResult</a>&lt;<a href='http://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;;</pre><div class='docblock'><p>This is called on non-fatal parse errors.</p>
+        </span><a id='src-348' class='srclink' href='../src/url/parser.rs.html#85' title='goto source code'>[src]</a></span></h1>
+<pre class='rust typedef'>type ErrorHandler = fn(reason: <a class='enum' href='../url/enum.ParseError.html' title='url::ParseError'>ParseError</a>) -&gt; <a class='type' href='../url/type.ParseResult.html' title='url::ParseResult'>ParseResult</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;;</pre><div class='docblock'><p>This is called on non-fatal parse errors.</p>
 
 <p>The handler can choose to continue or abort parsing by returning Ok() or Err(), respectively.
 See the <code>UrlParser::error_handler</code> method.</p>
@@ -57,10 +57,12 @@ See the <code>UrlParser::error_handler</code> method.</p>
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
+    <aside id="help" class="hidden">
         <div>
+            <h1 class="hidden">Help</h1>
+
             <div class="shortcuts">
-                <h1>Keyboard Shortcuts</h1>
+                <h2>Keyboard Shortcuts</h2>
 
                 <dl>
                     <dt>?</dt>
@@ -77,7 +79,7 @@ See the <code>UrlParser::error_handler</code> method.</p>
             </div>
 
             <div class="infos">
-                <h1>Search Tricks</h1>
+                <h2>Search Tricks</h2>
 
                 <p>
                     Prefix searches with a type followed by a colon (e.g.
@@ -87,8 +89,8 @@ See the <code>UrlParser::error_handler</code> method.</p>
                 <p>
                     Accepted types are: <code>fn</code>, <code>mod</code>,
                     <code>struct</code>, <code>enum</code>,
-                    <code>trait</code>, <code>typedef</code> (or
-                    <code>tdef</code>).
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
                 </p>
 
                 <p>
@@ -97,7 +99,7 @@ See the <code>UrlParser::error_handler</code> method.</p>
                 </p>
             </div>
         </div>
-    </div>
+    </aside>
 
     
 

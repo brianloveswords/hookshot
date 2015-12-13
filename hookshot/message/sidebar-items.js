@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["RefType",""]],"struct":[["GitHubMessage",""],["SimpleMessage",""]]});

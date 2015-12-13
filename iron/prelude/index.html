@@ -24,10 +24,10 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         <a href='../../iron/index.html'><img src='https://avatars0.githubusercontent.com/u/7853871?s=128' alt='' width='100'></a>
         <p class='location'><a href='../index.html'>iron</a></p><script>window.sidebarCurrent = {name: 'prelude', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script>
-    </section>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
@@ -45,7 +45,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-174' class='srclink' href='../../src/iron/lib.rs.html#124-127' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-60' class='srclink' href='../../src/iron/lib.rs.html#124-127' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>A module meant to be glob imported when using Iron.</p>
 
 <p>For instance:</p>
@@ -56,7 +56,17 @@
 of the convenience methods in Iron, as well as <code>Request</code>, <code>Response</code>
 <code>IronResult</code>, <code>IronError</code> and <code>Iron</code>.</p>
 </div><h2 id='reexports' class='section-header'><a href="#reexports">Reexports</a></h2>
-<table><tr><td><code>pub use ::{<a class='struct' href='../../iron/middleware/struct.Chain.html' title='iron::middleware::Chain'>Chain</a>, <a class='struct' href='../../iron/request/struct.Request.html' title='iron::request::Request'>Request</a>, <a class='struct' href='../../iron/response/struct.Response.html' title='iron::response::Response'>Response</a>, <a class='type' href='../../iron/type.IronResult.html' title='iron::IronResult'>IronResult</a>, <a class='struct' href='../../iron/error/struct.IronError.html' title='iron::error::IronError'>IronError</a>, <a class='struct' href='../../iron/struct.Iron.html' title='iron::Iron'>Iron</a>};</code></td></tr></table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
+<table><tr><td><code>pub use ::{<a class='struct' href='../../iron/middleware/struct.Chain.html' title='iron::middleware::Chain'>Chain</a>, <a class='struct' href='../../iron/request/struct.Request.html' title='iron::request::Request'>Request</a>, <a class='struct' href='../../iron/response/struct.Response.html' title='iron::response::Response'>Response</a>, <a class='type' href='../../iron/type.IronResult.html' title='iron::IronResult'>IronResult</a>, <a class='struct' href='../../iron/error/struct.IronError.html' title='iron::error::IronError'>IronError</a>};</code></td></tr></table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Iron.html'
+                               title='iron::prelude::Iron'>Iron</a></td>
+                        <td class='docblock short'>
+                             <p>The primary entrance point to <code>Iron</code>, a <code>struct</code> to instantiate a new server.</p>
+
+                        </td>
+                    </tr>
+                </table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
 <table>
                     <tr class=' module-item'>
                         <td><a class='trait' href='trait.Pluggable.html'
@@ -80,10 +90,12 @@ of the convenience methods in Iron, as well as <code>Request</code>, <code>Respo
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
+    <aside id="help" class="hidden">
         <div>
+            <h1 class="hidden">Help</h1>
+
             <div class="shortcuts">
-                <h1>Keyboard Shortcuts</h1>
+                <h2>Keyboard Shortcuts</h2>
 
                 <dl>
                     <dt>?</dt>
@@ -100,7 +112,7 @@ of the convenience methods in Iron, as well as <code>Request</code>, <code>Respo
             </div>
 
             <div class="infos">
-                <h1>Search Tricks</h1>
+                <h2>Search Tricks</h2>
 
                 <p>
                     Prefix searches with a type followed by a colon (e.g.
@@ -110,8 +122,8 @@ of the convenience methods in Iron, as well as <code>Request</code>, <code>Respo
                 <p>
                     Accepted types are: <code>fn</code>, <code>mod</code>,
                     <code>struct</code>, <code>enum</code>,
-                    <code>trait</code>, <code>typedef</code> (or
-                    <code>tdef</code>).
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
                 </p>
 
                 <p>
@@ -120,7 +132,7 @@ of the convenience methods in Iron, as well as <code>Request</code>, <code>Respo
                 </p>
             </div>
         </div>
-    </div>
+    </aside>
 
     
 

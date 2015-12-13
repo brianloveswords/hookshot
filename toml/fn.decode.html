@@ -24,10 +24,10 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         
         <p class='location'><a href='index.html'>toml</a></p><script>window.sidebarCurrent = {name: 'decode', ty: 'fn', relpath: ''};</script><script defer src="sidebar-items.js"></script>
-    </section>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
@@ -45,8 +45,8 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-8057' class='srclink' href='../src/toml/serialization.rs.html#375-379' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn decode&lt;T: <a class='trait' href='../rustc_serialize/serialize/trait.Decodable.html' title='rustc_serialize::serialize::Decodable'>Decodable</a>&gt;(toml: <a class='enum' href='../toml/enum.Value.html' title='toml::Value'>Value</a>) -&gt; <a class='enum' href='http://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;T&gt;</pre><div class='docblock'><p>Decodes a TOML value into a decodable type.</p>
+        </span><a id='src-1239' class='srclink' href='../src/toml/decoder/mod.rs.html#63-65' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn decode&lt;T: <a class='trait' href='../rustc_serialize/serialize/trait.Decodable.html' title='rustc_serialize::serialize::Decodable'>Decodable</a>&gt;(toml: <a class='enum' href='../toml/enum.Value.html' title='toml::Value'>Value</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;T&gt;</pre><div class='docblock'><p>Decodes a TOML value into a decodable type.</p>
 
 <p>This function will consume the given TOML value and attempt to decode it
 into the type specified. If decoding fails, <code>None</code> will be returned. If a
@@ -57,10 +57,12 @@ directly.</p>
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
+    <aside id="help" class="hidden">
         <div>
+            <h1 class="hidden">Help</h1>
+
             <div class="shortcuts">
-                <h1>Keyboard Shortcuts</h1>
+                <h2>Keyboard Shortcuts</h2>
 
                 <dl>
                     <dt>?</dt>
@@ -77,7 +79,7 @@ directly.</p>
             </div>
 
             <div class="infos">
-                <h1>Search Tricks</h1>
+                <h2>Search Tricks</h2>
 
                 <p>
                     Prefix searches with a type followed by a colon (e.g.
@@ -87,8 +89,8 @@ directly.</p>
                 <p>
                     Accepted types are: <code>fn</code>, <code>mod</code>,
                     <code>struct</code>, <code>enum</code>,
-                    <code>trait</code>, <code>typedef</code> (or
-                    <code>tdef</code>).
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
                 </p>
 
                 <p>
@@ -97,7 +99,7 @@ directly.</p>
                 </p>
             </div>
         </div>
-    </div>
+    </aside>
 
     
 

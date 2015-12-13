@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `users` crate.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, users">
+
+    <title>users - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'></p><script>window.sidebarCurrent = {name: 'users', ty: 'mod', relpath: '../'};</script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content mod">
+<h1 class='fqn'><span class='in-band'>Crate <a class='mod' href=''>users</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-0' class='srclink' href='../src/users/lib.rs.html#1-748' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>This is a library for getting information on Unix users and groups. It
+supports getting the system users, and creating your own mock tables.</p>
+
+<p>In Unix, each user has an individual <em>user ID</em>, and each process has an
+<em>effective user ID</em> that says which user’s permissions it is using.
+Furthermore, users can be the members of <em>groups</em>, which also have names and
+IDs. This functionality is exposed in libc, the C standard library, but as
+an unsafe Rust interface. This wrapper library provides a safe interface,
+using User and Group objects instead of low-level pointers and strings. It
+also offers basic caching functionality.</p>
+
+<p>It does not (yet) offer <em>editing</em> functionality; the objects returned are
+read-only.</p>
+
+<h2 id='users' class='section-header'><a href='#users'>Users</a></h2>
+<p>The function <code>get_current_uid</code> returns a <code>uid_t</code> value representing the user
+currently running the program, and the <code>get_user_by_uid</code> function scans the
+users database and returns a User object with the user’s information. This
+function returns <code>None</code> when there is no user for that ID.</p>
+
+<p>A <code>User</code> object has the following public fields:</p>
+
+<ul>
+<li><strong>uid:</strong> The user’s ID</li>
+<li><strong>name:</strong> The user’s name</li>
+<li><strong>primary_group:</strong> The ID of this user’s primary group</li>
+</ul>
+
+<p>Here is a complete example that prints out the current user’s name:</p>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>use</span> <span class='ident'>users</span>::{<span class='ident'>get_user_by_uid</span>, <span class='ident'>get_current_uid</span>};
+<span class='kw'>let</span> <span class='ident'>user</span> <span class='op'>=</span> <span class='ident'>get_user_by_uid</span>(<span class='ident'>get_current_uid</span>()).<span class='ident'>unwrap</span>();
+<span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;Hello, {}!&quot;</span>, <span class='ident'>user</span>.<span class='ident'>name</span>);</pre>
+
+<p>This code assumes (with <code>unwrap()</code>) that the user hasn’t been deleted after
+the program has started running. For arbitrary user IDs, this is <strong>not</strong> a
+safe assumption: it’s possible to delete a user while it’s running a
+program, or is the owner of files, or for that user to have never existed.
+So always check the return values from <code>user_to_uid</code>!</p>
+
+<p>There is also a <code>get_current_username</code> function, as it’s such a common
+operation that it deserves special treatment.</p>
+
+<h2 id='caching' class='section-header'><a href='#caching'>Caching</a></h2>
+<p>Despite the above warning, the users and groups database rarely changes.
+While a short program may only need to get user information once, a
+long-running one may need to re-query the database many times, and a
+medium-length one may get away with caching the values to save on redundant
+system calls.</p>
+
+<p>For this reason, this crate offers a caching interface to the database,
+which offers the same functionality while holding on to every result,
+caching the information so it can be re-used.</p>
+
+<p>To introduce a cache, create a new <code>OSUsers</code> object and call the same
+methods on it. For example:</p>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>use</span> <span class='ident'>users</span>::{<span class='ident'>Users</span>, <span class='ident'>OSUsers</span>};
+<span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>cache</span> <span class='op'>=</span> <span class='ident'>OSUsers</span>::<span class='ident'>empty_cache</span>();
+<span class='kw'>let</span> <span class='ident'>uid</span> <span class='op'>=</span> <span class='ident'>cache</span>.<span class='ident'>get_current_uid</span>();
+<span class='kw'>let</span> <span class='ident'>user</span> <span class='op'>=</span> <span class='ident'>cache</span>.<span class='ident'>get_user_by_uid</span>(<span class='ident'>uid</span>).<span class='ident'>unwrap</span>();
+<span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;Hello again, {}!&quot;</span>, <span class='ident'>user</span>.<span class='ident'>name</span>);</pre>
+
+<p>This cache is <strong>only additive</strong>: it’s not possible to drop it, or erase
+selected entries, as when the database may have been modified, it’s best to
+start entirely afresh. So to accomplish this, just start using a new
+<code>OSUsers</code> object.</p>
+
+<h2 id='groups' class='section-header'><a href='#groups'>Groups</a></h2>
+<p>Finally, it’s possible to get groups in a similar manner.
+A <code>Group</code> object has the following public fields:</p>
+
+<ul>
+<li><strong>gid:</strong> The group’s ID</li>
+<li><strong>name:</strong> The group’s name</li>
+<li><strong>members:</strong> Vector of names of the users that belong to this group</li>
+</ul>
+
+<p>And again, a complete example:</p>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>use</span> <span class='ident'>users</span>::{<span class='ident'>Users</span>, <span class='ident'>OSUsers</span>};
+<span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>cache</span> <span class='op'>=</span> <span class='ident'>OSUsers</span>::<span class='ident'>empty_cache</span>();
+<span class='kw'>let</span> <span class='ident'>group</span> <span class='op'>=</span> <span class='ident'>cache</span>.<span class='ident'>get_group_by_name</span>(<span class='string'>&quot;admin&quot;</span>).<span class='ident'>expect</span>(<span class='string'>&quot;No such group &#39;admin&#39;!&quot;</span>);
+<span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;The &#39;{}&#39; group has the ID {}&quot;</span>, <span class='ident'>group</span>.<span class='ident'>name</span>, <span class='ident'>group</span>.<span class='ident'>gid</span>);
+<span class='kw'>for</span> <span class='ident'>member</span> <span class='kw'>in</span> <span class='ident'>group</span>.<span class='ident'>members</span>.<span class='ident'>into_iter</span>() {
+    <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;{} is a member of the group&quot;</span>, <span class='ident'>member</span>);
+}</pre>
+
+<h2 id='caveats' class='section-header'><a href='#caveats'>Caveats</a></h2>
+<p>You should be prepared for the users and groups tables to be completely
+broken: IDs shouldn’t be assumed to map to actual users and groups, and
+usernames and group names aren’t guaranteed to map either!</p>
+
+<p>Use the mocking module to create custom tables to test your code for these
+edge cases.</p>
+</div><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='mod' href='mock/index.html'
+                               title='users::mock'>mock</a></td>
+                        <td class='docblock short'>
+                             <p>Mockable users and groups.</p>
+
+                        </td>
+                    </tr>
+                </table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Group.html'
+                               title='users::Group'>Group</a></td>
+                        <td class='docblock short'>
+                             <p>Information about a particular group.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.OSUsers.html'
+                               title='users::OSUsers'>OSUsers</a></td>
+                        <td class='docblock short'>
+                             <p>A producer of user and group instances that caches every result.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.SwitchUserGuard.html'
+                               title='users::SwitchUserGuard'>SwitchUserGuard</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.User.html'
+                               title='users::User'>User</a></td>
+                        <td class='docblock short'>
+                             <p>Information about a particular user.</p>
+
+                        </td>
+                    </tr>
+                </table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='trait' href='trait.Users.html'
+                               title='users::Users'>Users</a></td>
+                        <td class='docblock short'>
+                             <p>The trait for the <code>OSUsers</code> object.</p>
+
+                        </td>
+                    </tr>
+                </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.get_current_gid.html'
+                               title='users::get_current_gid'>get_current_gid</a></td>
+                        <td class='docblock short'>
+                             <p>Return the group ID for the user running the process.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.get_current_groupname.html'
+                               title='users::get_current_groupname'>get_current_groupname</a></td>
+                        <td class='docblock short'>
+                             <p>Return the groupname of the user running the process.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.get_current_uid.html'
+                               title='users::get_current_uid'>get_current_uid</a></td>
+                        <td class='docblock short'>
+                             <p>Return the user ID for the user running the process.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.get_current_username.html'
+                               title='users::get_current_username'>get_current_username</a></td>
+                        <td class='docblock short'>
+                             <p>Return the username of the user running the process.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.get_effective_gid.html'
+                               title='users::get_effective_gid'>get_effective_gid</a></td>
+                        <td class='docblock short'>
+                             <p>Return the group ID for the effective user running the process.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.get_effective_groupname.html'
+                               title='users::get_effective_groupname'>get_effective_groupname</a></td>
+                        <td class='docblock short'>
+                             <p>Return the groupname of the effective user running the process.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.get_effective_uid.html'
+                               title='users::get_effective_uid'>get_effective_uid</a></td>
+                        <td class='docblock short'>
+                             <p>Return the user ID for the effective user running the process.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.get_effective_username.html'
+                               title='users::get_effective_username'>get_effective_username</a></td>
+                        <td class='docblock short'>
+                             <p>Return the username of the effective user running the process.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.get_group_by_gid.html'
+                               title='users::get_group_by_gid'>get_group_by_gid</a></td>
+                        <td class='docblock short'>
+                             <p>Return a Group object if one exists for the given group ID; otherwise, return None.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.get_group_by_name.html'
+                               title='users::get_group_by_name'>get_group_by_name</a></td>
+                        <td class='docblock short'>
+                             <p>Return a Group object if one exists for the given groupname; otherwise, return None.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.get_user_by_name.html'
+                               title='users::get_user_by_name'>get_user_by_name</a></td>
+                        <td class='docblock short'>
+                             <p>Return a User object if one exists for the given username; otherwise, return None.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.get_user_by_uid.html'
+                               title='users::get_user_by_uid'>get_user_by_uid</a></td>
+                        <td class='docblock short'>
+                             <p>Return a User object if one exists for the given user ID; otherwise, return None.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.set_both_gid.html'
+                               title='users::set_both_gid'>set_both_gid</a></td>
+                        <td class='docblock short'>
+                             <p>Atomically set current and effective group for the running process, requires root priviledges.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.set_both_uid.html'
+                               title='users::set_both_uid'>set_both_uid</a></td>
+                        <td class='docblock short'>
+                             <p>Atomically set current and effective user for the running process, requires root priviledges.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.set_current_gid.html'
+                               title='users::set_current_gid'>set_current_gid</a></td>
+                        <td class='docblock short'>
+                             <p>Set current group for the running process, requires root priviledges.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.set_current_uid.html'
+                               title='users::set_current_uid'>set_current_uid</a></td>
+                        <td class='docblock short'>
+                             <p>Set current user for the running process, requires root priviledges.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.set_effective_gid.html'
+                               title='users::set_effective_gid'>set_effective_gid</a></td>
+                        <td class='docblock short'>
+                             <p>Set effective user for the running process, requires root priviledges.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.set_effective_uid.html'
+                               title='users::set_effective_uid'>set_effective_uid</a></td>
+                        <td class='docblock short'>
+                             <p>Set effective user for the running process, requires root priviledges.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.switch_user_group.html'
+                               title='users::switch_user_group'>switch_user_group</a></td>
+                        <td class='docblock short'>
+                             <p>Safely switch user and group for the current scope.
+Requires root access.</p>
+
+                        </td>
+                    </tr>
+                </table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='type' href='type.c_int.html'
+                               title='users::c_int'>c_int</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='type' href='type.gid_t.html'
+                               title='users::gid_t'>gid_t</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='type' href='type.uid_t.html'
+                               title='users::uid_t'>uid_t</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                </table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "users";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script async src="../search-index.js"></script>
+</body>
+</html>

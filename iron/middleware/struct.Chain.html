@@ -24,10 +24,10 @@
 
     
 
-    <section class="sidebar">
+    <nav class="sidebar">
         <a href='../../iron/index.html'><img src='https://avatars0.githubusercontent.com/u/7853871?s=128' alt='' width='100'></a>
         <p class='location'><a href='../index.html'>iron</a>::<wbr><a href='index.html'>middleware</a></p><script>window.sidebarCurrent = {name: 'Chain', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
-    </section>
+    </nav>
 
     <nav class="sub">
         <form class="search-form js-only">
@@ -45,7 +45,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-320' class='srclink' href='../../src/iron/middleware/mod.rs.html#132-138' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-105' class='srclink' href='../../src/iron/middleware/mod.rs.html#132-138' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Chain {
     // some fields omitted
 }</pre><div class='docblock'><p>The middleware chain used in Iron.</p>
@@ -55,7 +55,7 @@ but Iron&#39;s infrastructure is flexible enough to allow alternate
 systems.</p>
 </div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../iron/middleware/struct.Chain.html' title='iron::middleware::Chain'>Chain</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>&lt;H: <a class='trait' href='../../iron/middleware/trait.Handler.html' title='iron::middleware::Handler'>Handler</a>&gt;(handler: H) -&gt; <a class='struct' href='../../iron/middleware/struct.Chain.html' title='iron::middleware::Chain'>Chain</a></code></h4>
 <div class='docblock'><p>Construct a new ChainBuilder from a <code>Handler</code>.</p>
-</div><h4 id='method.link' class='method'><code>fn <a href='#method.link' class='fnname'>link</a>&lt;B, A&gt;(&amp;mut self, link: <a href='http://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(B, A)</a>) <span class='where'>where A: <a class='trait' href='../../iron/middleware/trait.AfterMiddleware.html' title='iron::middleware::AfterMiddleware'>AfterMiddleware</a>, B: <a class='trait' href='../../iron/middleware/trait.BeforeMiddleware.html' title='iron::middleware::BeforeMiddleware'>BeforeMiddleware</a></span></code></h4>
+</div><h4 id='method.link' class='method'><code>fn <a href='#method.link' class='fnname'>link</a>&lt;B, A&gt;(&amp;mut self, link: <a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(B, A)</a>) <span class='where'>where A: <a class='trait' href='../../iron/middleware/trait.AfterMiddleware.html' title='iron::middleware::AfterMiddleware'>AfterMiddleware</a>, B: <a class='trait' href='../../iron/middleware/trait.BeforeMiddleware.html' title='iron::middleware::BeforeMiddleware'>BeforeMiddleware</a></span></code></h4>
 <div class='docblock'><p>Link both a before and after middleware to the chain at once.</p>
 
 <p>Middleware that have a Before and After piece should have a constructor
@@ -74,10 +74,12 @@ which returns both as a tuple, so it can be passed directly to link.</p>
 
     <section class="footer"></section>
 
-    <div id="help" class="hidden">
+    <aside id="help" class="hidden">
         <div>
+            <h1 class="hidden">Help</h1>
+
             <div class="shortcuts">
-                <h1>Keyboard Shortcuts</h1>
+                <h2>Keyboard Shortcuts</h2>
 
                 <dl>
                     <dt>?</dt>
@@ -94,7 +96,7 @@ which returns both as a tuple, so it can be passed directly to link.</p>
             </div>
 
             <div class="infos">
-                <h1>Search Tricks</h1>
+                <h2>Search Tricks</h2>
 
                 <p>
                     Prefix searches with a type followed by a colon (e.g.
@@ -104,8 +106,8 @@ which returns both as a tuple, so it can be passed directly to link.</p>
                 <p>
                     Accepted types are: <code>fn</code>, <code>mod</code>,
                     <code>struct</code>, <code>enum</code>,
-                    <code>trait</code>, <code>typedef</code> (or
-                    <code>tdef</code>).
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
                 </p>
 
                 <p>
@@ -114,7 +116,7 @@ which returns both as a tuple, so it can be passed directly to link.</p>
                 </p>
             </div>
         </div>
-    </div>
+    </aside>
 
     
 
