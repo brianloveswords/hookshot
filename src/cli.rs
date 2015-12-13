@@ -63,6 +63,11 @@ pub fn main() {
     if matches.opt_present("h") {
         return print_usage(&program, opts);
     }
+    if skip_signature_check() {
+        println!("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        println!("hookshot is running in insecure mode, signatures will not be checked");
+        println!("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+    }
     let config_file = match matches.opt_str("c") {
         Some(file) => file,
         None => {
