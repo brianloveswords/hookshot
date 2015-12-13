@@ -1,0 +1,7 @@
+- hosts: 127.0.0.1
+  connection: local
+  sudo: no
+  tasks:
+    - name: test action
+      copy: content="{{ git_ref }} | {{ git_commit_sha }}"
+            dest="/tmp/hookshot_git_data.txt"
