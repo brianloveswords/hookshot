@@ -6,12 +6,28 @@ use repo_config::{RepoConfig, DeployMethod};
 use server_config::Environment;
 use std::env;
 use std::error::Error;
+use std::fmt::Display;
 use std::fs::File;
-use std::io::Write;
+use std::io::{Write, Result};
 use std::path::Path;
 use task_manager::Runnable;
 use users;
 use uuid::Uuid;
+
+struct LogWriter {
+    file: File
+}
+
+impl LogWriter {
+    fn new(path: &Path) -> Result<LogWriter> {
+        Ok(LogWriter { file: try!(File::create(path)) })
+    }
+
+    #[allow(unused_must_use)]
+    fn write<T: AsRef<str> + Display>(&mut self, msg: T) {
+        self.file.write_all(format!("{}\n", msg).as_bytes());
+    }
+}
 
 pub struct DeployTask {
     pub repo: GitRepo,
@@ -25,7 +41,6 @@ impl Runnable for DeployTask {
 
     // TODO: this is a god damn mess and seriously needs to be refactored,
     // especially all of the logging.
-    #[allow(unused_must_use)]
     fn run(&mut self) {
         let task_id = self.id.to_string();
 
@@ -43,29 +58,28 @@ impl Runnable for DeployTask {
 
         // Truncate the logfile and write "task running..."
         let logfile_path = Path::new(&self.logdir).join(format!("{}.log", task_id));
-        let mut logfile = match File::create(&logfile_path) {
+        let mut logger = match LogWriter::new(&logfile_path) {
             Ok(logfile) => logfile,
             Err(_) => return println!("[{}]: could not open logfile for writing", &task_id),
         };
-        logfile.write_all(b"\ntask running...\n");
-
         // Log the current user
-        logfile.write_all(format!("system user: {}\n\n", users::get_current_username().unwrap_or("<none>".to_owned())).as_bytes());
+        logger.write(format!("system user: {}\n", users::get_current_username().unwrap_or("<none>".to_owned())));
 
         // Log the hookshot environment variables
-        logfile.write_all(format!("hookshot environment:\n---------------------\n{}\n", format_environment(&self.env)).as_bytes());
+        logger.write(format!("hookshot environment:\n---------------------\n{}", format_environment(&self.env)));
 
         // Log the system environment variables
-        logfile.write_all(format!("system environment:\n-------------------\n{}\n", format_os_environment()).as_bytes());
+        logger.write(format!("system environment:\n-------------------\n{}", format_os_environment()));
 
         // Log what time the task started.
         let time_task_started = UTC::now();
-        logfile.write_all(format!("started: {}\n", time_task_started).as_bytes());
+        logger.write(format!("started: {}", time_task_started));
 
         if let Err(git_error) = self.repo.get_latest() {
             let stderr = String::from_utf8(git_error.output.unwrap().stderr).unwrap();
             let err = format!("{}: {}", git_error.desc, stderr);
-            logfile.write_all(format!("{}", err).as_bytes());
+
+            logger.write(format!("{}", err));
             return println!("[{}]: {}", task_id, err);
         }
 
@@ -76,8 +90,9 @@ impl Runnable for DeployTask {
                                   self.repo.remote_path,
                                   e.description(),
                                   e.related_branch().unwrap_or("None"));
-                logfile.write_all(format!("{}", err).as_bytes());
-                return println!("[{}]: {}", &task_id, err);
+
+                logger.write(format!("{}", err));
+                return println!("[{}]: {}", task_id, err);
             }
             Ok(config) => config,
         };
@@ -87,8 +102,9 @@ impl Runnable for DeployTask {
         let ref_config = match config.lookup(self.repo.reftype, &self.repo.refstring) {
             None => {
                 let err = format!("No config for ref '{}'", &self.repo.refstring);
-                logfile.write_all(format!("{}", err).as_bytes());
-                return println!("[{}]: {}", &task_id, err);
+
+                logger.write(format!("{}", err));
+                return println!("[{}]: {}", task_id, err);
             }
             Some(config) => config,
         };
@@ -99,7 +115,8 @@ impl Runnable for DeployTask {
                 DeployMethod::Ansible => match ref_config.ansible_task() {
                     None => {
                         let err = format!("No task for ref '{}'", &self.repo.refstring);
-                        logfile.write_all(format!("{}", err).as_bytes());
+
+                        logger.write(format!("{}", err));
                         return println!("[{}]: {}", &task_id, err);
                     }
                     Some(task) => {
@@ -111,7 +128,8 @@ impl Runnable for DeployTask {
                 DeployMethod::Makefile => match ref_config.make_task() {
                     None => {
                         let err = format!("No task for ref '{}'", &self.repo.refstring);
-                        logfile.write_all(format!("{}", err).as_bytes());
+
+                        logger.write(format!("{}", err));
                         return println!("[{}]: {}", &task_id, err);
                     }
                     Some(task) => {
@@ -129,7 +147,7 @@ impl Runnable for DeployTask {
                 let err = format!("task failed: {} ({})",
                                   e.desc,
                                   e.detail.unwrap_or(String::from("")));
-                logfile.write_all(format!("{}", err).as_bytes());
+                logger.write(format!("{}", err));
                 return println!("[{}]: {}", &task_id, err);
             }
         };
@@ -154,15 +172,16 @@ impl Runnable for DeployTask {
         // Log what time the task ended and how long it took
         let time_task_ended = UTC::now();
         let duration = time_task_ended - time_task_started;
-        logfile.write_all(format!("task finished: {}\n", time_task_ended).as_bytes());
-        logfile.write_all(format!("duration: {}...\n\n", format_duration(duration)).as_bytes());
+
+        logger.write(format!("task finished: {}", time_task_ended));
+        logger.write(format!("duration: {}...\n", format_duration(duration)));
 
         // Log the exit code and the standard streams
-        logfile.write_all(format!("exit code: {}.\n", exit_code).as_bytes());
-        logfile.write_all(b"\n==stdout==\n");
-        logfile.write_all(&output.stdout);
-        logfile.write_all(b"\n==stderr==\n");
-        logfile.write_all(&output.stderr);
+        logger.write(format!("exit code: {}", exit_code));
+        logger.write("\n==stdout==");
+        logger.write(String::from_utf8_lossy(&output.stdout));
+        logger.write("\n==stderr==");
+        logger.write(String::from_utf8_lossy(&output.stderr));
     }
 }
 
