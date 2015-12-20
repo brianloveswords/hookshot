@@ -15,6 +15,7 @@ pub struct ServerConfig {
     pub hostname: String,
     pub checkout_root: VerifiedPath,
     pub log_root: VerifiedPath,
+    pub queue_limit: Option<u64>,
     pub port: u16,
     pub environments: Table,
 }
@@ -29,6 +30,7 @@ pub enum Error {
     InvalidSecret,
     MissingPort,
     InvalidPort,
+    InvalidQueueLimit,
     MissingCheckoutRoot,
     InvalidCheckoutRoot,
     MissingLogRoot,
@@ -59,6 +61,7 @@ impl StdError for Error {
             Error::InvalidPort => "'config.port' must be 16 integer",
             Error::MissingCheckoutRoot => "missing 'config.checkout_root'",
             Error::InvalidCheckoutRoot => "'config.checkout_root' must be a directory",
+            Error::InvalidQueueLimit => "'config.queue' must be a positive integer",
             Error::MissingLogRoot => "missing 'config.log_root'",
             Error::InvalidLogRoot => "'config.log_root' must be a directory",
             Error::InvalidEnvironmentTable => "'env' table is invalid, check configuration",
@@ -128,8 +131,9 @@ impl ServerConfig {
         };
         let secret = match lookup_as_string(config, "secret") {
             LookupResult::Missing => return Err(Error::MissingSecret),
-            LookupResult::WrongType => return Err(Error::InvalidSecret),
-            LookupResult::Value(v) => String::from(v),
+            LookupResult::StringValue(v) => String::from(v),
+            _ => return Err(Error::InvalidSecret),
+
         };
         let u16_max = u16::max_value() as i64;
         let port = match config.lookup("port") {
@@ -150,11 +154,11 @@ impl ServerConfig {
                     Err(_) => return Err(Error::InvalidCheckoutRoot),
                 }
             }
-            LookupResult::WrongType => return Err(Error::InvalidCheckoutRoot),
-            LookupResult::Value(v) => match VerifiedPath::directory(None, Path::new(v)) {
+            LookupResult::StringValue(v) => match VerifiedPath::directory(None, Path::new(v)) {
                 Ok(v) => v,
                 Err(_) => return Err(Error::InvalidCheckoutRoot),
             },
+            _ => return Err(Error::InvalidCheckoutRoot),
         };
 
         let log_root = match lookup_as_string(config, "log_root") {
@@ -169,16 +173,21 @@ impl ServerConfig {
                     Err(_) => return Err(Error::InvalidLogRoot),
                 }
             }
-            LookupResult::WrongType => return Err(Error::InvalidLogRoot),
-            LookupResult::Value(v) => match VerifiedPath::directory(None, Path::new(v)) {
+            LookupResult::StringValue(v) => match VerifiedPath::directory(None, Path::new(v)) {
                 Ok(v) => v,
                 Err(_) => return Err(Error::InvalidLogRoot),
             },
+            _ => return Err(Error::InvalidLogRoot),
         };
         let hostname = match lookup_as_string(config, "hostname") {
             LookupResult::Missing => return Err(Error::MissingHostname),
-            LookupResult::WrongType => return Err(Error::InvalidHostname),
-            LookupResult::Value(v) => String::from(v),
+            LookupResult::StringValue(v) => String::from(v),
+            _ => return Err(Error::InvalidHostname),
+        };
+        let queue_limit = match lookup_as_integer(config, "queue_limit") {
+            LookupResult::Missing => None,
+            LookupResult::IntegerValue(v) if v > 1 => Some(v as u64),
+            _ => return Err(Error::InvalidQueueLimit),
         };
         let environments = match root.get("env") {
             None => Table::new(),
@@ -190,6 +199,7 @@ impl ServerConfig {
 
         Ok(ServerConfig {
             port: port,
+            queue_limit: queue_limit,
             checkout_root: checkout_root,
             log_root: log_root,
             secret: secret,
@@ -244,16 +254,28 @@ impl ServerConfig {
 enum LookupResult<'a> {
     Missing,
     WrongType,
-    Value(&'a str),
+    StringValue(&'a str),
+    IntegerValue(i64),
 }
 
+fn lookup_as_integer<'a>(obj: &'a toml::Value, key: &'static str) -> LookupResult<'a> {
+    match obj.lookup(key) {
+        None => LookupResult::Missing,
+        Some(v) => {
+            match v.as_integer() {
+                None => LookupResult::WrongType,
+                Some(v) => LookupResult::IntegerValue(v),
+            }
+        }
+    }
+}
 fn lookup_as_string<'a>(obj: &'a toml::Value, key: &'static str) -> LookupResult<'a> {
     match obj.lookup(key) {
         None => LookupResult::Missing,
         Some(v) => {
             match v.as_str() {
                 None => LookupResult::WrongType,
-                Some(v) => LookupResult::Value(v),
+                Some(v) => LookupResult::StringValue(v),
             }
         }
     }
@@ -425,6 +447,46 @@ mod tests {
     }
 
     #[test]
+    fn test_config_queue_limit() {
+        let toml = r#"
+            [config]
+            secret = "it's a secret to everyone"
+            hostname = "127.0.0.1"
+            checkout_root = "/tmp"
+            log_root = "/tmp"
+            queue_limit = 10
+        "#;
+        let config = ServerConfig::from(&toml).unwrap();
+        assert_eq!(config.queue_limit, Some(10));
+    }
+
+    #[test]
+    fn test_config_default_queue_limit() {
+        let toml = r#"
+            [config]
+            secret = "it's a secret to everyone"
+            hostname = "127.0.0.1"
+            checkout_root = "/tmp"
+            log_root = "/tmp"
+        "#;
+        let config = ServerConfig::from(&toml).unwrap();
+        assert_eq!(config.queue_limit, None);
+    }
+
+    #[test]
+    fn test_config_invalid_queue_limit() {
+        let toml = r#"
+            [config]
+            secret = "it's a secret to everyone"
+            hostname = "127.0.0.1"
+            checkout_root = "/tmp"
+            log_root = "/tmp"
+            queue_limit = "not an integer"
+        "#;
+        expect_error!(toml, Error::InvalidQueueLimit);
+    }
+
+    #[test]
     fn test_environments() {
         let toml = r#"
             [config]
@@ -433,6 +495,7 @@ mod tests {
             checkout_root = "/tmp"
             log_root = "/tmp"
             hostname = "127.0.0.1"
+            queue_limit = 1
 
             [env.brianloveswords.hookshot.master]
             username = "brianloveswords"

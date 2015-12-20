@@ -57,6 +57,11 @@ log_root = "/var/log/hookshot"
 ## outgoing webhook requests so a consumer can create complete URLs.
 hostname = "10.20.30.40"
 
+## The number of items to limit any given queue. Any items that get added after
+## the limit has been reached will bump the oldest item from the queue. For an
+## unlimited queue length, comment out or remove this configuration line.
+queue_limit = 1
+
 ## `env.*` sections are optional. They represent extra data that will be sent to
 ## repositories that might need extra that shouldn't be stored in the repository
 ## configuration or embedded in the make or ansible tasks.

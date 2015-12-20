@@ -139,18 +139,31 @@ use std::thread;
 /// Types that are able to be added to a [TaskManager](./index.html) queue.
 pub trait Runnable {
     fn run(&mut self);
+    fn cancel(&self) { }
 }
 
 struct Queue<T>
     where T: Runnable + Send
 {
     queue: VecDeque<(T, Sender<T>)>,
+    limit: Option<u64>,
 }
 impl<T> Queue<T> where T: Runnable + Send {
-    fn new() -> Queue<T> {
-        Queue { queue: VecDeque::new() }
+    fn new(limit: Option<u64>) -> Queue<T> {
+        Queue { queue: VecDeque::new(), limit: limit }
     }
     fn push_task(&mut self, task: (T, Sender<T>)) {
+        if let Some(limit) = self.limit {
+            if limit < 1 {
+                return;
+            }
+            if self.queue.len() + 1 > limit as usize {
+                if let Some((cancelled_task, _)) = self.pop_task() {
+                    cancelled_task.cancel();
+                }
+                return self.push_task(task);
+            }
+        }
         self.queue.push_back(task);
     }
     fn pop_task(&mut self) -> Option<(T, Sender<T>)> {
@@ -187,27 +200,30 @@ pub struct TaskManager<T>
     threads: ThreadMap,
     shutdown_lock: Option<Sender<()>>,
     stopped: bool,
+    limit: Option<u64>,
 }
 
 impl<'a, T> TaskManager<T> where T: 'static + Runnable + Send {
     /// Create a new TaskManager
-    pub fn new() -> TaskManager<T> {
+    pub fn new(limit: Option<u64>) -> TaskManager<T> {
         TaskManager {
             queues: QueueMap::<T>::new(),
             threads: ThreadMap::new(),
             shutdown_lock: None,
             stopped: false,
+            limit: limit,
         }
     }
 
     /// Create a new TaskManager that takes a shutdown receiver which can be
     /// used to block a thread until [`shutdown()`](#method.shutdown) is called.
-    pub fn new_with_lock(lock: Sender<()>) -> TaskManager<T> {
+    pub fn new_with_lock(limit: Option<u64>, lock: Sender<()>) -> TaskManager<T> {
         TaskManager {
             queues: QueueMap::<T>::new(),
             threads: ThreadMap::new(),
             shutdown_lock: Some(lock),
             stopped: false,
+            limit: limit,
         }
     }
 
@@ -349,7 +365,7 @@ impl<'a, T> TaskManager<T> where T: 'static + Runnable + Send {
             return key;
         }
 
-        let queue = Arc::new(Mutex::new(Queue::<T>::new()));
+        let queue = Arc::new(Mutex::new(Queue::<T>::new(self.limit)));
         self.queues.insert(key.clone(), queue);
         self.start_worker(key.clone());
         key
@@ -420,6 +436,7 @@ mod tests {
         fn run(&mut self) {
             let mut s = self.s.lock().unwrap();
             s.push_str(self.m);
+            thread::sleep_ms(50);
         }
     }
 
@@ -429,7 +446,7 @@ mod tests {
         let s1 = Arc::new(Mutex::new(String::new()));
         let s2 = Arc::new(Mutex::new(String::new()));
 
-        let task_manager = Arc::new(Mutex::new(TaskManager::new()));
+        let task_manager = Arc::new(Mutex::new(TaskManager::new(None)));
         let thread1 = {
             let shared_manager = task_manager.clone();
             let s = s1.clone();
@@ -471,4 +488,38 @@ mod tests {
         assert_eq!(*s1.lock().unwrap(), "brian");
         assert_eq!(*s2.lock().unwrap(), "sloths");
     }
+
+    #[test]
+    #[allow(unused_must_use)]
+    fn test_task_manager_limit() {
+        let s1 = Arc::new(Mutex::new(String::new()));
+        let limit = Some(1);
+        let task_manager = Arc::new(Mutex::new(TaskManager::new(limit)));
+
+        let thread1 = {
+            let shared_manager = task_manager.clone();
+            let s = s1.clone();
+            thread::spawn(move || {
+                let mut manager = shared_manager.lock().unwrap();
+                let key = Uuid::new_v4().to_string();
+
+                let queue_key = manager.ensure_queue(key);
+                manager.add_task(&queue_key, Task {s: s.clone(), m: "1"});
+                thread::sleep_ms(1);
+                manager.add_task(&queue_key, Task {s: s.clone(), m: "2"});
+                thread::sleep_ms(1);
+                manager.add_task(&queue_key, Task {s: s.clone(), m: "3"});
+                thread::sleep_ms(1);
+                manager.add_task(&queue_key, Task {s: s.clone(), m: "4"});
+                thread::sleep_ms(1);
+                manager.add_task(&queue_key, Task {s: s.clone(), m: "5"})
+                    .unwrap().recv();
+
+            })
+        };
+        thread1.join();
+
+        assert_eq!(*s1.lock().unwrap(), "15");
+    }
+
 }
