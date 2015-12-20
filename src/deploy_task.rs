@@ -38,6 +38,15 @@ pub struct DeployTask {
     pub secret: String,
 }
 impl Runnable for DeployTask {
+    fn cancel(&self) {
+        let task_id = self.id.to_string();
+        let logfile_path = Path::new(&self.logdir).join(format!("{}.log", task_id));
+        let mut logger = match LogWriter::new(&logfile_path) {
+            Ok(logfile) => logfile,
+            Err(_) => return println!("[{}]: could not open logfile for writing", &task_id),
+        };
+        logger.write("task cancelled");
+    }
 
     // TODO: this is a god damn mess and seriously needs to be refactored,
     // especially all of the logging.

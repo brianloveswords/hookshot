@@ -111,7 +111,7 @@ pub fn main() {
 #[allow(unused_must_use)]
 fn start_server(config: ServerConfig) {
     let mut router = Router::new();
-    let global_manager = Arc::new(Mutex::new(TaskManager::new()));
+    let global_manager = Arc::new(Mutex::new(TaskManager::new(config.queue_limit)));
 
     // Create a healthcheck endpoint.
     router.get("/health", move |_: &mut Request| {
