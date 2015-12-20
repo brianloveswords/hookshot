@@ -60,7 +60,7 @@ pub fn failed(task: &DeployTask, config: &RepoConfig) {
 
 fn send_message(task: &DeployTask, config: &RepoConfig, status: TaskState) {
     println!("[{}]: notifier: looking up notify url", &task.id);
-    let notify_url = match get_notify_url(task, config) {
+    let notifiers = match get_notifiers(task, config) {
         Some(url) => url,
         None => {
             println!("[{}]: notifier: could not find notify url", &task.id);
@@ -97,18 +97,18 @@ fn send_message(task: &DeployTask, config: &RepoConfig, status: TaskState) {
 
     // Spawn a new thread to send the message so we don't block the task
     let task_id = task.id.clone();
-    let notifiers = notify_url.clone();
+    let notifiers = notifiers.clone();
     let secret = task.secret.clone();
 
     thread::spawn(move || {
         let sig = Signature::create(HashType::SHA256, &request_body, &secret);
 
-        for notify_url in &notifiers {
+        for notifiers in &notifiers {
             println!("[{}]: notifier: sending {} message to {}",
                      &task_id,
                      &status,
-                     &notify_url);
-            let request = client.post(notify_url)
+                     &notifiers);
+            let request = client.post(notifiers)
                 .header(XHookshotSignature(sig.to_string()))
                 .header(ContentType::json())
                 .body(&request_body)
@@ -123,11 +123,11 @@ fn send_message(task: &DeployTask, config: &RepoConfig, status: TaskState) {
     });
 }
 
-fn get_notify_url<'a>(task: &DeployTask, config: &'a RepoConfig) -> Option<&'a Vec<String>> {
+fn get_notifiers<'a>(task: &DeployTask, config: &'a RepoConfig) -> Option<&'a Vec<String>> {
     let refstring = &task.repo.refstring;
     let reftype = task.repo.reftype;
     match config.lookup(reftype, refstring) {
-        Some(refconfig) => refconfig.notify_url.as_ref(),
+        Some(refconfig) => refconfig.notifiers.as_ref(),
         None => None,
     }
 }

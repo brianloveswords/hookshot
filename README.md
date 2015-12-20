@@ -99,11 +99,11 @@ repository and branch. Below you can find an example annotated `.hookshot.conf`:
 ## Defaults to use when a branch configuration is missing fields.
 ## "method" is required.
 [default]
-method = "ansible"                   # default task type. "makefile" or "ansible"
-task = "deploy"                      # default make task to run. Optional.
-playbook = "ansible/deploy.yml"      # default playbook to use for ansible. Optional
-inventory = "ansible/inventory"      # default inventory to use for ansible. Optional
-notify_url = "http://127.0.0.1:7231" # default notify url. Optional
+method = "ansible"                    # default task type. "makefile" or "ansible"
+task = "deploy"                       # default make task to run. Optional.
+playbook = "ansible/deploy.yml"       # default playbook to use for ansible. Optional
+inventory = "ansible/inventory"       # default inventory to use for ansible. Optional
+notifiers = ["http://127.0.0.1:7231"] # default notifier. Optional
 
 ## Configuration for branches that have tasks associated with them. This doesn't
 ## need to be comprehensive of every branch in the repository. Any configuration
@@ -115,10 +115,10 @@ inventory = "deploy/inventory/production"
 ## When the staging branch is pushed ansible-playbook will be run with default
 ## playbook and the "ansible/inventory/staging" inventory, doing a path lookup
 ## starting from the root of the repository. This also overrides the default
-## `notify_url`.
+## `notifiers`.
 [branch.staging]
 inventory = "ansible/inventory/staging"
-notify_url = "http://127.0.0.1:7231/staging"
+notifiers = ["http://127.0.0.1:7231/staging"]
 
 ## When the prototype branch `make self-deploy` will be run instead of
 ## `ansible-playbook`. Any extra variables will be stored in the environment
@@ -137,9 +137,9 @@ Now, assuming the `hookshot` service is running at
 Now whenever the `production`, `staging` and `prototype` branches are pushed the
 associated make task or ansible playbook/inventory combo will be executed.
 
-## Notify URL
+## Notifiers
 
-The `notify_url` will receive a message when a task begins and another when the
+The `notifiers` will receive a message when a task begins and another when the
 task completes successfully or fails. Below is an annotated example of a
 message:
 
@@ -186,7 +186,7 @@ future.
 
 See
 [examples/webhook-server.js](https://github.com/brianloveswords/hookshot/blob/master/examples/webhook-server.js)
-for an example `notify_url` receiver written in ES6. The server listens for
+for an example `notifiers` receiver written in ES6. The server listens for
 hookshot notifications and sends a status update to a Slack channel so people
 can keep easily track of what's going on with a hookshot task.
 

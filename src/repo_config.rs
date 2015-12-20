@@ -31,7 +31,7 @@ impl ToString for DeployMethod {
 pub struct Config<'a> {
     pub pattern: String,
     pub method: DeployMethod,
-    pub notify_url: Option<Vec<URL>>,
+    pub notifiers: Option<Vec<URL>>,
     make_task: Option<MakeTask<'a>>,
     ansible_task: Option<AnsibleTask<'a>>,
 }
@@ -99,14 +99,14 @@ pub enum Error {
     InvalidDefaultMakeTask,
     InvalidDefaultPlaybook,
     InvalidDefaultInventory,
-    InvalidDefaultNotifyUrl,
+    InvalidDefaultNotifier,
     MissingConfiguration,
     InvalidConfigGroup,
     InvalidConfigEntry(String),
     InvalidMethod(String),
     InvalidPlaybook(String),
     InvalidInventory(String),
-    InvalidNotifyUrl(String),
+    InvalidNotifier(String),
     MissingMethod(String),
     InvalidMakeTask(String),
     MissingTask(String),
@@ -124,14 +124,14 @@ impl StdError for Error {
             Error::InvalidDefaultMakeTask => "`default.task` must be a valid, existing make task",
             Error::InvalidDefaultPlaybook => "`default.playbook` must point to an existing file",
             Error::InvalidDefaultInventory => "`default.inventory` must point to an existing file",
-            Error::InvalidDefaultNotifyUrl => "`default.notify_url` must be a URL",
+            Error::InvalidDefaultNotifier => "`default.notifiers` must be an array of urls",
             Error::MissingConfiguration => "must have at least one `branch` or `tag` entry",
             Error::InvalidConfigGroup => "`branch` or `tag` must be a table",
             Error::InvalidConfigEntry(_) => "every `branch.<pattern>` or `tag.<pattern>` entry must be a table",
             Error::InvalidMethod(_) => "invalid branch `method`, valid values are 'ansible' and 'makefile'",
             Error::InvalidPlaybook(_) => "branch `playbook` must point to an existing file",
             Error::InvalidInventory(_) => "branch `inventory` must point to an existing file",
-            Error::InvalidNotifyUrl(_) => "branch `notify_url` must be valid URL",
+            Error::InvalidNotifier(_) => "branch `notifiers` must be valid URL",
             Error::MissingMethod(_) => "could not find `method` between default and branch config",
             Error::InvalidMakeTask(_) => "branch `task` must be valid, existing make task",
             Error::MissingTask(_) => "could not find make or ansible task between default and branch config",
@@ -153,7 +153,7 @@ impl Error {
             Error::InvalidMethod(ref s) |
             Error::InvalidPlaybook(ref s) |
             Error::InvalidInventory(ref s) |
-            Error::InvalidNotifyUrl(ref s) |
+            Error::InvalidNotifier(ref s) |
             Error::InvalidMakeTask(ref s) |
             Error::MissingTask(ref s) => Some(s),
             _ => None,
@@ -297,10 +297,10 @@ impl<'a> RepoConfig<'a> {
             _ => return Err(Error::InvalidDefaultInventory),
         };
 
-        let default_notify_url = match lookup_as_array(default, "notify_url") {
+        let default_notifiers = match lookup_as_array(default, "notifiers") {
             LookupResult::Missing => None,
             LookupResult::VectorValue(v) => Some(v),
-            _ => return Err(Error::InvalidDefaultNotifyUrl),
+            _ => return Err(Error::InvalidDefaultNotifier),
         };
 
         let mut config_groups = BTreeMap::new();
@@ -355,10 +355,10 @@ impl<'a> RepoConfig<'a> {
                     _ => return Err(Error::InvalidInventory(pattern.clone()))
                 };
 
-                let notify_url = match lookup_as_array(config, "notify_url") {
-                    LookupResult::Missing => default_notify_url.clone(),
+                let notifiers = match lookup_as_array(config, "notifiers") {
+                    LookupResult::Missing => default_notifiers.clone(),
                     LookupResult::VectorValue(v) => Some(v),
-                    _ => return Err(Error::InvalidNotifyUrl(pattern.clone())),
+                    _ => return Err(Error::InvalidNotifier(pattern.clone())),
                 };
 
                 let branch_make_task = match lookup_as_string(config, "task") {
@@ -401,7 +401,7 @@ impl<'a> RepoConfig<'a> {
                     ansible_task: ansible_task,
                     make_task: make_task,
                     method: method,
-                    notify_url: notify_url
+                    notifiers: notifiers
                 };
 
                 let mut map = config_groups.get_mut(group_type).unwrap();
@@ -473,7 +473,7 @@ mod tests {
             method: DeployMethod::Makefile,
             make_task: None,
             ansible_task: None,
-            notify_url: None,
+            notifiers: None,
         }
     }
 
@@ -491,18 +491,18 @@ mod tests {
             assert_eq!(ansible_task.inventory, "ansible/inventory/production");
             assert_eq!(config.method, DeployMethod::Ansible);
             assert!(config.make_task.is_none());
-            assert!(config.notify_url.is_none());
+            assert!(config.notifiers.is_none());
         }
         // staging config
         {
             let config = config.lookup_branch("staging").unwrap();
-            let notify_url = config.notify_url.clone().unwrap();
+            let notifiers = config.notifiers.clone().unwrap();
             let ansible_task = config.ansible_task().unwrap();
             assert_eq!(ansible_task.inventory, "ansible/inventory/staging");
             assert_eq!(ansible_task.playbook, "ansible/deploy.yml");
             assert_eq!(config.method, DeployMethod::Ansible);
             assert!(config.make_task.is_none());
-            assert_eq!(notify_url, vec!["http://example.org"]);
+            assert_eq!(notifiers, vec!["http://example.org"]);
         }
         // brian-test-branch config
         {
@@ -510,7 +510,7 @@ mod tests {
             let method = config.method.clone();
             assert!(config.ansible_task.is_none());
             assert_eq!(method.to_string(), "makefile");
-            assert!(config.notify_url.is_none());
+            assert!(config.notifiers.is_none());
         }
 
     }
