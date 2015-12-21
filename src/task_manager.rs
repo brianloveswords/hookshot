@@ -11,12 +11,6 @@
 //! See docs for the [`TaskManager`](struct.TaskManager.html) struct for more
 //! usage examples.
 //!
-//! # Limitations
-//!
-//! - Task queues can grow infinitely. We should have optional a way
-//! to cap the queue size and any tasks that come in after that limit
-//! push off the oldest task.
-//!
 //! # Examples
 //!
 //! ## Waiting for tasks to finish
@@ -32,8 +26,9 @@
 //!         println!("{}", self.msg);
 //!     }
 //! }
-//!
-//! let mut task_manager = TaskManager::new();
+//! // Set a limit of 100 items per queue
+//! let limit = Some(100);
+//! let mut task_manager = TaskManager::new(limit);
 //!
 //! // This will cause "a", "b", "c" and "1", "2", "3" to print in
 //! // order though letters and numbers will be intermingled because the
@@ -76,8 +71,9 @@
 //!         self.result = Some(42);
 //!     }
 //! }
-//!
-//! let mut task_manager = TaskManager::new();
+//! // Allow queues to grow without bound
+//! let limit = None;
+//! let mut task_manager = TaskManager::new(limit);
 //!
 //! let key = task_manager.ensure_queue(String::from("q"));
 //!
@@ -105,7 +101,7 @@
 //! # }
 //! # impl ImportantTask { fn new() -> ImportantTask { ImportantTask } }
 //! let (shutdown_tx, shutdown_rx) = channel();
-//! let task_manager = Arc::new(Mutex::new(TaskManager::new_with_lock(shutdown_tx)));
+//! let task_manager = Arc::new(Mutex::new(TaskManager::new_with_lock(None, shutdown_tx)));
 //!
 //! let shared_manager = task_manager.clone();
 //! event_handler("add_task", move || {
@@ -293,7 +289,7 @@ impl<'a, T> TaskManager<T> where T: 'static + Runnable + Send {
     /// # let important_task1 = ImportantTask;
     /// # let important_task2 = ImportantTask;
     /// let (shutdown_tx, shutdown_rx) = channel();
-    /// let tasks = Arc::new(Mutex::new(TaskManager::new_with_lock(shutdown_tx)));
+    /// let tasks = Arc::new(Mutex::new(TaskManager::new_with_lock(None, shutdown_tx)));
     ///
     /// let shared_tasks = tasks.clone();
     /// thread::spawn(move || {
