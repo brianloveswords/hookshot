@@ -186,7 +186,7 @@ impl ServerConfig {
         };
         let queue_limit = match lookup_as_integer(config, "queue_limit") {
             LookupResult::Missing => None,
-            LookupResult::IntegerValue(v) if v > 1 => Some(v as u64),
+            LookupResult::IntegerValue(v) if v > 0 => Some(v as u64),
             _ => return Err(Error::InvalidQueueLimit),
         };
         let environments = match root.get("env") {
