@@ -72,12 +72,12 @@ queue_limit = 1
 ## additionally when the task is ansible.
 
 [env.brian.cool-website.production]
-hostname = "cool-site.biz"
+hostname = "website.biz"
 username = "admin"
 password = "do you like geodes?"
 
 [env.brian.cool-website.staging]
-hostname = "staging.cool-site.biz"
+hostname = "staging.website.biz"
 username = "staging-admin"
 password = "a passphrase for the stating server"
 ```
@@ -135,9 +135,9 @@ task = "self-deploy"
 ```
 
 Now, assuming the `hookshot` service is running at
-`http://hookshot.website:1469`, set up a webhook for the GitHub repository:
+`http://hookshot.website.biz:1469`, set up a webhook for the GitHub repository with the url `http://hookshot.website.biz:1469/tasks`:
 
-![screenshot of webhook setup](https://cldup.com/NKrwR-X_cp.png)
+![screenshot of webhook setup](https://cldup.com/g5Cl8f24dD.png)
 
 Now whenever the `production`, `staging` and `prototype` branches are pushed the
 associated make task or ansible playbook/inventory combo will be executed.
