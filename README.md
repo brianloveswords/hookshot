@@ -17,13 +17,17 @@ That's it. See the [Running hookshot](#running-hookshot) section.
 # Building from Source
 
 - Ensure you have `libssl-dev` installed.
-  - If you're on OS X you probably have this.
+  - If you're on OS X you probably have this. Unless you're on 10.11 (El Capitan)
+    in which case you'll need to install OpenSSL.  See rust-openssl/255 for
+    more information.
 
   - On Ubuntu you can do `apt-get install libssl-dev`. You'll probably
     need to `sudo`.
 
 - Clone this repository or download a
   [source tarball](https://github.com/brianloveswords/hookshot/releases)
+
+- Ensure you have a late-ish version of Rust (minimum 1.???)
 
 - `make release`. When it's done the binary will be located at
   `./target/release/hookshot`
