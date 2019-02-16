@@ -12,9 +12,15 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       echo UPDATING APT CACHE
       apt-get update -y
       echo INSTALLING DEPS
-      apt-get install git libssl-dev python-pip -y
+      apt-get install git libssl-dev python-pip pkg-config -y
       pip install ansible
       echo INSTALLING RUST
-      sh <(curl -sf -L https://static.rust-lang.org/rustup.sh) --disable-sudo -y > /dev/null 2>&1
+      curl -sf -L https://static.rust-lang.org/rustup.sh | sh -s -- -y > /dev/null 2>&1
+      source $HOME/.cargo/env
+      echo UPDATE RUST
+      cargo update
+      echo BUILD PACKAGE
+      cd /mnt/vagrant
+      make release
     eos
 end
